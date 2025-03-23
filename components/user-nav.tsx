@@ -53,7 +53,7 @@ export function UserNav() {
         <nav className="flex flex-col gap-4 mt-8">
           <Link href="/" className="flex items-center gap-2 mb-6">
             <Code2 className="h-6 w-6 text-primary" />
-            <span className="font-bold text-lg">BlockLearn</span>
+            <span className="font-bold text-lg">SkillChain</span>
           </Link>
           <Link href="/marketplace" className="text-lg font-medium">
             Marketplace

@@ -9,7 +9,7 @@ export function Footer() {
           <div className="flex flex-col gap-2">
             <Link href="/" className="flex items-center gap-2">
               <Code2 className="h-6 w-6 text-primary" />
-              <span className="font-bold">BlockLearn</span>
+              <span className="font-bold">SkillChain</span>
             </Link>
             <p className="text-sm text-muted-foreground">
               The premier platform for blockchain education and course creation
@@ -92,7 +92,7 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-8 border-t pt-8 text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} BlockLearn. All rights reserved.
+          © {new Date().getFullYear()} SkillChain. All rights reserved.
         </div>
       </div>
     </footer>

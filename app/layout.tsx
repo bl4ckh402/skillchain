@@ -10,7 +10,7 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
-  title: "BlockLearn - Blockchain Education Platform",
+  title: "SkillChain - Blockchain Education Platform",
   description: "Learn blockchain technology through interactive courses",
   generator: 'v0.dev'
 }
@@ -26,21 +26,28 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <AuthProvider>
             <JobsProvider>
-              <HackathonsProvider>
-                <div className="flex min-h-screen flex-col">
-                  <header className="sticky top-0 z-40 border-b bg-background">
-                    <div className="container flex h-16 items-center justify-between py-4">
-                      <MainNav />
-                      <div className="flex items-center gap-4">
-                        <UserNav />
-                        <ModeToggle />
-                      </div>
+              <HackathonProvider>
+                <ProjectProvider>
+                  <CourseProvider>
+                    <CommunityProvider>
+                    <div className="flex min-h-screen flex-col">
+                      <header className="sticky top-0 z-40 border-b bg-background">
+                        <div className="container flex h-16 items-center justify-between py-4">
+                          <MainNav />
+                          <div className="flex items-center gap-4">
+                            <UserNav />
+                            <ModeToggle />
+                          </div>
+                        </div>
+                      </header>
+                      <main className="flex-1">{children}</main>
                     </div>
-                  </header>
-                  <main className="flex-1">{children}</main>
-                </div>
-                <Toaster />
-              </HackathonsProvider>
+
+                    <Toaster />
+                    </CommunityProvider>
+                  </CourseProvider>
+                </ProjectProvider>
+              </HackathonProvider>
             </JobsProvider>
           </AuthProvider>
         </ThemeProvider>
@@ -54,5 +61,8 @@ export default function RootLayout({
 import './globals.css'
 import { AuthProvider } from "@/context/AuthProvider"
 import { JobsProvider } from "@/context/JobsProvider"
-import { HackathonsProvider } from "@/context/HackathonContext"
+import { HackathonProvider } from "@/context/HackathonContext"
+import { ProjectProvider } from "@/context/ProjectContext"
+import { CourseProvider } from "@/context/CourseContext"
+import { CommunityProvider } from "@/context/CommunityProvider"
 

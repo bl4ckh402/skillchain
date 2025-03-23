@@ -1137,7 +1137,7 @@ export default function CreateCoursePage() {
                 <div className="rounded-lg border border-slate-200 dark:border-slate-800 p-4">
                   <div className="text-sm">
                     <p className="font-medium text-slate-800 dark:text-slate-200">Platform Fee</p>
-                    <p className="text-muted-foreground">BlockLearn takes a 2% fee from all course sales</p>
+                    <p className="text-muted-foreground">SkillChain takes a 2% fee from all course sales</p>
                   </div>
                 </div>
 
@@ -1265,7 +1265,7 @@ export default function CreateCoursePage() {
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="centralized" id="storage-centralized" />
                       <Label htmlFor="storage-centralized" className="text-slate-700 dark:text-slate-300">
-                        Centralized - Store content on BlockLearn servers
+                        Centralized - Store content on SkillChain servers
                       </Label>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -1276,7 +1276,7 @@ export default function CreateCoursePage() {
                     </div>
                   </RadioGroup>
                   <p className="text-xs text-muted-foreground">
-                    Decentralized storage ensures your content remains available even if BlockLearn servers go offline
+                    Decentralized storage ensures your content remains available even if SkillChain servers go offline
                   </p>
                 </div>
 

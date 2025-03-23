@@ -31,7 +31,7 @@ export function HowItWorks() {
           <div className="space-y-2">
             <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">How It Works</h2>
             <p className="max-w-[700px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-              BlockLearn makes blockchain education accessible, practical, and rewarding
+              SkillChain makes blockchain education accessible, practical, and rewarding
             </p>
           </div>
         </div>

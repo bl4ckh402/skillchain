@@ -1,3 +1,4 @@
+"use client"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -24,136 +25,62 @@ import {
   Pin,
   Award,
 } from "lucide-react"
+import { useCommunity } from "@/context/CommunityProvider"
+import { Post } from "@/types/community"
+
+
+const mapDiscussionToPost = (discussion: any): Post => ({
+  id: discussion.id,
+  title: discussion.title,
+  content: discussion.preview, // Full content would be loaded in detail view
+  preview: discussion.preview,
+  author: {
+    id: discussion.authorId || 'unknown',
+    name: discussion.author,
+    avatar: discussion.authorAvatar
+  },
+  tags: discussion.tags,
+  likes: discussion.likes,
+  comments: discussion.replies,
+  views: discussion.views,
+  category: discussion.category,
+  type: 'discussion',
+  status: 'published',
+  isPinned: discussion.isPinned,
+  isHot: discussion.isHot,
+  createdAt: new Date(discussion.date), // Convert relative date to actual date
+  updatedAt: new Date(discussion.date)
+})
 
 export default function CommunityPage() {
-  const discussions = [
-    {
-      id: 1,
-      title: "Best practices for gas optimization in Solidity contracts?",
-      author: "Alex Johnson",
-      authorAvatar: "/images/users/alex-johnson.jpg",
-      date: "2 days ago",
-      category: "Smart Contracts",
-      replies: 24,
-      views: 156,
-      likes: 42,
-      isPinned: true,
-      isHot: true,
-      tags: ["Solidity", "Gas Optimization", "Ethereum"],
-      preview:
-        "I'm working on a complex DeFi protocol and looking for advanced techniques to minimize gas costs. I've already implemented...",
-    },
-    {
-      id: 2,
-      title: "How to handle cross-chain asset transfers securely?",
-      author: "Maria Garcia",
-      authorAvatar: "/images/users/maria-garcia.jpg",
-      date: "1 week ago",
-      category: "Interoperability",
-      replies: 18,
-      views: 132,
-      likes: 35,
-      isPinned: false,
-      isHot: true,
-      tags: ["Cross-chain", "Security", "Bridges"],
-      preview:
-        "I'm building a dApp that needs to transfer assets between Ethereum and Polygon. What are the best practices for ensuring...",
-    },
-    {
-      id: 3,
-      title: "Implementing zero-knowledge proofs in a privacy-focused application",
-      author: "David Kim",
-      authorAvatar: "/images/users/david-kim.jpg",
-      date: "3 days ago",
-      category: "Privacy",
-      replies: 12,
-      views: 98,
-      likes: 27,
-      isPinned: false,
-      isHot: false,
-      tags: ["ZK Proofs", "Privacy", "Cryptography"],
-      preview:
-        "I'm working on a privacy-focused application and want to implement zero-knowledge proofs. Has anyone worked with circom or snarkjs?...",
-    },
-    {
-      id: 4,
-      title: "Best UI libraries for Web3 applications?",
-      author: "Sarah Chen",
-      authorAvatar: "/images/users/sarah-chen.jpg",
-      date: "5 days ago",
-      category: "Frontend",
-      replies: 31,
-      views: 215,
-      likes: 53,
-      isPinned: false,
-      isHot: true,
-      tags: ["UI", "Frontend", "Web3"],
-      preview:
-        "I'm looking for recommendations on UI libraries that work well with Web3 applications. I've been using React with ethers.js but...",
-    },
-    {
-      id: 5,
-      title: "Strategies for DAO governance and voting mechanisms",
-      author: "Michael Lee",
-      authorAvatar: "/images/users/michael-lee.jpg",
-      date: "1 week ago",
-      category: "Governance",
-      replies: 22,
-      views: 178,
-      likes: 39,
-      isPinned: false,
-      isHot: false,
-      tags: ["DAO", "Governance", "Voting"],
-      preview:
-        "Our project is transitioning to a DAO model and we're evaluating different governance structures. What are some effective voting mechanisms...",
-    },
-  ]
 
-  const categories = [
-    { name: "Smart Contracts", count: 156, icon: <MessageSquare className="h-4 w-4" /> },
-    { name: "DeFi", count: 124, icon: <TrendingUp className="h-4 w-4" /> },
-    { name: "NFTs", count: 98, icon: <Award className="h-4 w-4" /> },
-    { name: "Web3", count: 87, icon: <Users className="h-4 w-4" /> },
-    { name: "Governance", count: 64, icon: <Bookmark className="h-4 w-4" /> },
-  ]
+  const { 
+    posts,
+    categories, 
+    topContributors, 
+    upcomingEvents,
+    registerForEvent 
+  } = useCommunity()
 
-  const topContributors = [
-    {
-      name: "Alex Johnson",
-      avatar: "/images/users/alex-johnson.jpg",
-      posts: 156,
-      reputation: 4250,
-    },
-    {
-      name: "Maria Garcia",
-      avatar: "/images/users/maria-garcia.jpg",
-      posts: 124,
-      reputation: 3890,
-    },
-    {
-      name: "David Kim",
-      avatar: "/images/users/david-kim.jpg",
-      posts: 98,
-      reputation: 3120,
-    },
-  ]
+  const mappedDiscussions = posts
+    .filter(post => post.type === 'discussion')
+    .map(post => ({
+      ...post,
+      replies: post.comments, // Map comments count to replies for UI
+      authorAvatar: post.author.avatar,
+      author: post.author.name,
+      date: post.createdAt.toLocaleDateString()
+    }))
 
-  const upcomingEvents = [
-    {
-      id: 1,
-      title: "Web3 Developer Workshop",
-      date: "June 15, 2023",
-      time: "2:00 PM - 4:00 PM UTC",
-      participants: 156,
-    },
-    {
-      id: 2,
-      title: "DeFi Trends Q2 2023",
-      date: "June 22, 2023",
-      time: "3:00 PM - 4:30 PM UTC",
-      participants: 89,
-    },
-  ]
+  
+
+  const handleJoinEvent = async (eventId: string) => {
+    try {
+      await registerForEvent(eventId)
+    } catch (error) {
+      console.error('Failed to join event:', error)
+    }
+  }
 
   return (
     <div className="flex flex-col">
@@ -163,7 +90,7 @@ export default function CommunityPage() {
             <div className="max-w-2xl">
               <Badge className="mb-2 px-3 py-1 text-sm bg-purple-500 hover:bg-purple-600 text-white">Community</Badge>
               <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl mb-4 text-slate-800 dark:text-slate-100">
-                BlockLearn Community
+                SkillChain Community
               </h1>
               <p className="text-lg text-muted-foreground mb-6">
                 Connect with blockchain enthusiasts, ask questions, and share your knowledge
@@ -316,8 +243,7 @@ export default function CommunityPage() {
 
                 <TabsContent value="latest" className="mt-0">
                   <div className="space-y-4">
-                    {discussions.map((discussion) => (
-                      <Link href={`/community/discussion/${discussion.id}`} key={discussion.id}>
+                  {mappedDiscussions.map((discussion) => (                      <Link href={`/community/discussion/${discussion.id}`} key={discussion.id}>
                         <Card
                           className={`transition-all hover:shadow-md ${discussion.isPinned ? "border-2 border-purple-300 dark:border-purple-700" : "border-slate-200 dark:border-slate-800"}`}
                         >
@@ -428,7 +354,7 @@ export default function CommunityPage() {
 
                 <TabsContent value="trending" className="mt-0">
                   <div className="space-y-4">
-                    {discussions
+                    {mappedDiscussions
                       .filter((d) => d.isHot)
                       .map((discussion) => (
                         <Link href={`/community/discussion/${discussion.id}`} key={discussion.id}>

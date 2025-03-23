@@ -1,80 +1,43 @@
 "use client"
 
 import { createContext, useContext, useState } from 'react'
-import { collection, query, where, getDocs, addDoc, deleteDoc, doc, updateDoc, setDoc, increment } from 'firebase/firestore'
+import { collection, query, where, getDocs, addDoc, deleteDoc, doc, updateDoc, setDoc, increment, serverTimestamp, orderBy } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
+import { useAuth } from './AuthProvider'
+import { Hackathon, HackathonFilters } from '@/types/hackathon'
 
-interface Hackathon {
-  id?: string
-  title: string
-  organizer: string
-  logo: string
-  website: string
-  startDate: Date
-  endDate: Date
-  location: string
-  participants: number
-  prizePool: string
-  status: 'upcoming' | 'active' | 'completed'
-  tags: string[]
-  description: string
-  image?: string
-  featured: boolean
-  sponsors: {
-    name: string
-    logo: string
-  }[]
-  timeline: {
-    date: string
-    event: string
-    description: string
-  }[]
-  resources: {
-    type: string
-    title: string
-    link: string
-  }[]
-  prizes: {
-    title: string
-    amount: string
-    description: string
-  }[]
-  judges: {
-    name: string
-    title: string
-    avatar: string
-  }[]
-}
-
-interface HackathonFilters {
-  status?: string[]
-  tags?: string[]
-}
-
-interface HackathonsContextType {
+interface HackathonContextType {
   hackathons: Hackathon[]
   loading: boolean
   filters: HackathonFilters
   setFilters: (filters: HackathonFilters) => void
-  createHackathon: (hackathon: Omit<Hackathon, 'id'>) => Promise<string>
+  createHackathon: (hackathon: Omit<Hackathon, 'id' | 'createdAt' | 'updatedAt'>) => Promise<string>
   updateHackathon: (id: string, hackathon: Partial<Hackathon>) => Promise<void>
   deleteHackathon: (id: string) => Promise<void>
   getHackathons: (filters?: HackathonFilters) => Promise<void>
   getFeaturedHackathons: () => Promise<Hackathon[]>
-  getHackathonsByOrganizer: (organizerId: string) => Promise<Hackathon[]>
-  registerParticipant: (hackathonId: string, userId: string) => Promise<void>
+  getMyHackathons: () => Promise<Hackathon[]>
+  registerForHackathon: (hackathonId: string) => Promise<void>
 }
 
-const HackathonsContext = createContext<HackathonsContextType | null>(null)
+const HackathonContext = createContext<HackathonContextType | null>(null)
 
-export function HackathonsProvider({ children }: { children: React.ReactNode }) {
+export function HackathonProvider({ children }: { children: React.ReactNode }) {
   const [hackathons, setHackathons] = useState<Hackathon[]>([])
   const [loading, setLoading] = useState(false)
   const [filters, setFilters] = useState<HackathonFilters>({})
+  const { user } = useAuth()
 
-  const createHackathon = async (hackathon: Omit<Hackathon, 'id'>) => {
+  const createHackathon = async (hackathon: Omit<Hackathon, 'id' | 'createdAt' | 'updatedAt'>) => {
+    if (!user) throw new Error('Must be logged in')
+    
     try {
-      const docRef = await addDoc(collection(db, 'hackathons'), hackathon)
+      const docRef = await addDoc(collection(db, 'hackathons'), {
+        ...hackathon,
+        createdBy: user.uid,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      })
       return docRef.id
     } catch (error: any) {
       throw new Error(`Error creating hackathon: ${error.message}`)
@@ -84,7 +47,10 @@ export function HackathonsProvider({ children }: { children: React.ReactNode }) 
   const updateHackathon = async (id: string, hackathon: Partial<Hackathon>) => {
     try {
       const hackathonRef = doc(db, 'hackathons', id)
-      await updateDoc(hackathonRef, hackathon)
+      await updateDoc(hackathonRef, {
+        ...hackathon,
+        updatedAt: serverTimestamp()
+      })
     } catch (error: any) {
       throw new Error(`Error updating hackathon: ${error.message}`)
     }
@@ -101,15 +67,17 @@ export function HackathonsProvider({ children }: { children: React.ReactNode }) 
   const getHackathons = async (filters?: HackathonFilters) => {
     setLoading(true)
     try {
-      let hackathonsQuery = query(collection(db, 'hackathons'))
+      let hackathonsQuery = query(
+        collection(db, 'hackathons'),
+        orderBy('createdAt', 'desc')
+      )
 
-      if (filters) {
-        if (filters.status?.length) {
-          hackathonsQuery = query(hackathonsQuery, where('status', 'in', filters.status))
-        }
-        if (filters.tags?.length) {
-          hackathonsQuery = query(hackathonsQuery, where('tags', 'array-contains-any', filters.tags))
-        }
+      if (filters?.status?.length) {
+        hackathonsQuery = query(hackathonsQuery, where('status', 'in', filters.status))
+      }
+
+      if (filters?.tags?.length) {
+        hackathonsQuery = query(hackathonsQuery, where('tags', 'array-contains-any', filters.tags))
       }
 
       const snapshot = await getDocs(hackathonsQuery)
@@ -130,7 +98,8 @@ export function HackathonsProvider({ children }: { children: React.ReactNode }) 
     try {
       const featuredQuery = query(
         collection(db, 'hackathons'),
-        where('featured', '==', true)
+        where('featured', '==', true),
+        orderBy('createdAt', 'desc')
       )
       const snapshot = await getDocs(featuredQuery)
       return snapshot.docs.map(doc => ({
@@ -142,26 +111,39 @@ export function HackathonsProvider({ children }: { children: React.ReactNode }) 
     }
   }
 
-  const getHackathonsByOrganizer = async (organizerId: string) => {
+  const getMyHackathons = async () => {
+    if (!user) return []
+    
     try {
-      const organizerQuery = query(
-        collection(db, 'hackathons'),
-        where('organizerId', '==', organizerId)
+      const registrationsQuery = query(
+        collection(db, 'hackathon_participants'),
+        where('userId', '==', user.uid)
       )
-      const snapshot = await getDocs(organizerQuery)
-      return snapshot.docs.map(doc => ({
+      const registrationsSnapshot = await getDocs(registrationsQuery)
+      const hackathonIds = registrationsSnapshot.docs.map(doc => doc.data().hackathonId)
+
+      if (!hackathonIds.length) return []
+
+      const hackathonsQuery = query(
+        collection(db, 'hackathons'),
+        where('id', 'in', hackathonIds)
+      )
+      const hackathonsSnapshot = await getDocs(hackathonsQuery)
+      return hackathonsSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as Hackathon[]
     } catch (error: any) {
-      throw new Error(`Error fetching organizer hackathons: ${error.message}`)
+      throw new Error(`Error fetching my hackathons: ${error.message}`)
     }
   }
 
-  const registerParticipant = async (hackathonId: string, userId: string) => {
+  const registerForHackathon = async (hackathonId: string) => {
+    if (!user) throw new Error('Must be logged in')
+
     try {
       const hackathonRef = doc(db, 'hackathons', hackathonId)
-      const participantRef = doc(db, 'hackathon_participants', `${hackathonId}_${userId}`)
+      const participantRef = doc(db, 'hackathon_participants', `${hackathonId}_${user.uid}`)
       
       await updateDoc(hackathonRef, {
         participants: increment(1)
@@ -169,11 +151,11 @@ export function HackathonsProvider({ children }: { children: React.ReactNode }) 
 
       await setDoc(participantRef, {
         hackathonId,
-        userId,
-        registeredAt: new Date()
+        userId: user.uid,
+        registeredAt: serverTimestamp()
       })
     } catch (error: any) {
-      throw new Error(`Error registering participant: ${error.message}`)
+      throw new Error(`Error registering for hackathon: ${error.message}`)
     }
   }
 
@@ -187,21 +169,21 @@ export function HackathonsProvider({ children }: { children: React.ReactNode }) 
     deleteHackathon,
     getHackathons,
     getFeaturedHackathons,
-    getHackathonsByOrganizer,
-    registerParticipant
+    getMyHackathons,
+    registerForHackathon
   }
 
   return (
-    <HackathonsContext.Provider value={value}>
+    <HackathonContext.Provider value={value}>
       {children}
-    </HackathonsContext.Provider>
+    </HackathonContext.Provider>
   )
 }
 
 export const useHackathons = () => {
-  const context = useContext(HackathonsContext)
+  const context = useContext(HackathonContext)
   if (!context) {
-    throw new Error('useHackathons must be used within a HackathonsProvider')
+    throw new Error('useHackathons must be used within a HackathonProvider')
   }
   return context
 }

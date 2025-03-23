@@ -201,7 +201,7 @@ export default function DashboardPage() {
       title: "Web3 Developer Workshop",
       date: "June 15, 2023",
       time: "2:00 PM - 4:00 PM UTC",
-      host: "BlockLearn Team",
+      host: "SkillChain Team",
       participants: 156,
       image: "/images/events/web3-workshop.jpg",
     },

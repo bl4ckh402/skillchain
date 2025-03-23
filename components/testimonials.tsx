@@ -6,7 +6,7 @@ export function Testimonials() {
   const testimonials = [
     {
       quote:
-        "BlockLearn helped me transition from traditional web development to blockchain. The interactive coding exercises were incredibly helpful.",
+        "SkillChain helped me transition from traditional web development to blockchain. The interactive coding exercises were incredibly helpful.",
       name: "Sarah Chen",
       title: "Frontend Developer",
       avatar: "/placeholder.svg?height=40&width=40",

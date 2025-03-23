@@ -1,3 +1,4 @@
+"use client"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -7,157 +8,188 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Footer } from "@/components/footer"
-import { Search, Star, Users, Clock, BookOpen, Sparkles, TrendingUp, Award, Zap } from "lucide-react"
+import { Search, Star, Users, Clock, BookOpen, Sparkles, TrendingUp, Award, Zap, Code2, Wallet, Globe } from "lucide-react"
+import { useEffect, useState } from "react"
+import { useCourses } from "@/context/CourseContext"
+import { Course, CourseFilters, CourseLevel } from "@/types/course"
+import { EmptyState } from "@/components/empty-state"
 
 export default function MarketplacePage() {
-  const featuredCourses = [
-    {
-      id: 1,
-      title: "Blockchain Fundamentals",
-      instructor: "Alex Johnson",
-      instructorAvatar: "/images/instructors/alex-johnson.jpg",
-      level: "Beginner",
-      rating: 4.8,
-      reviews: 128,
-      students: 1245,
-      duration: "12 hours",
-      price: "$49.99",
-      image: "/images/courses/blockchain-fundamentals-hero.jpg",
-      tags: ["Blockchain", "Cryptocurrency", "Web3"],
-      featured: true,
-      bestseller: true,
-    },
-    {
-      id: 2,
-      title: "Smart Contract Development with Solidity",
-      instructor: "Maria Garcia",
-      instructorAvatar: "/images/instructors/maria-garcia.jpg",
-      level: "Intermediate",
-      rating: 4.9,
-      reviews: 95,
-      students: 876,
-      duration: "15 hours",
-      price: "$79.99",
-      image: "/images/courses/smart-contract-development.jpg",
-      tags: ["Solidity", "Ethereum", "Smart Contracts"],
-      featured: true,
-    },
-    {
-      id: 3,
-      title: "DeFi Protocols and Applications",
-      instructor: "David Kim",
-      instructorAvatar: "/images/instructors/david-kim.jpg",
-      level: "Advanced",
-      rating: 4.7,
-      reviews: 82,
-      students: 543,
-      duration: "18 hours",
-      price: "$89.99",
-      image: "/images/courses/defi-protocols.jpg",
-      tags: ["DeFi", "Yield Farming", "Liquidity"],
-      featured: true,
-      new: true,
-    },
-  ]
+  const { courses, loading, filters, setFilters, getFeaturedCourses } = useCourses()
+  const [featuredCourses, setFeaturedCourses] = useState<Course[]>([])
+  const [searchQuery, setSearchQuery] = useState("")
+  const [sortBy, setSortBy] = useState("popular")
+  const [allCourses, setAllCourses] = useState<Course[]>([])
+  const [activeFilters, setActiveFilters] = useState<CourseFilters>({
+    level: [],
+    duration: [],
+    price: undefined,
+    rating: undefined,
+    search: ""
+  })
 
-  const allCourses = [
-    ...featuredCourses,
-    {
-      id: 4,
-      title: "NFT Creation and Marketing",
-      instructor: "Sarah Chen",
-      instructorAvatar: "/images/instructors/sarah-chen.jpg",
-      level: "Intermediate",
-      rating: 4.6,
-      reviews: 74,
-      students: 612,
-      duration: "10 hours",
-      price: "$69.99",
-      image: "/images/courses/nft-creation.jpg",
-      tags: ["NFTs", "Digital Art", "Marketing"],
-      bestseller: true,
-    },
-    {
-      id: 5,
-      title: "Web3 Frontend Development",
-      instructor: "James Wilson",
-      instructorAvatar: "/images/instructors/james-wilson.jpg",
-      level: "Intermediate",
-      rating: 4.8,
-      reviews: 56,
-      students: 423,
-      duration: "14 hours",
-      price: "$74.99",
-      image: "/images/courses/web3-frontend.jpg",
-      tags: ["React", "Web3.js", "dApps"],
-      new: true,
-    },
-    {
-      id: 6,
-      title: "Blockchain Security Fundamentals",
-      instructor: "Elena Rodriguez",
-      instructorAvatar: "/images/instructors/elena-rodriguez.jpg",
-      level: "Advanced",
-      rating: 4.9,
-      reviews: 48,
-      students: 321,
-      duration: "16 hours",
-      price: "$84.99",
-      image: "/images/courses/blockchain-security.jpg",
-      tags: ["Security", "Auditing", "Vulnerabilities"],
-    },
-    {
-      id: 7,
-      title: "Cryptocurrency Trading Strategies",
-      instructor: "Michael Lee",
-      instructorAvatar: "/images/instructors/michael-lee.jpg",
-      level: "Beginner",
-      rating: 4.5,
-      reviews: 112,
-      students: 987,
-      duration: "8 hours",
-      price: "$59.99",
-      image: "/images/courses/crypto-trading.jpg",
-      tags: ["Trading", "Analysis", "Investment"],
-      bestseller: true,
-    },
-    {
-      id: 8,
-      title: "Building on Polkadot Ecosystem",
-      instructor: "Sophia Martinez",
-      instructorAvatar: "/images/instructors/sophia-martinez.jpg",
-      level: "Intermediate",
-      rating: 4.7,
-      reviews: 38,
-      students: 245,
-      duration: "12 hours",
-      price: "$79.99",
-      image: "/images/courses/polkadot-ecosystem.jpg",
-      tags: ["Polkadot", "Substrate", "Parachains"],
-      new: true,
-    },
-    {
-      id: 9,
-      title: "Zero-Knowledge Proofs Explained",
-      instructor: "Daniel Brown",
-      instructorAvatar: "/images/instructors/daniel-brown.jpg",
-      level: "Advanced",
-      rating: 4.8,
-      reviews: 42,
-      students: 198,
-      duration: "10 hours",
-      price: "$89.99",
-      image: "/images/courses/zk-proofs.jpg",
-      tags: ["ZK Proofs", "Cryptography", "Privacy"],
-    },
-  ]
+  useEffect(() => {
+    const loadInitialData = async () => {
+      try {
+        // Load featured courses
+        const featured = await getFeaturedCourses()
+        setFeaturedCourses(featured)
+
+        // Load all courses
+        setAllCourses(courses)
+      } catch (error) {
+        console.error('Failed to load courses:', error)
+      }
+    }
+
+    loadInitialData()
+  }, [courses, getFeaturedCourses])
+
+  // Add filters effect
+  useEffect(() => {
+    if (!courses.length) return
+
+    let filtered = [...courses]
+
+    // Apply filters
+    if (activeFilters.level?.length) {
+      filtered = filtered.filter(course => activeFilters.level!.includes(course.level))
+    }
+
+    if (activeFilters.search) {
+      const search = activeFilters.search.toLowerCase()
+      filtered = filtered.filter(course =>
+        course.title.toLowerCase().includes(search) ||
+        course.description.toLowerCase().includes(search) ||
+        course.tags.some(tag => tag.toLowerCase().includes(search))
+      )
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        case 'price-low':
+          return parseFloat(a.price.replace('$', '')) - parseFloat(b.price.replace('$', ''))
+        case 'price-high':
+          return parseFloat(b.price.replace('$', '')) - parseFloat(a.price.replace('$', ''))
+        case 'rating':
+          return (b.rating || 0) - (a.rating || 0)
+        default: // popular
+          return (b.students || 0) - (a.students || 0)
+      }
+    })
+
+    setAllCourses(filtered)
+  }, [courses, activeFilters, sortBy])
+
+
+
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    setActiveFilters(prev => ({
+      ...prev,
+      search: searchQuery
+    }))
+  }
+
+  const handleFilterChange = (filterType: keyof CourseFilters, value: string) => {
+    setActiveFilters(prev => {
+      const current = { ...prev }
+
+      switch (filterType) {
+        case 'level':
+          const levelFilter = current.level || []
+          if (levelFilter.includes(value as CourseLevel)) {
+            current.level = levelFilter.filter(v => v !== value)
+          } else {
+            current.level = [...levelFilter, value as CourseLevel]
+          }
+          break
+        case 'duration':
+          const durationFilter = current.duration || []
+          if (durationFilter.includes(value)) {
+            current.duration = durationFilter.filter(v => v !== value)
+          } else {
+            current.duration = [...durationFilter, value]
+          }
+          break
+
+        case 'rating':
+          current.rating = parseFloat(value)
+          break
+      }
+
+      return current
+    })
+  }
+
+  const handleSort = (value: string) => {
+    setSortBy(value)
+    const sortedCourses = [...courses].sort((a, b) => {
+      switch (value) {
+        case 'newest':
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        case 'price-low':
+          return parseFloat(a.price.replace('$', '')) - parseFloat(b.price.replace('$', ''))
+        case 'price-high':
+          return parseFloat(b.price.replace('$', '')) - parseFloat(a.price.replace('$', ''))
+        case 'rating':
+          return b.rating! - a.rating!
+        default: // popular
+          return b.students! - a.students!
+      }
+    })
+    setFilters({
+      ...filters,
+      sort: value
+    })
+  }
+
 
   const categories = [
-    { name: "Blockchain Basics", count: 24, icon: <BookOpen className="h-4 w-4" /> },
-    { name: "Smart Contracts", count: 18, icon: <Zap className="h-4 w-4" /> },
-    { name: "DeFi", count: 15, icon: <TrendingUp className="h-4 w-4" /> },
-    { name: "NFTs", count: 12, icon: <Sparkles className="h-4 w-4" /> },
-    { name: "Web3", count: 20, icon: <Award className="h-4 w-4" /> },
+    {
+      name: "Blockchain Basics",
+      icon: <BookOpen className="h-4 w-4 text-blue-500" />,
+      count: 12
+    },
+    {
+      name: "Smart Contracts",
+      icon: <Code2 className="h-4 w-4 text-purple-500" />,
+      count: 8
+    },
+    {
+      name: "DeFi",
+      icon: <TrendingUp className="h-4 w-4 text-green-500" />,
+      count: 15
+    },
+    {
+      name: "NFTs",
+      icon: <Sparkles className="h-4 w-4 text-amber-500" />,
+      count: 10
+    },
+    {
+      name: "Web3",
+      icon: <Globe className="h-4 w-4 text-teal-500" />,
+      count: 9
+    },
+    {
+      name: "Cryptocurrency",
+      icon: <Wallet className="h-4 w-4 text-red-500" />,
+      count: 11
+    },
+    {
+      name: "Security",
+      icon: <Award className="h-4 w-4 text-indigo-500" />,
+      count: 6
+    },
+    {
+      name: "Advanced Topics",
+      icon: <Zap className="h-4 w-4 text-rose-500" />,
+      count: 7
+    }
   ]
 
   return (
@@ -178,11 +210,15 @@ export default function MarketplacePage() {
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="search"
-                    placeholder="Search for courses..."
-                    className="pl-9 bg-background border-blue-100 dark:border-blue-900 h-12"
-                  />
+                  <form onSubmit={handleSearch}>
+                    <Input
+                      type="search"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search for courses..."
+                      className="pl-9 bg-background border-blue-100 dark:border-blue-900 h-12"
+                    />
+                  </form>
                 </div>
                 <Button
                   size="lg"
@@ -205,7 +241,7 @@ export default function MarketplacePage() {
                   </CardHeader>
                   <CardContent className="pt-6">
                     <div className="space-y-2">
-                      {categories.map((category, index) => (
+                      {categories.map((category: any, index: number) => (
                         <Link
                           key={index}
                           href={`/marketplace/category/${category.name.toLowerCase().replace(/\s+/g, "-")}`}
@@ -240,6 +276,8 @@ export default function MarketplacePage() {
                             <input
                               type="checkbox"
                               id="beginner"
+                              checked={activeFilters.level?.includes(CourseLevel.BEGINNER)}
+                              onChange={() => handleFilterChange('level', CourseLevel.BEGINNER)}
                               className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600"
                             />
                             <label htmlFor="beginner" className="text-sm text-slate-700 dark:text-slate-300">
@@ -422,7 +460,7 @@ export default function MarketplacePage() {
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
                   <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200">Featured Courses</h2>
                   <div className="flex items-center gap-2">
-                    <Select defaultValue="popular">
+                    <Select value={sortBy} onValueChange={handleSort}>
                       <SelectTrigger className="w-[180px] border-blue-200 dark:border-blue-800">
                         <SelectValue placeholder="Sort by" />
                       </SelectTrigger>
@@ -436,98 +474,107 @@ export default function MarketplacePage() {
                     </Select>
                   </div>
                 </div>
-
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {featuredCourses.map((course) => (
-                    <Link href={`/course/${course.id}`} key={course.id} className="group">
-                      <Card
-                        className={`overflow-hidden transition-all hover:shadow-lg ${course.featured ? "border-2 border-blue-300 dark:border-blue-700" : "border-slate-200 dark:border-slate-800"}`}
-                      >
-                        <div className="aspect-video w-full overflow-hidden relative">
-                          <img
-                            src={course.image || "/placeholder.svg"}
-                            alt={course.title}
-                            className="object-cover w-full h-full transition-transform group-hover:scale-105"
-                          />
-                          <div className="absolute top-2 right-2 flex gap-2">
-                            {course.bestseller && (
-                              <Badge className="bg-amber-500 hover:bg-amber-600 text-white">Bestseller</Badge>
-                            )}
-                            {course.new && <Badge className="bg-green-500 hover:bg-green-600 text-white">New</Badge>}
+                {loading ? (
+                  <div className="flex items-center justify-center h-64">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  </div>
+                ) : featuredCourses.length === 0 ? (
+                  <EmptyState
+                    title="No Courses Available"
+                    description="Be the first to create a course and share your blockchain knowledge with the community."
+                  // showCreateButton={true}
+                  />
+                ) : (
+                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {featuredCourses.map((course) => (
+                      <Link href={`/course/${course.id}`} key={course.id} className="group">
+                        <Card
+                          className={`overflow-hidden transition-all hover:shadow-lg ${course.featured ? "border-2 border-blue-300 dark:border-blue-700" : "border-slate-200 dark:border-slate-800"}`}
+                        >
+                          <div className="aspect-video w-full overflow-hidden relative">
+                            <img
+                              src={course.image || "/placeholder.svg"}
+                              alt={course.title}
+                              className="object-cover w-full h-full transition-transform group-hover:scale-105"
+                            />
+                            <div className="absolute top-2 right-2 flex gap-2">
+                              {course.bestseller && (
+                                <Badge className="bg-amber-500 hover:bg-amber-600 text-white">Bestseller</Badge>
+                              )}
+                              {course.new && <Badge className="bg-green-500 hover:bg-green-600 text-white">New</Badge>}
+                            </div>
                           </div>
-                        </div>
-                        <CardHeader className="pb-2">
-                          <div className="flex items-center justify-between">
-                            <Badge
-                              className={`${
-                                course.level === "Beginner"
+                          <CardHeader className="pb-2">
+                            <div className="flex items-center justify-between">
+                              <Badge
+                                className={`${course.level === "Beginner"
                                   ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
                                   : course.level === "Intermediate"
                                     ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
                                     : "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
-                              }`}
-                            >
-                              {course.level}
-                            </Badge>
-                            <div className="flex items-center gap-1">
-                              <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
-                              <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
-                                {course.rating}
-                              </span>
-                              <span className="text-xs text-slate-500 dark:text-slate-400">({course.reviews})</span>
-                            </div>
-                          </div>
-                          <CardTitle className="line-clamp-1 text-xl text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                            {course.title}
-                          </CardTitle>
-                          <CardDescription className="flex items-center gap-1">
-                            <Avatar className="h-4 w-4">
-                              <AvatarImage src={course.instructorAvatar} alt={course.instructor} />
-                              <AvatarFallback className="text-[8px] bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
-                                {course.instructor.substring(0, 2).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-xs">{course.instructor}</span>
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent className="pb-2">
-                          <div className="flex flex-wrap gap-2 mb-3">
-                            {course.tags.map((tag, index) => (
-                              <Badge
-                                key={index}
-                                variant="secondary"
-                                className="font-normal text-blue-700 bg-blue-100 hover:bg-blue-200 dark:text-blue-300 dark:bg-blue-900 dark:hover:bg-blue-800"
+                                  }`}
                               >
-                                {tag}
+                                {course.level}
                               </Badge>
-                            ))}
-                          </div>
-                          <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
-                            <div className="flex items-center gap-1">
-                              <Users className="h-4 w-4 text-blue-500" />
-                              <span>{course.students} students</span>
+                              <div className="flex items-center gap-1">
+                                <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
+                                <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
+                                  {course.rating}
+                                </span>
+                                <span className="text-xs text-slate-500 dark:text-slate-400">({course.reviews})</span>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <Clock className="h-4 w-4 text-teal-500" />
-                              <span>{course.duration}</span>
+                            <CardTitle className="line-clamp-1 text-xl text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                              {course.title}
+                            </CardTitle>
+                            <CardDescription className="flex items-center gap-1">
+                              <Avatar className="h-4 w-4">
+                                <AvatarImage src={course.instructor.avatar} alt={course.instructor.name} />
+                                <AvatarFallback className="text-[8px] bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
+                                  {course.instructor.name.substring(0, 2).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="text-xs">{course.instructor.name}</span>
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent className="pb-2">
+                            <div className="flex flex-wrap gap-2 mb-3">
+                              {course.tags.map((tag, index) => (
+                                <Badge
+                                  key={index}
+                                  variant="secondary"
+                                  className="font-normal text-blue-700 bg-blue-100 hover:bg-blue-200 dark:text-blue-300 dark:bg-blue-900 dark:hover:bg-blue-800"
+                                >
+                                  {tag}
+                                </Badge>
+                              ))}
                             </div>
-                          </div>
-                        </CardContent>
-                        <CardFooter className="flex items-center justify-between">
-                          <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{course.price}</div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
-                          >
-                            View Course
-                          </Button>
-                        </CardFooter>
-                      </Card>
-                    </Link>
-                  ))}
-                </div>
-
+                            <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
+                              <div className="flex items-center gap-1">
+                                <Users className="h-4 w-4 text-blue-500" />
+                                <span>{course.students} students</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-4 w-4 text-teal-500" />
+                                <span>{course.duration}</span>
+                              </div>
+                            </div>
+                          </CardContent>
+                          <CardFooter className="flex items-center justify-between">
+                            <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{course.price}</div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                            >
+                              View Course
+                            </Button>
+                          </CardFooter>
+                        </Card>
+                      </Link>
+                    ))}
+                  </div>
+                )}
                 <div className="mt-12">
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
                     <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200">All Courses</h2>
@@ -568,107 +615,19 @@ export default function MarketplacePage() {
                     </TabsList>
 
                     <TabsContent value="all" className="mt-0">
-                      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                        {allCourses.slice(3).map((course) => (
-                          <Link href={`/course/${course.id}`} key={course.id} className="group">
-                            <Card
-                              className={`overflow-hidden transition-all hover:shadow-lg ${course.featured ? "border-2 border-blue-300 dark:border-blue-700" : "border-slate-200 dark:border-slate-800"}`}
-                            >
-                              <div className="aspect-video w-full overflow-hidden relative">
-                                <img
-                                  src={course.image || "/placeholder.svg"}
-                                  alt={course.title}
-                                  className="object-cover w-full h-full transition-transform group-hover:scale-105"
-                                />
-                                <div className="absolute top-2 right-2 flex gap-2">
-                                  {course.bestseller && (
-                                    <Badge className="bg-amber-500 hover:bg-amber-600 text-white">Bestseller</Badge>
-                                  )}
-                                  {course.new && (
-                                    <Badge className="bg-green-500 hover:bg-green-600 text-white">New</Badge>
-                                  )}
-                                </div>
-                              </div>
-                              <CardHeader className="pb-2">
-                                <div className="flex items-center justify-between">
-                                  <Badge
-                                    className={`${
-                                      course.level === "Beginner"
-                                        ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-                                        : course.level === "Intermediate"
-                                          ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
-                                          : "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
-                                    }`}
-                                  >
-                                    {course.level}
-                                  </Badge>
-                                  <div className="flex items-center gap-1">
-                                    <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
-                                    <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
-                                      {course.rating}
-                                    </span>
-                                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                                      ({course.reviews})
-                                    </span>
-                                  </div>
-                                </div>
-                                <CardTitle className="line-clamp-1 text-xl text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                                  {course.title}
-                                </CardTitle>
-                                <CardDescription className="flex items-center gap-1">
-                                  <Avatar className="h-4 w-4">
-                                    <AvatarImage src={course.instructorAvatar} alt={course.instructor} />
-                                    <AvatarFallback className="text-[8px] bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
-                                      {course.instructor.substring(0, 2).toUpperCase()}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <span className="text-xs">{course.instructor}</span>
-                                </CardDescription>
-                              </CardHeader>
-                              <CardContent className="pb-2">
-                                <div className="flex flex-wrap gap-2 mb-3">
-                                  {course.tags.map((tag, index) => (
-                                    <Badge
-                                      key={index}
-                                      variant="secondary"
-                                      className="font-normal text-blue-700 bg-blue-100 hover:bg-blue-200 dark:text-blue-300 dark:bg-blue-900 dark:hover:bg-blue-800"
-                                    >
-                                      {tag}
-                                    </Badge>
-                                  ))}
-                                </div>
-                                <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
-                                  <div className="flex items-center gap-1">
-                                    <Users className="h-4 w-4 text-blue-500" />
-                                    <span>{course.students} students</span>
-                                  </div>
-                                  <div className="flex items-center gap-1">
-                                    <Clock className="h-4 w-4 text-teal-500" />
-                                    <span>{course.duration}</span>
-                                  </div>
-                                </div>
-                              </CardContent>
-                              <CardFooter className="flex items-center justify-between">
-                                <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{course.price}</div>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
-                                >
-                                  View Course
-                                </Button>
-                              </CardFooter>
-                            </Card>
-                          </Link>
-                        ))}
-                      </div>
-                    </TabsContent>
-
-                    <TabsContent value="blockchain" className="mt-0">
-                      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                        {allCourses
-                          .filter((course) => course.tags.includes("Blockchain"))
-                          .map((course) => (
+                      {loading ? (
+                        <div className="flex items-center justify-center h-64">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        </div>
+                      ) : featuredCourses.length === 0 ? (
+                        <EmptyState
+                          title="No Courses Available"
+                          description="Be the first to create a course and share your blockchain knowledge with the community."
+                        // showCreateButton={true}
+                        />
+                      ) : (
+                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                          {allCourses.slice(3).map((course: Course) => (
                             <Link href={`/course/${course.id}`} key={course.id} className="group">
                               <Card
                                 className={`overflow-hidden transition-all hover:shadow-lg ${course.featured ? "border-2 border-blue-300 dark:border-blue-700" : "border-slate-200 dark:border-slate-800"}`}
@@ -691,13 +650,12 @@ export default function MarketplacePage() {
                                 <CardHeader className="pb-2">
                                   <div className="flex items-center justify-between">
                                     <Badge
-                                      className={`${
-                                        course.level === "Beginner"
-                                          ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-                                          : course.level === "Intermediate"
-                                            ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
-                                            : "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
-                                      }`}
+                                      className={`${course.level === "Beginner"
+                                        ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+                                        : course.level === "Intermediate"
+                                          ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                                          : "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
+                                        }`}
                                     >
                                       {course.level}
                                     </Badge>
@@ -716,17 +674,17 @@ export default function MarketplacePage() {
                                   </CardTitle>
                                   <CardDescription className="flex items-center gap-1">
                                     <Avatar className="h-4 w-4">
-                                      <AvatarImage src={course.instructorAvatar} alt={course.instructor} />
+                                      <AvatarImage src={course.instructor.avatar} alt={course.instructor.name} />
                                       <AvatarFallback className="text-[8px] bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
-                                        {course.instructor.substring(0, 2).toUpperCase()}
+                                        {course.instructor.name.substring(0, 2).toUpperCase()}
                                       </AvatarFallback>
                                     </Avatar>
-                                    <span className="text-xs">{course.instructor}</span>
+                                    <span className="text-xs">{course.instructor.name}</span>
                                   </CardDescription>
                                 </CardHeader>
                                 <CardContent className="pb-2">
                                   <div className="flex flex-wrap gap-2 mb-3">
-                                    {course.tags.map((tag, index) => (
+                                    {course.tags.map((tag: any, index: number) => (
                                       <Badge
                                         key={index}
                                         variant="secondary"
@@ -748,9 +706,7 @@ export default function MarketplacePage() {
                                   </div>
                                 </CardContent>
                                 <CardFooter className="flex items-center justify-between">
-                                  <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                                    {course.price}
-                                  </div>
+                                  <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{course.price}</div>
                                   <Button
                                     variant="outline"
                                     size="sm"
@@ -762,7 +718,120 @@ export default function MarketplacePage() {
                               </Card>
                             </Link>
                           ))}
-                      </div>
+                        </div>
+                      )}
+                    </TabsContent>
+
+                    <TabsContent value="blockchain" className="mt-0">
+                      {loading ? (
+                        <div className="flex items-center justify-center h-64">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        </div>
+                      ) : featuredCourses.length === 0 ? (
+                        <EmptyState
+                          title="No Courses Available"
+                          description="Be the first to create a course and share your blockchain knowledge with the community."
+                        // showCreateButton={true}
+                        />
+                      ) : (
+                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                          {allCourses
+                            .filter((course: Course) => course.tags.includes("Blockchain"))
+                            .map((course: Course) => (
+                              <Link href={`/course/${course.id}`} key={course.id} className="group">
+                                <Card
+                                  className={`overflow-hidden transition-all hover:shadow-lg ${course.featured ? "border-2 border-blue-300 dark:border-blue-700" : "border-slate-200 dark:border-slate-800"}`}
+                                >
+                                  <div className="aspect-video w-full overflow-hidden relative">
+                                    <img
+                                      src={course.image || "/placeholder.svg"}
+                                      alt={course.title}
+                                      className="object-cover w-full h-full transition-transform group-hover:scale-105"
+                                    />
+                                    <div className="absolute top-2 right-2 flex gap-2">
+                                      {course.bestseller && (
+                                        <Badge className="bg-amber-500 hover:bg-amber-600 text-white">Bestseller</Badge>
+                                      )}
+                                      {course.new && (
+                                        <Badge className="bg-green-500 hover:bg-green-600 text-white">New</Badge>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <CardHeader className="pb-2">
+                                    <div className="flex items-center justify-between">
+                                      <Badge
+                                        className={`${course.level === "Beginner"
+                                          ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+                                          : course.level === "Intermediate"
+                                            ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                                            : "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
+                                          }`}
+                                      >
+                                        {course.level}
+                                      </Badge>
+                                      <div className="flex items-center gap-1">
+                                        <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
+                                        <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
+                                          {course.rating}
+                                        </span>
+                                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                                          ({course.reviews})
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <CardTitle className="line-clamp-1 text-xl text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                      {course.title}
+                                    </CardTitle>
+                                    <CardDescription className="flex items-center gap-1">
+                                      <Avatar className="h-4 w-4">
+                                        <AvatarImage src={course.instructor.avatar} alt={course.instructor.name} />
+                                        <AvatarFallback className="text-[8px] bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
+                                          {course.instructor.name.substring(0, 2).toUpperCase()}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                      <span className="text-xs">{course.instructor.name}</span>
+                                    </CardDescription>
+                                  </CardHeader>
+                                  <CardContent className="pb-2">
+                                    <div className="flex flex-wrap gap-2 mb-3">
+                                      {course.tags.map((tag, index) => (
+                                        <Badge
+                                          key={index}
+                                          variant="secondary"
+                                          className="font-normal text-blue-700 bg-blue-100 hover:bg-blue-200 dark:text-blue-300 dark:bg-blue-900 dark:hover:bg-blue-800"
+                                        >
+                                          {tag}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                    <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
+                                      <div className="flex items-center gap-1">
+                                        <Users className="h-4 w-4 text-blue-500" />
+                                        <span>{course.students} students</span>
+                                      </div>
+                                      <div className="flex items-center gap-1">
+                                        <Clock className="h-4 w-4 text-teal-500" />
+                                        <span>{course.duration}</span>
+                                      </div>
+                                    </div>
+                                  </CardContent>
+                                  <CardFooter className="flex items-center justify-between">
+                                    <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                                      {course.price}
+                                    </div>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                                    >
+                                      View Course
+                                    </Button>
+                                  </CardFooter>
+                                </Card>
+                              </Link>
+                            ))}
+                        </div>
+                      )}
                     </TabsContent>
 
                     {/* Other tab contents would follow the same pattern */}
@@ -776,7 +845,7 @@ export default function MarketplacePage() {
                 <div>
                   <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">Become an Instructor</h2>
                   <p className="text-muted-foreground">
-                    Share your blockchain knowledge and earn by creating courses on BlockLearn
+                    Share your blockchain knowledge and earn by creating courses on SkillChain
                   </p>
                 </div>
                 <Button className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white">

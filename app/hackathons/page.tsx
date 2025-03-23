@@ -1,3 +1,4 @@
+"use client"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,143 +9,78 @@ import { Progress } from "@/components/ui/progress"
 import { Footer } from "@/components/footer"
 import { Calendar, MapPin, Trophy, Users, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
+import { useEffect, useState } from "react"
+import { useHackathons } from "@/context/HackathonContext"
+import { Project } from "@/types/project"
+import { useProjects } from "@/context/ProjectContext"
 
 export default function HackathonsPage() {
-  const hackathons = [
-    {
-      id: 1,
-      title: "DeFi Innovation Challenge",
-      organizer: "Ethereum Foundation",
-      logo: "/images/organizations/ethereum-foundation.jpg",
-      startDate: "Aug 15, 2023",
-      endDate: "Sep 15, 2023",
-      location: "Online",
-      participants: 1245,
-      prizePool: "$50,000",
-      status: "active",
-      tags: ["DeFi", "Ethereum", "Smart Contracts"],
-      description:
-        "Build innovative decentralized finance applications on Ethereum to solve real-world financial problems.",
-      image: "/images/hackathons/defi-innovation.jpg",
-      progress: 65,
-      featured: true,
-    },
-    {
-      id: 2,
-      title: "NFT Marketplace Hackathon",
-      organizer: "Polygon",
-      logo: "/images/organizations/polygon.jpg",
-      startDate: "Sep 1, 2023",
-      endDate: "Oct 1, 2023",
-      location: "Online",
-      participants: 876,
-      prizePool: "$30,000",
-      status: "active",
-      tags: ["NFTs", "Polygon", "Marketplace"],
-      description: "Create the next generation of NFT marketplaces with improved user experience and lower gas fees.",
-      image: "/images/hackathons/nft-marketplace.jpg",
-      progress: 45,
-    },
-    {
-      id: 3,
-      title: "Web3 Social Media Hackathon",
-      organizer: "Solana Foundation",
-      logo: "/images/organizations/solana-foundation.jpg",
-      startDate: "Oct 10, 2023",
-      endDate: "Nov 10, 2023",
-      location: "Online",
-      participants: 0,
-      prizePool: "$40,000",
-      status: "upcoming",
-      tags: ["Social Media", "Solana", "Web3"],
-      description:
-        "Reimagine social media platforms using Web3 technologies to give users control over their data and content.",
-      image: "/images/hackathons/web3-social-media.jpg",
-      progress: 0,
-      featured: true,
-    },
-    {
-      id: 4,
-      title: "Cross-Chain Interoperability Challenge",
-      organizer: "Chainlink",
-      logo: "/images/organizations/chainlink.jpg",
-      startDate: "Jul 1, 2023",
-      endDate: "Aug 1, 2023",
-      location: "Online",
-      participants: 932,
-      prizePool: "$45,000",
-      status: "completed",
-      tags: ["Interoperability", "Chainlink", "Cross-Chain"],
-      description:
-        "Develop solutions that enable seamless communication and asset transfers between different blockchain networks.",
-      image: "/images/hackathons/cross-chain.jpg",
-      progress: 100,
-    },
-    {
-      id: 5,
-      title: "Zero-Knowledge Proof Hackathon",
-      organizer: "zkSync",
-      logo: "/images/organizations/zksync.jpg",
-      startDate: "Sep 20, 2023",
-      endDate: "Oct 20, 2023",
-      location: "Online",
-      participants: 0,
-      prizePool: "$35,000",
-      status: "upcoming",
-      tags: ["ZK Proofs", "Privacy", "Scaling"],
-      description:
-        "Build applications using zero-knowledge proofs to enhance privacy and scalability on blockchain networks.",
-      image: "/images/hackathons/zk-proof.jpg",
-      progress: 0,
-    },
-    {
-      id: 6,
-      title: "Global Blockchain Summit Hackathon",
-      organizer: "Binance",
-      logo: "/images/organizations/binance.jpg",
-      startDate: "Nov 5, 2023",
-      endDate: "Nov 7, 2023",
-      location: "Singapore",
-      participants: 0,
-      prizePool: "$100,000",
-      status: "upcoming",
-      tags: ["BNB Chain", "DApps", "Innovation"],
-      description:
-        "A 48-hour in-person hackathon during the Global Blockchain Summit to build innovative blockchain solutions.",
-      image: "/images/hackathons/global-summit.jpg",
-      progress: 0,
-    },
-  ]
+  const { hackathons, loading, filters, setFilters, getHackathons } = useHackathons()
+  const [searchQuery, setSearchQuery] = useState("")
+  const [pastWinners, setPastWinners] = useState<Project[]>([])
+  const [loadingWinners, setLoadingWinners] = useState(false)
+  const {getWinningProjects} = useProjects()
 
-  const pastWinners = [
-    {
-      id: 1,
-      project: "DeFi Aggregator Protocol",
-      team: "BlockWizards",
-      hackathon: "DeFi Summer Hackathon",
-      description:
-        "A protocol that aggregates liquidity from multiple DeFi platforms to provide the best rates for users.",
-      image: "/images/projects/defi-aggregator.jpg",
-    },
-    {
-      id: 2,
-      project: "Decentralized Identity Solution",
-      team: "ChainID",
-      hackathon: "Web3 Identity Hackathon",
-      description:
-        "A privacy-focused identity solution that gives users control over their personal data using zero-knowledge proofs.",
-      image: "/images/projects/decentralized-identity.jpg",
-    },
-    {
-      id: 3,
-      project: "Cross-Chain NFT Bridge",
-      team: "BridgeBuilders",
-      hackathon: "NFT Innovation Challenge",
-      description:
-        "A bridge that allows NFTs to be transferred between different blockchain networks while preserving their provenance.",
-      image: "/images/projects/nft-bridge.jpg",
-    },
-  ]
+  useEffect(() => {
+    loadHackathons()
+    loadWinners()
+  }, [filters])
+
+
+  const loadWinners = async () => {
+    setLoadingWinners(true)
+    try {
+      const winningProjects = await getWinningProjects(3) // Get top 3 winners
+      setPastWinners(winningProjects)
+    } catch (error) {
+      console.error('Failed to load winners:', error)
+    } finally {
+      setLoadingWinners(false)
+    }
+  }
+
+  const loadHackathons = async () => {
+    try {
+      await getHackathons(filters)
+    } catch (error) {
+      console.error('Failed to load hackathons:', error)
+    }
+  }
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    setFilters({ ...filters, search: searchQuery })
+  }
+
+  // const pastWinners = [
+  //   {
+  //     id: 1,
+  //     project: "DeFi Aggregator Protocol",
+  //     team: "BlockWizards",
+  //     hackathon: "DeFi Summer Hackathon",
+  //     description:
+  //       "A protocol that aggregates liquidity from multiple DeFi platforms to provide the best rates for users.",
+  //     image: "/images/projects/defi-aggregator.jpg",
+  //   },
+  //   {
+  //     id: 2,
+  //     project: "Decentralized Identity Solution",
+  //     team: "ChainID",
+  //     hackathon: "Web3 Identity Hackathon",
+  //     description:
+  //       "A privacy-focused identity solution that gives users control over their personal data using zero-knowledge proofs.",
+  //     image: "/images/projects/decentralized-identity.jpg",
+  //   },
+  //   {
+  //     id: 3,
+  //     project: "Cross-Chain NFT Bridge",
+  //     team: "BridgeBuilders",
+  //     hackathon: "NFT Innovation Challenge",
+  //     description:
+  //       "A bridge that allows NFTs to be transferred between different blockchain networks while preserving their provenance.",
+  //     image: "/images/projects/nft-bridge.jpg",
+  //   },
+  // ]
 
   return (
     <div className="flex flex-col">
@@ -288,7 +224,7 @@ export default function HackathonsPage() {
                             <div className="flex items-center gap-1">
                               <Calendar className="h-4 w-4 text-purple-500" />
                               <span>
-                                {hackathon.startDate} - {hackathon.endDate}
+                                {hackathon.startDate.toLocaleDateString()} - {hackathon.endDate.toLocaleDateString()}
                               </span>
                             </div>
                             <div className="flex items-center gap-1">
@@ -373,7 +309,7 @@ export default function HackathonsPage() {
                             <div className="flex items-center gap-1">
                               <Calendar className="h-4 w-4 text-purple-500" />
                               <span>
-                                {hackathon.startDate} - {hackathon.endDate}
+                                {hackathon.startDate.toLocaleDateString()} - {hackathon.endDate.toLocaleDateString()}
                               </span>
                             </div>
                             <div className="flex items-center gap-1">
@@ -450,7 +386,7 @@ export default function HackathonsPage() {
                             <div className="flex items-center gap-1">
                               <Calendar className="h-4 w-4 text-purple-500" />
                               <span>
-                                {hackathon.startDate} - {hackathon.endDate}
+                                {hackathon.startDate.toLocaleDateString()} - {hackathon.endDate.toLocaleDateString()}
                               </span>
                             </div>
                             <div className="flex items-center gap-1">
@@ -494,11 +430,13 @@ export default function HackathonsPage() {
                 {pastWinners.map((winner) => (
                   <Card key={winner.id} className="border-slate-200 dark:border-slate-800 overflow-hidden">
                     <div className="aspect-video w-full overflow-hidden">
-                      <img
-                        src={winner.image || "/placeholder.svg"}
-                        alt={winner.project}
+                      {winner.images.map((image)=>{return(
+                        <img
+                        src={image || "/placeholder.svg"}
+                        alt={winner.title}
                         className="object-cover w-full h-full"
                       />
+                      )})}
                     </div>
                     <CardHeader>
                       <div className="flex items-center justify-between">
@@ -509,10 +447,10 @@ export default function HackathonsPage() {
                           <Trophy className="mr-1 h-3 w-3 fill-amber-500 text-amber-500" />
                           Winner
                         </Badge>
-                        <span className="text-xs text-indigo-600 dark:text-indigo-400">{winner.hackathon}</span>
+                        <span className="text-xs text-indigo-600 dark:text-indigo-400">{winner.hackathonTitle}</span>
                       </div>
                       <CardTitle className="line-clamp-1 text-slate-800 dark:text-slate-200">
-                        {winner.project}
+                        {winner.title}
                       </CardTitle>
                       <CardDescription>
                         by <span className="text-purple-600 dark:text-purple-400 font-medium">{winner.team}</span>
@@ -539,7 +477,7 @@ export default function HackathonsPage() {
                 <div>
                   <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">Organize a Hackathon</h2>
                   <p className="text-muted-foreground">
-                    Partner with BlockLearn to host your own blockchain hackathon or competition
+                    Partner with SkillChain to host your own blockchain hackathon or competition
                   </p>
                 </div>
                 <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white">

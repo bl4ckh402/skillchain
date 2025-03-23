@@ -1,7 +1,8 @@
-import { initializeApp, getApps } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-import { getFirestore } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { initializeApp, getApps } from "firebase/app"
+import { getAnalytics } from "firebase/analytics"
+import { getFirestore } from 'firebase/firestore'
+import { getAuth } from 'firebase/auth'
+import { getStorage } from 'firebase/storage'
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -11,16 +12,20 @@ const firebaseConfig = {
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
-};
+}
 
 // Initialize Firebase only if it hasn't been initialized
-const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig)
 
-// Export auth and db instances
-export const auth = getAuth(app);
-export const db = getFirestore(app);
+// Export auth, db, and storage instances
+export const auth = getAuth(app)
+export const db = getFirestore(app)
+export const storage = getStorage(app)
 
 // Only initialize analytics on the client side
+let analytics = null
 if (typeof window !== 'undefined') {
-  const analytics = getAnalytics(app);
+  analytics = getAnalytics(app)
 }
+
+export { analytics }
