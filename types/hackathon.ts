@@ -21,7 +21,7 @@ export interface Hackathon {
     }[]
     timeline: {
       date: string
-      event: string
+      attendinevent: string
       description: string
     }[]
     resources: {

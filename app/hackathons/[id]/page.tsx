@@ -34,27 +34,27 @@ export default function HackathonDetailPage({ params }: { params: { id: string }
     timeline: [
       {
         date: "August 15, 2023",
-        event: "Hackathon Kickoff",
+        attendinevent: "Hackathon Kickoff",
         description: "Opening ceremony and project ideation workshops",
       },
       {
         date: "August 20, 2023",
-        event: "Team Registration Deadline",
+        attendinevent: "Team Registration Deadline",
         description: "Last day to register your team and project idea",
       },
       {
         date: "September 10, 2023",
-        event: "Project Submission Deadline",
+        attendinevent: "Project Submission Deadline",
         description: "All projects must be submitted by 11:59 PM UTC",
       },
       {
         date: "September 12-14, 2023",
-        event: "Judging Period",
+        attendinevent: "Judging Period",
         description: "Projects will be evaluated by our panel of judges",
       },
       {
         date: "September 15, 2023",
-        event: "Winners Announcement",
+        attendinevent: "Winners Announcement",
         description: "Closing ceremony and announcement of winners",
       },
     ],
@@ -377,7 +377,7 @@ export default function HackathonDetailPage({ params }: { params: { id: string }
                                 <Clock className="h-4 w-4 text-primary-foreground" />
                               </div>
                               <div className="ml-4">
-                                <h4 className="font-medium">{item.event}</h4>
+                                <h4 className="font-medium">{item.attendinevent}</h4>
                                 <p className="text-sm text-muted-foreground">{item.date}</p>
                                 <p className="mt-1 text-sm">{item.description}</p>
                               </div>

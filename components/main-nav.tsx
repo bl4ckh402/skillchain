@@ -24,11 +24,11 @@ export function MainNav() {
       label: "Hackathons",
       active: pathname === "/hackathons",
     },
-    {
-      href: "/dashboard/courses",
-      label: "My Courses",
-      active: pathname === "/dashboard/courses",
-    },
+    // {
+    //   href: "/dashboard",
+    //   label: "My Courses",
+    //   active: pathname === "/dashboard/courses",
+    // },
     {
       href: "/community",
       label: "Community",

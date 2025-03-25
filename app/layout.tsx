@@ -30,6 +30,8 @@ export default function RootLayout({
                 <ProjectProvider>
                   <CourseProvider>
                     <CommunityProvider>
+                    <DashboardProvider>
+
                     <div className="flex min-h-screen flex-col">
                       <header className="sticky top-0 z-40 border-b bg-background">
                         <div className="container flex h-16 items-center justify-between py-4">
@@ -44,6 +46,7 @@ export default function RootLayout({
                     </div>
 
                     <Toaster />
+                    </DashboardProvider>
                     </CommunityProvider>
                   </CourseProvider>
                 </ProjectProvider>
@@ -64,5 +67,6 @@ import { JobsProvider } from "@/context/JobsProvider"
 import { HackathonProvider } from "@/context/HackathonContext"
 import { ProjectProvider } from "@/context/ProjectContext"
 import { CourseProvider } from "@/context/CourseContext"
+import { DashboardProvider } from "@/context/DashboardProvider"
 import { CommunityProvider } from "@/context/CommunityProvider"
 

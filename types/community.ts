@@ -1,3 +1,4 @@
+import { Timestamp } from "firebase/firestore"
 import { ReactNode } from "react"
 
 export interface Post {
@@ -109,36 +110,36 @@ export interface Contributor {
     joinedAt: Date
 }
 
-export interface Event {
-    id: string
-    title: string
-    description: string
-    type: 'workshop' | 'webinar' | 'conference' | 'meetup' | 'hackathon' | 'other'
-    format: 'online' | 'in-person' | 'hybrid'
-    date: string
-    time: string
-    endDate?: string
-    endTime?: string
-    timeZone: string
+export interface CommunityEvent {
+    id: string;
+    title: string;
+    description: string;
+    type: 'workshop' | 'webinar' | 'conference' | 'meetup' | 'hackathon' | 'other';
+    format: 'online' | 'in-person' | 'hybrid';
+    date: string | Date | Timestamp;
+    time: string;
+    endDate?: string | Date | Timestamp;
+    endTime?: string;
+    timeZone: string;
     location?: {
-        name: string
-        address?: string
-        city?: string
-        country?: string
+        name: string;
+        address?: string;
+        city?: string;
+        country?: string;
         virtual?: {
-            platform: string
-            link: string
-        }
-    }
-    participants: number
-    maxParticipants?: number
+            platform: string;
+            link: string;
+        };
+    };
+    participants: number;
+    maxParticipants?: number;
     organizer: {
-        id: string
-        name: string
-        avatar: string
-        role?: string
-        bio?: string
-    }
+        id: string;
+        name: string;
+        avatar: string;
+        role?: string;
+        bio?: string;
+    };
     speakers?: {
         id: string
         name: string

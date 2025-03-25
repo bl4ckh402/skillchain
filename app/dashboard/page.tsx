@@ -28,110 +28,37 @@ import {
   Bookmark,
   Filter,
 } from "lucide-react"
+import { useDashboard } from "@/context/DashboardProvider"
+import { useAuth } from "@/context/AuthProvider"
 
 export default function DashboardPage() {
+  const {user}=useAuth()
   const [activeTab, setActiveTab] = useState("overview")
+  const { dashboardData, loading, error } = useDashboard()
 
-  const enrolledCourses = [
-    {
-      id: 1,
-      title: "Blockchain Fundamentals",
-      instructor: "Alex Johnson",
-      instructorAvatar: "/images/instructors/alex-johnson.jpg",
-      progress: 35,
-      lastAccessed: "2 days ago",
-      image: "/images/courses/blockchain-fundamentals-hero.jpg",
-      nextLesson: "Public Key Cryptography",
-      totalLessons: 24,
-      completedLessons: 8,
-    },
-    {
-      id: 2,
-      title: "Smart Contract Development with Solidity",
-      instructor: "Maria Garcia",
-      instructorAvatar: "/images/instructors/maria-garcia.jpg",
-      progress: 68,
-      lastAccessed: "Yesterday",
-      image: "/images/courses/smart-contract-development.jpg",
-      nextLesson: "Contract Security Best Practices",
-      totalLessons: 32,
-      completedLessons: 22,
-    },
-    {
-      id: 3,
-      title: "NFT Creation and Marketing",
-      instructor: "Sarah Chen",
-      instructorAvatar: "/images/instructors/sarah-chen.jpg",
-      progress: 12,
-      lastAccessed: "1 week ago",
-      image: "/images/courses/nft-creation.jpg",
-      nextLesson: "Creating Your First NFT",
-      totalLessons: 18,
-      completedLessons: 2,
-    },
-  ]
+  if (loading) {
+    return <div>Loading...</div>
+  }
 
-  const achievements = [
-    {
-      id: 1,
-      title: "Blockchain Pioneer",
-      description: "Completed your first blockchain course",
-      icon: <Award className="h-8 w-8 text-amber-500" />,
-      date: "Mar 15, 2023",
-      unlocked: true,
-    },
-    {
-      id: 2,
-      title: "Code Master",
-      description: "Completed 5 coding exercises with perfect scores",
-      icon: <Zap className="h-8 w-8 text-purple-500" />,
-      date: "Apr 22, 2023",
-      unlocked: true,
-    },
-    {
-      id: 3,
-      title: "Smart Contract Specialist",
-      description: "Deployed your first smart contract",
-      icon: <Certificate className="h-8 w-8 text-blue-500" />,
-      date: "May 10, 2023",
-      unlocked: true,
-    },
-    {
-      id: 4,
-      title: "DeFi Explorer",
-      description: "Complete the DeFi Protocols course",
-      icon: <TrendingUp className="h-8 w-8 text-teal-500" />,
-      date: null,
-      unlocked: false,
-    },
-    {
-      id: 5,
-      title: "Web3 Wizard",
-      description: "Build and deploy a full dApp",
-      icon: <Sparkles className="h-8 w-8 text-indigo-500" />,
-      date: null,
-      unlocked: false,
-    },
-  ]
+  if (error) {
+    return <div>Error: {error}</div>
+  }
 
-  const certificates = [
-    {
-      id: 1,
-      title: "Blockchain Fundamentals",
-      issueDate: "March 15, 2023",
-      instructor: "Alex Johnson",
-      image: "/images/certificates/blockchain-fundamentals.jpg",
-      tokenId: "0x1a2b3c4d5e6f",
-    },
-    {
-      id: 2,
-      title: "Smart Contract Security",
-      issueDate: "May 10, 2023",
-      instructor: "Elena Rodriguez",
-      image: "/images/certificates/smart-contract-security.jpg",
-      tokenId: "0x7e8f9a0b1c2d",
-    },
-  ]
+  if (!dashboardData) {
+    return <div>No dashboard data available</div>
+  }
+
+  const {
+    stats,
+    enrolledCourses,
+    participatedHackathons,
+    appliedJobs,
+    completedProjects,
+    upcomingEvents,
+    achievements,
+    certificates
+  } = dashboardData
+
 
   const notifications = [
     {
@@ -195,49 +122,30 @@ export default function DashboardPage() {
     },
   ]
 
-  const upcomingEvents = [
-    {
-      id: 1,
-      title: "Web3 Developer Workshop",
-      date: "June 15, 2023",
-      time: "2:00 PM - 4:00 PM UTC",
-      host: "SkillChain Team",
-      participants: 156,
-      image: "/images/events/web3-workshop.jpg",
-    },
-    {
-      id: 2,
-      title: "DeFi Trends Q2 2023",
-      date: "June 22, 2023",
-      time: "3:00 PM - 4:30 PM UTC",
-      host: "David Kim",
-      participants: 89,
-      image: "/images/events/defi-trends.jpg",
-    },
-  ]
-
-  const stats = [
+  const statsArray = [
     {
       title: "Courses Enrolled",
-      value: "3",
+      value: (dashboardData?.stats?.coursesEnrolled ?? 0).toString(),
       icon: <BookOpen className="h-5 w-5 text-blue-500" />,
     },
     {
       title: "Hours Learned",
-      value: "42",
+      value: (dashboardData?.stats?.hoursLearned ?? 0).toString(),
       icon: <Clock className="h-5 w-5 text-teal-500" />,
     },
     {
-      title: "Achievements",
-      value: "3",
+      title: "Achievements", 
+      value: (dashboardData?.stats?.achievements ?? 0).toString(),
       icon: <Award className="h-5 w-5 text-amber-500" />,
     },
     {
       title: "Certificates",
-      value: "2",
+      value: (dashboardData?.stats?.certificates ?? 0).toString(), 
       icon: <Certificate className="h-5 w-5 text-purple-500" />,
     },
   ]
+
+  
 
   return (
     <div className="flex flex-col">
@@ -249,11 +157,11 @@ export default function DashboardPage() {
                 <Avatar className="h-16 w-16 border-4 border-white dark:border-slate-800">
                   <AvatarImage src="/images/users/user-avatar.jpg" alt="User" />
                   <AvatarFallback className="bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300 text-xl">
-                    JD
+                    {user?.displayName?.substring(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-200">Welcome back, John!</h1>
+                  <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-200">Welcome back, {user?.displayName}!</h1>
                   <p className="text-muted-foreground">Continue your blockchain learning journey</p>
                 </div>
               </div>
@@ -277,7 +185,7 @@ export default function DashboardPage() {
 
         <div className="container py-8">
           <div className="grid gap-6 md:grid-cols-4">
-            {stats.map((stat, index) => (
+            {statsArray.map((stat, index) => (
               <Card key={index} className="border-blue-100 dark:border-blue-900">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
@@ -325,12 +233,12 @@ export default function DashboardPage() {
                 <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-4">Continue Learning</h2>
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {enrolledCourses.map((course) => (
-                    <Link href={`/course/${course.id}`} key={course.id} className="group">
+                    <Link href={`/course/${course.courseId}`} key={course.courseId} className="group">
                       <Card className="overflow-hidden transition-all hover:shadow-lg border-slate-200 dark:border-slate-800">
                         <div className="aspect-video w-full overflow-hidden relative">
                           <img
-                            src={course.image || "/placeholder.svg"}
-                            alt={course.title}
+                            src={course.courseData.image || "/placeholder.svg"}
+                            alt={course.courseData.title}
                             className="object-cover w-full h-full transition-transform group-hover:scale-105"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
@@ -341,11 +249,11 @@ export default function DashboardPage() {
                                   <span className="text-sm font-medium">Continue</span>
                                 </div>
                                 <div className="text-sm">
-                                  {course.completedLessons}/{course.totalLessons} lessons
+                                  {course.progress.completedLessons}/{course.progress.totalLessons} lessons
                                 </div>
                               </div>
                               <Progress
-                                value={course.progress}
+                                value={course.progress.progress}
                                 className="h-1.5 bg-white/30"
                                 indicatorClassName="bg-blue-500"
                               />
@@ -354,26 +262,26 @@ export default function DashboardPage() {
                         </div>
                         <CardHeader className="pb-2">
                           <CardTitle className="line-clamp-1 text-xl text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                            {course.title}
+                            {course.courseData.title}
                           </CardTitle>
                           <CardDescription className="flex items-center gap-1">
                             <Avatar className="h-4 w-4">
-                              <AvatarImage src={course.instructorAvatar} alt={course.instructor} />
+                              <AvatarImage src={course.courseData.instructor.avatar} alt={course.courseData.instructor.name} />
                               <AvatarFallback className="text-[8px] bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
-                                {course.instructor.substring(0, 2).toUpperCase()}
+                                {course.courseData.instructor.name.substring(0, 2).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
-                            <span className="text-xs">{course.instructor}</span>
+                            <span className="text-xs">{course.courseData.instructor.name}</span>
                           </CardDescription>
                         </CardHeader>
                         <CardContent className="pb-2">
                           <div className="space-y-2">
                             <div className="flex items-center justify-between text-sm">
                               <span>Progress</span>
-                              <span className="font-medium">{course.progress}%</span>
+                              <span className="font-medium">{course.progress.progress}%</span>
                             </div>
                             <Progress
-                              value={course.progress}
+                              value={course.progress.progress}
                               className="h-2 bg-slate-100 dark:bg-slate-800"
                               indicatorClassName="bg-gradient-to-r from-blue-500 to-teal-500"
                             />
@@ -381,14 +289,14 @@ export default function DashboardPage() {
                           <div className="mt-3 text-sm text-slate-600 dark:text-slate-400">
                             <p>
                               Next:{" "}
-                              <span className="font-medium text-blue-600 dark:text-blue-400">{course.nextLesson}</span>
+                              <span className="font-medium text-blue-600 dark:text-blue-400">{course.progress.nextLesson}</span>
                             </p>
                           </div>
                         </CardContent>
                         <CardFooter className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
                           <div className="flex items-center gap-1">
                             <Clock className="h-4 w-4 text-blue-500" />
-                            <span>Last accessed {course.lastAccessed}</span>
+                            <span>Last accessed {course.progress.lastAccessed?.toDate().toLocaleDateString()}</span>
                           </div>
                           <Button
                             variant="ghost"
@@ -420,7 +328,7 @@ export default function DashboardPage() {
                               <h3 className="font-medium text-slate-800 dark:text-slate-200">{achievement.title}</h3>
                               <p className="text-sm text-slate-500 dark:text-slate-400">{achievement.description}</p>
                               <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                                Unlocked on {achievement.date}
+                                Unlocked on {achievement.unlockedAt.toLocaleDateString()}
                               </p>
                             </div>
                           </div>
@@ -442,26 +350,26 @@ export default function DashboardPage() {
                   <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-4">Upcoming Events</h2>
                   <Card className="border-blue-100 dark:border-blue-900">
                     <CardContent className="p-6 space-y-4">
-                      {upcomingEvents.map((event) => (
-                        <div key={event.id} className="flex gap-4">
+                      {upcomingEvents.map((attendinevent) => (
+                        <div key={attendinevent.id} className="flex gap-4">
                           <div className="w-16 h-16 rounded-md overflow-hidden shrink-0">
                             <img
-                              src={event.image || "/placeholder.svg"}
-                              alt={event.title}
+                              src={attendinevent.cover || "/placeholder.svg"}
+                              alt={attendinevent.title}
                               className="object-cover w-full h-full"
                             />
                           </div>
                           <div className="flex-1">
-                            <h3 className="font-medium text-slate-800 dark:text-slate-200">{event.title}</h3>
+                            <h3 className="font-medium text-slate-800 dark:text-slate-200">{attendinevent.title}</h3>
                             <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mt-1">
                               <Calendar className="h-4 w-4 text-blue-500" />
                               <span>
-                                {event.date}, {event.time}
+                                {attendinevent.date.toLocaleString()}, {attendinevent.time}
                               </span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mt-1">
                               <Users className="h-4 w-4 text-teal-500" />
-                              <span>{event.participants} participants</span>
+                              <span>{attendinevent.participants} participants</span>
                             </div>
                           </div>
                           <Button
@@ -615,15 +523,15 @@ export default function DashboardPage() {
                   <div className="space-y-4">
                     {enrolledCourses.map((course) => (
                       <Card
-                        key={course.id}
+                        key={course.courseId}
                         className="overflow-hidden transition-all hover:shadow-md border-slate-200 dark:border-slate-800"
                       >
                         <div className="flex flex-col md:flex-row">
                           <div className="w-full md:w-1/4 lg:w-1/5">
                             <div className="aspect-video md:h-full w-full overflow-hidden">
                               <img
-                                src={course.image || "/placeholder.svg"}
-                                alt={course.title}
+                                src={course.courseData.image || "/placeholder.svg"}
+                                alt={course.courseData.title}
                                 className="object-cover w-full h-full"
                               />
                             </div>
@@ -631,29 +539,29 @@ export default function DashboardPage() {
                           <div className="flex-1 p-6">
                             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                               <div className="space-y-1">
-                                <h3 className="font-bold text-xl text-slate-800 dark:text-slate-200">{course.title}</h3>
+                                <h3 className="font-bold text-xl text-slate-800 dark:text-slate-200">{course.courseData.title}</h3>
                                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                                  Instructor: {course.instructor}
+                                  Instructor: {course.courseData.instructor.name}
                                 </p>
                                 <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
                                   <div className="flex items-center gap-1">
                                     <BookOpen className="h-4 w-4 text-blue-500" />
                                     <span>
-                                      {course.completedLessons}/{course.totalLessons} lessons
+                                      {course.progress.completedLessons}/{course.progress.totalLessons} lessons
                                     </span>
                                   </div>
                                   <div className="flex items-center gap-1">
                                     <Clock className="h-4 w-4 text-teal-500" />
-                                    <span>Last accessed {course.lastAccessed}</span>
+                                    <span>Last accessed {course.progress.lastAccessed.toDate().toLocaleDateString()}</span>
                                   </div>
                                 </div>
                               </div>
                               <div className="flex flex-col items-end gap-2">
                                 <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                                  {course.progress}% complete
+                                  {course.progress.progress}% complete
                                 </div>
                                 <Progress
-                                  value={course.progress}
+                                  value={course.progress.progress}
                                   className="h-2 w-full md:w-[200px] bg-slate-100 dark:bg-slate-800"
                                   indicatorClassName="bg-gradient-to-r from-blue-500 to-teal-500"
                                 />
@@ -663,7 +571,7 @@ export default function DashboardPage() {
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                               <div>
                                 <p className="text-sm text-slate-600 dark:text-slate-400">Next Lesson:</p>
-                                <p className="font-medium text-blue-600 dark:text-blue-400">{course.nextLesson}</p>
+                                <p className="font-medium text-blue-600 dark:text-blue-400">{course.progress.nextLesson}</p>
                               </div>
                               <div className="flex items-center gap-2">
                                 <Button
@@ -748,7 +656,7 @@ export default function DashboardPage() {
                         {achievement.unlocked ? (
                           <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
                             <CheckCircle2 className="mr-1 h-3 w-3" />
-                            Unlocked on {achievement.date}
+                            Unlocked on {achievement.unlockedAt.toLocaleDateString()}
                           </Badge>
                         ) : (
                           <Badge
@@ -797,13 +705,13 @@ export default function DashboardPage() {
                               {certificate.title}
                             </h3>
                             <p className="text-sm text-slate-500 dark:text-slate-400">
-                              Instructor: {certificate.instructor}
+                              Instructor: {certificate.instructorId}
                             </p>
                           </div>
                           <div className="space-y-2">
                             <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                               <Calendar className="h-4 w-4 text-blue-500" />
-                              <span>Issued on {certificate.issueDate}</span>
+                              <span>Issued on {certificate.issuedAt.toLocaleDateString()}</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                               <Certificate className="h-4 w-4 text-teal-500" />

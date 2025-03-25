@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState } from 'react'
-import { collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc, orderBy, limit, serverTimestamp, increment, setDoc } from 'firebase/firestore'
+import { collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc, orderBy, limit, serverTimestamp, increment, setDoc, getDoc } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { db, storage } from '@/lib/firebase'
 import { Course, CourseFilters, CourseStatus } from '@/types/course'
@@ -17,12 +17,15 @@ interface CourseContextType {
   deleteCourse: (id: string) => Promise<void>
   publishCourse: (id: string) => Promise<void>
   archiveCourse: (id: string) => Promise<void>
+  getCourseById: (id: string) => Promise<Course | null>
   getFeaturedCourses: () => Promise<Course[]>
   getMyCourses: () => Promise<Course[]>
   getCoursesByInstructor: (instructorId: string) => Promise<Course[]>
   searchCourses: (query: string) => Promise<Course[]>
   enrollInCourse: (courseId: string) => Promise<void>
   uploadCourseImage: (file: File) => Promise<string>
+  trackProgress: (courseId: string, lessonId: string, completed: boolean) => Promise<void>
+  getCourseProgress: (courseId: string) => Promise<number>
 }
 
 const CourseContext = createContext<CourseContextType | null>(null)
@@ -58,15 +61,27 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const updateCourse = async (id: string, course: Partial<Course>) => {
+  const updateCourse = async (courseId: string, courseData: Partial<Course>): Promise<void> => {
+    if (!user) throw new Error('Must be logged in to update a course')
+
     try {
-      const courseRef = doc(db, 'courses', id)
+      const courseRef = doc(db, 'courses', courseId)
+      const courseDoc = await getDoc(courseRef)
+
+      if (!courseDoc.exists()) {
+        throw new Error('Course not found')
+      }
+
+      if (courseDoc.data().instructor.id !== user.uid) {
+        throw new Error('Not authorized to update this course')
+      }
+
       await updateDoc(courseRef, {
-        ...course,
-        updatedAt: serverTimestamp()
+        ...courseData,
+        updatedAt: new Date()
       })
     } catch (error: any) {
-      throw new Error(`Error updating course: ${error.message}`)
+      throw new Error(`Failed to update course: ${error.message}`)
     }
   }
 
@@ -205,6 +220,20 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const getCourseById = async (id: string) => {
+    try {
+      const docRef = doc(db, 'courses', id)
+      const docSnap = await getDoc(docRef)
+      if (docSnap.exists()) {
+        return { id: docSnap.id, ...docSnap.data() } as Course
+      } else {
+        return null
+      }
+    } catch (error: any) {
+      throw new Error(`Error fetching course: ${error.message}`)
+    }
+  }
+
   const uploadCourseImage = async (file: File) => {
     if (!user) throw new Error('Must be logged in')
 
@@ -215,6 +244,60 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
       return url
     } catch (error: any) {
       throw new Error(`Error uploading image: ${error.message}`)
+    }
+  }
+
+
+  const trackProgress = async (courseId: string, lessonId: string, completed: boolean) => {
+    if (!user) throw new Error('Must be logged in')
+
+    try {
+      const enrollmentRef = doc(db, 'enrollments', `${user.uid}_${courseId}`)
+      const enrollmentDoc = await getDoc(enrollmentRef)
+
+      if (!enrollmentDoc.exists()) {
+        throw new Error('Not enrolled in course')
+      }
+
+      const enrollment = enrollmentDoc.data() as FirestoreEnrolledCourse
+      const updatedCompletedLessons = completed 
+        ? [...enrollment.progress.completedLessons, lessonId]
+        : enrollment.progress.completedLessons.filter(id => id !== lessonId)
+
+      // Calculate progress percentage
+      const totalLessons = enrollment.progress.totalLessons
+      const progress = (updatedCompletedLessons.length / totalLessons) * 100
+
+      await updateDoc(enrollmentRef, {
+        'progress.completedLessons': updatedCompletedLessons,
+        'progress.progress': progress,
+        'progress.lastAccessed': serverTimestamp(),
+        status: progress === 100 ? 'completed' : 'active'
+      })
+
+      // If course completed, issue certificate
+      if (progress === 100) {
+        await issueCertificate(courseId)
+      }
+    } catch (error: any) {
+      throw new Error(`Error tracking progress: ${error.message}`)
+    }
+  }
+
+  const getCourseProgress = async (courseId: string) => {
+    if (!user) return 0
+
+    try {
+      const enrollmentRef = doc(db, 'enrollments', `${user.uid}_${courseId}`)
+      const enrollmentDoc = await getDoc(enrollmentRef)
+
+      if (!enrollmentDoc.exists()) return 0
+
+      const enrollment = enrollmentDoc.data() as FirestoreEnrolledCourse
+      return enrollment.progress.progress
+    } catch (error) {
+      console.error('Error getting course progress:', error)
+      return 0
     }
   }
 
@@ -233,7 +316,10 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
     getCoursesByInstructor,
     searchCourses,
     enrollInCourse,
-    uploadCourseImage
+    uploadCourseImage,
+    getCourseById,
+    trackProgress,
+    getCourseProgress
   }
 
   return (

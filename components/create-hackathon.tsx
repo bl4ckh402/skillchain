@@ -45,12 +45,12 @@ export function PostHackathonModal({ open, onClose }: PostHackathonModalProps) {
         timeline: [
           {
             date: formData.get("startDate") as string,
-            event: "Registration Opens",
+            attendinevent: "Registration Opens",
             description: "Hackathon registration begins"
           },
           {
             date: formData.get("endDate") as string,
-            event: "Submission Deadline",
+            attendinevent: "Submission Deadline",
             description: "Final project submissions due"
           }
         ],

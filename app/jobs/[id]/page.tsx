@@ -26,8 +26,7 @@ import { useJobs } from "@/context/JobsProvider"
 import { toast } from "@/components/ui/use-toast"
 
 export default function JobDetailPage({ params }: { params: { id: string } }) {
-  const resolvedParams = use(params)
-  const { job, loading, error } = useJob(resolvedParams.id)
+  const { job, loading, error } = useJob(params.id)
   const { user } = useAuth()
   const { applyForJob, saveJob } = useJobs()
 

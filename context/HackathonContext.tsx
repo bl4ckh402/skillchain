@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState } from 'react'
-import { collection, query, where, getDocs, addDoc, deleteDoc, doc, updateDoc, setDoc, increment, serverTimestamp, orderBy } from 'firebase/firestore'
+import { collection, query, where, getDocs, addDoc, deleteDoc, doc, updateDoc, setDoc, increment, serverTimestamp, orderBy, getDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { useAuth } from './AuthProvider'
 import { Hackathon, HackathonFilters } from '@/types/hackathon'
@@ -11,6 +11,7 @@ interface HackathonContextType {
   loading: boolean
   filters: HackathonFilters
   setFilters: (filters: HackathonFilters) => void
+  getHackathonById: (id: string) => Promise<Hackathon | null>
   createHackathon: (hackathon: Omit<Hackathon, 'id' | 'createdAt' | 'updatedAt'>) => Promise<string>
   updateHackathon: (id: string, hackathon: Partial<Hackathon>) => Promise<void>
   deleteHackathon: (id: string) => Promise<void>
@@ -138,6 +139,20 @@ export function HackathonProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const getHackathonById = async (id: string) => {
+    try {
+      const docRef = doc(db, 'hackathons', id)
+      const docSnap = await getDoc(docRef)
+      if (docSnap.exists()) {
+        return { id: docSnap.id, ...docSnap.data() } as Hackathon
+      } else {
+        return null
+      }
+    } catch (error: any) {
+      throw new Error(`Error fetching hackathon: ${error.message}`)
+    }
+  }
+
   const registerForHackathon = async (hackathonId: string) => {
     if (!user) throw new Error('Must be logged in')
 
@@ -164,6 +179,7 @@ export function HackathonProvider({ children }: { children: React.ReactNode }) {
     loading,
     filters,
     setFilters,
+    getHackathonById,
     createHackathon,
     updateHackathon,
     deleteHackathon,

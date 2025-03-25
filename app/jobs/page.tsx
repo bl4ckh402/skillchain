@@ -610,9 +610,10 @@ export default function JobsPage() {
                       <EmptyState
                         title="No jobs available"
                         description="We don't have any jobs matching your criteria right now. Try adjusting your filters or check back later."
+                        icon={<Briefcase className="h-10 w-10 text-blue-500" />}
                       />
                     )}
-                    {/* <div className="mt-8 flex items-center justify-center gap-2">
+                    <div className="mt-8 flex items-center justify-center gap-2">
                       <Button
                         variant="outline"
                         size="icon"
@@ -648,7 +649,7 @@ export default function JobsPage() {
                       >
                         <ChevronRight className="h-4 w-4" />
                       </Button>
-                    </div> */}
+                    </div>
                   </TabsContent>
 
                   <TabsContent value="development" className="mt-0">
@@ -658,103 +659,23 @@ export default function JobsPage() {
                       <EmptyState
                         title="No development jobs available"
                         description="We don't have any development positions open right now. Check back later or browse other categories."
+                        icon={<Briefcase className="h-10 w-10 text-blue-500" />}
                       />
                     )}
                   </TabsContent>
 
+                    
+
                   <TabsContent value="business" className="mt-0">
-                    <div className="space-y-4">
-                      {jobs
-                        .filter((job) =>
-                          job.tags.some((tag) => ["Product Management", "Finance", "DeFi"].includes(tag)),
-                        )
-                        .map((job) => (
-                          <Link href={`/jobs/${job.id}`} key={job.id}>
-                            <Card
-                              className={`transition-all hover:shadow-md ${job.featured ? "border-2 border-blue-300 dark:border-blue-700" : "border-slate-200 dark:border-slate-800"}`}
-                            >
-                              <CardContent className="p-6">
-                                <div className="flex flex-col gap-4 md:flex-row md:items-start">
-                                  <Avatar className="h-12 w-12 border-2 border-white dark:border-slate-800">
-                                    <AvatarImage src={job.logo} alt={job.company} />
-                                    <AvatarFallback className="bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
-                                      {job.company.charAt(0)}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <div className="flex-1 space-y-2">
-                                    <div>
-                                      <div className="flex items-center gap-2">
-                                        <h3 className="font-bold text-slate-800 dark:text-slate-200">{job.title}</h3>
-                                        {job.featured && (
-                                          <Badge className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white">
-                                            Featured
-                                          </Badge>
-                                        )}
-                                      </div>
-                                      <div className="flex items-center text-sm text-slate-500 dark:text-slate-400">
-                                        <Building className="mr-1 h-4 w-4 text-blue-500" />
-                                        {job.company}
-                                      </div>
-                                    </div>
-                                    <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
-                                      {job.description}
-                                    </p>
-                                    <div className="flex flex-wrap gap-2">
-                                      {job.tags.map((tag, index) => (
-                                        <Badge
-                                          key={index}
-                                          variant="secondary"
-                                          className="font-normal text-blue-700 bg-blue-100 hover:bg-blue-200 dark:text-blue-300 dark:bg-blue-900 dark:hover:bg-blue-800"
-                                        >
-                                          {tag}
-                                        </Badge>
-                                      ))}
-                                    </div>
-                                  </div>
-                                  <div className="flex flex-col items-end gap-2 text-sm">
-                                    <Badge
-                                      variant={
-                                        job.type === "Full-time"
-                                          ? "default"
-                                          : job.type === "Contract"
-                                            ? "outline"
-                                            : "secondary"
-                                      }
-                                      className={
-                                        job.type === "Full-time"
-                                          ? "bg-green-500 hover:bg-green-600 text-white"
-                                          : job.type === "Contract"
-                                            ? "border-amber-300 text-amber-700 dark:border-amber-800 dark:text-amber-400"
-                                            : ""
-                                      }
-                                    >
-                                      {job.type}
-                                    </Badge>
-                                    <div className="flex items-center text-slate-500 dark:text-slate-400">
-                                      <MapPin className="mr-1 h-4 w-4 text-teal-500" />
-                                      {job.location}
-                                    </div>
-                                    <div className="flex items-center text-slate-500 dark:text-slate-400">
-                                      <DollarSign className="mr-1 h-4 w-4 text-green-500" />
-                                      <span className="font-medium text-slate-700 dark:text-slate-300">
-                                        {job.salary}
-                                      </span>
-                                    </div>
-                                    <div className="flex items-center text-slate-500 dark:text-slate-400">
-                                      <Clock className="mr-1 h-4 w-4 text-blue-500" />
-                                      {new Date(job.postedAt).toLocaleDateString('en-US', {
-                                        day: 'numeric',
-                                        month: 'short',
-                                        year: 'numeric'
-                                      })}
-                                    </div>
-                                  </div>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          </Link>
-                        ))}
-                    </div>
+                    {jobsByCategory.business.length > 0 ? (
+                      <JobsList jobs={jobsByCategory.business} />
+                    ) : (
+                      <EmptyState
+                        title="No Business jobs available"
+                        description="We don't have any B/D positions open right now. Check back later or browse other categories."
+                        icon={<Briefcase className="h-10 w-10 text-blue-500" />}
+                      />
+                    )}
                   </TabsContent>
 
                   {/* Empty states for other tabs */}
@@ -765,6 +686,7 @@ export default function JobsPage() {
                       <EmptyState
                         title="No design jobs available"
                         description="We don't have any design positions open right now. Check back later or browse other categories."
+                        icon={<Briefcase className="h-10 w-10 text-blue-500" />}
                       />
                     )}
                   </TabsContent>
@@ -776,6 +698,7 @@ export default function JobsPage() {
                       <EmptyState
                         title="No marketing jobs available"
                         description="We don't have any marketing positions open right now. Check back later or browse other categories."
+                        icon={<Briefcase className="h-10 w-10 text-blue-500" />}
                       />
                     )}
                   </TabsContent>

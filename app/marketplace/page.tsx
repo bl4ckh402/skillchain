@@ -482,6 +482,7 @@ export default function MarketplacePage() {
                   <EmptyState
                     title="No Courses Available"
                     description="Be the first to create a course and share your blockchain knowledge with the community."
+                    icon={<BookOpen className="h-12 w-12 text-blue-500 dark:text-blue-300" />}
                   // showCreateButton={true}
                   />
                 ) : (
@@ -623,6 +624,7 @@ export default function MarketplacePage() {
                         <EmptyState
                           title="No Courses Available"
                           description="Be the first to create a course and share your blockchain knowledge with the community."
+                          icon={<BookOpen className="h-12 w-12 text-blue-500 dark:text-blue-300" />}
                         // showCreateButton={true}
                         />
                       ) : (
@@ -731,7 +733,7 @@ export default function MarketplacePage() {
                         <EmptyState
                           title="No Courses Available"
                           description="Be the first to create a course and share your blockchain knowledge with the community."
-                        // showCreateButton={true}
+                          icon={<BookOpen className="h-12 w-12 text-blue-500 dark:text-blue-300" />}
                         />
                       ) : (
                         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

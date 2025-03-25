@@ -61,35 +61,6 @@ export function UserNav() {
           <Link href="/community" className="text-lg font-medium">
             Community
           </Link>
-          {user ? (
-            <>
-              <Link href="/dashboard/courses" className="text-lg font-medium">
-                My Courses
-              </Link>
-              {Array.isArray(userProfile?.createdCourses) && userProfile.createdCourses.length > 0 && (
-                <Link href="/create" className="text-lg font-medium">
-                  Create Course
-                </Link>
-              )}
-              <Link href="/dashboard" className="text-lg font-medium">
-                Dashboard
-              </Link>
-              <Button variant="outline" className="mt-4" onClick={handleSignOut}>
-                Sign Out
-              </Button>
-            </>
-          ) : (
-            <div className="flex flex-col gap-2 mt-4">
-              <Link href="/login">
-                <Button variant="outline" className="w-full">
-                  Login
-                </Button>
-              </Link>
-              <Link href="/signup">
-                <Button className="w-full">Sign Up</Button>
-              </Link>
-            </div>
-          )}
         </nav>
       </SheetContent>
     </Sheet>
@@ -144,9 +115,9 @@ export function UserNav() {
             <DropdownMenuItem asChild>
               <Link href="/dashboard">Dashboard</Link>
             </DropdownMenuItem>
-            <DropdownMenuItem asChild>
+            {/* <DropdownMenuItem asChild>
               <Link href="/dashboard/courses">My Courses</Link>
-            </DropdownMenuItem>
+            </DropdownMenuItem> */}
             {Array.isArray(userProfile?.createdCourses) && userProfile.createdCourses.length > 0 && (
               <DropdownMenuItem asChild>
                 <Link href="/dashboard/creator">Creator Dashboard</Link>

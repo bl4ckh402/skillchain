@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState } from 'react'
-import { collection, query, where, getDocs, addDoc, deleteDoc, doc, updateDoc, arrayUnion } from 'firebase/firestore'
+import { collection, query, where, getDocs, addDoc, deleteDoc, doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase'
 import { Job, JobFilters } from '@/types/job'
 
@@ -10,6 +10,7 @@ interface JobsContextType {
   loading: boolean
   filters: JobFilters
   setFilters: (filters: JobFilters) => void
+  getJobById: (id: string) => Promise<Job | null>
   createJob: (job: Omit<Job, 'id' | 'postedAt'>) => Promise<string>
   updateJob: (id: string, job: Partial<Job>) => Promise<void>
   deleteJob: (id: string) => Promise<void>
@@ -118,6 +119,19 @@ export function JobsProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const getJobById = async (id: string) => {
+    try{
+      const jobRef = doc(db, 'jobs', id)
+      const docSnap = await getDoc(jobRef)
+      if (docSnap.exists()) {
+        return { id: docSnap.id, ...docSnap.data() } as Job
+      } else {
+        return null
+      }
+    }catch(error: any){
+      throw new Error(`Error fetching job: ${error.message}`)
+  }}
+
   const applyForJob = async (jobId: string) => {
     if (!auth.currentUser) throw new Error('Must be logged in')
     const jobRef = doc(db, 'jobs', jobId)
@@ -138,6 +152,7 @@ export function JobsProvider({ children }: { children: React.ReactNode }) {
     jobs,
     loading,
     filters,
+    getJobById,
     setFilters,
     createJob,
     updateJob,

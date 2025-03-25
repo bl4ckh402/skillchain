@@ -48,6 +48,22 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     return getDownloadURL(fileRef)
   }
 
+  const getProjectById = async (id: string) => {
+    try {
+      const docRef = doc(db, 'projects', id)
+      const docSnap = await getDoc(docRef)
+      if (docSnap.exists()) {
+        return {
+          id: docSnap.id,
+          ...docSnap.data()
+        } as Project
+      }
+      return null
+    } catch (error: any) {
+      throw new Error(`Error fetching project: ${error.message}`)
+    }
+  }
+
   const submitProject = async (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (!user) throw new Error('Must be logged in')
 
@@ -125,25 +141,25 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const getProjectById = async (projectId: string) => {
-    try {
-      const docRef = doc(db, 'projects', projectId)
-      const docSnap = await getDoc(docRef)
-      if (docSnap.exists()) {
-        // Increment view count
-        await updateDoc(docRef, {
-          views: increment(1)
-        })
-        return {
-          id: docSnap.id,
-          ...docSnap.data()
-        } as Project
-      }
-      return null
-    } catch (error: any) {
-      throw new Error(`Error fetching project: ${error.message}`)
-    }
-  }
+  // const getProjectById = async (projectId: string) => {
+  //   try {
+  //     const docRef = doc(db, 'projects', projectId)
+  //     const docSnap = await getDoc(docRef)
+  //     if (docSnap.exists()) {
+  //       // Increment view count
+  //       await updateDoc(docRef, {
+  //         views: increment(1)
+  //       })
+  //       return {
+  //         id: docSnap.id,
+  //         ...docSnap.data()
+  //       } as Project
+  //     }
+  //     return null
+  //   } catch (error: any) {
+  //     throw new Error(`Error fetching project: ${error.message}`)
+  //   }
+  // }
 
   const likeProject = async (projectId: string) => {
     if (!user) throw new Error('Must be logged in')

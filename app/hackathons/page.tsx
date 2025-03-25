@@ -7,19 +7,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Progress } from "@/components/ui/progress"
 import { Footer } from "@/components/footer"
-import { Calendar, MapPin, Trophy, Users, Search } from "lucide-react"
+import { Calendar, MapPin, Trophy, Users, Search, Rocket, Clock, Award } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { useEffect, useState } from "react"
 import { useHackathons } from "@/context/HackathonContext"
 import { Project } from "@/types/project"
 import { useProjects } from "@/context/ProjectContext"
+import { EmptyState } from "@/components/empty-state"
 
 export default function HackathonsPage() {
   const { hackathons, loading, filters, setFilters, getHackathons } = useHackathons()
   const [searchQuery, setSearchQuery] = useState("")
   const [pastWinners, setPastWinners] = useState<Project[]>([])
   const [loadingWinners, setLoadingWinners] = useState(false)
-  const {getWinningProjects} = useProjects()
+  const { getWinningProjects } = useProjects()
 
   useEffect(() => {
     loadHackathons()
@@ -147,11 +148,11 @@ export default function HackathonsPage() {
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="active" className="mt-0">
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {hackathons
-                    .filter((h) => h.status === "active")
-                    .map((hackathon) => (
+              <TabsContent value="active" className="mt-0 w-full">
+                {hackathons
+                  .filter((h) => h.status === "active").length > 0 ? (
+                  hackathons.map((hackathon) => (
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                       <Link href={`/hackathons/${hackathon.id}`} key={hackathon.id} className="group">
                         <Card
                           className={`overflow-hidden transition-all hover:shadow-lg ${hackathon.featured ? "border-2 border-purple-300 dark:border-purple-700" : "border-slate-200 dark:border-slate-800"}`}
@@ -234,15 +235,24 @@ export default function HackathonsPage() {
                           </CardFooter>
                         </Card>
                       </Link>
-                    ))}
-                </div>
+                    </div>
+                  ))
+                ) : (
+                  <EmptyState
+                    icon={<Rocket className="h-10 w-10 text-purple-500" />}
+                    title="No Active Hackathons"
+                    description="There are no ongoing hackathons at the moment. Check out upcoming hackathons or browse past events."
+
+                  />
+                )
+                }
               </TabsContent>
 
               <TabsContent value="upcoming" className="mt-0">
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {hackathons
-                    .filter((h) => h.status === "upcoming")
-                    .map((hackathon) => (
+                {hackathons
+                  .filter((h) => h.status === "upcoming").length > 0 ? (
+                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {hackathons.map((hackathon) => (
                       <Link href={`/hackathons/${hackathon.id}`} key={hackathon.id} className="group">
                         <Card
                           className={`overflow-hidden transition-all hover:shadow-lg ${hackathon.featured ? "border-2 border-purple-300 dark:border-purple-700" : "border-slate-200 dark:border-slate-800"}`}
@@ -320,31 +330,46 @@ export default function HackathonsPage() {
                         </Card>
                       </Link>
                     ))}
-                </div>
+                  </div>
+                ) : (
+                  <EmptyState
+                    icon={<Clock className="h-10 w-10 text-purple-500" />}
+                    title="No Upcoming Hackathons"
+                    description="Stay tuned! New hackathons are being planned and will be announced soon."
+                  />
+                )}
               </TabsContent>
 
               <TabsContent value="completed" className="mt-0">
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {hackathons
-                    .filter((h) => h.status === "completed")
-                    .map((hackathon) => (
+                {hackathons
+                  .filter((h) => h.status === "completed").length > 0 ? (
+                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {hackathons.map((hackathon) => (
                       <Link href={`/hackathons/${hackathon.id}`} key={hackathon.id} className="group">
-                        <Card className="overflow-hidden transition-all hover:shadow-lg border-slate-200 dark:border-slate-800">
+                        <Card
+                          className={`overflow-hidden transition-all hover:shadow-lg ${hackathon.featured ? "border-2 border-purple-300 dark:border-purple-700" : "border-slate-200 dark:border-slate-800"}`}
+                        >
                           <div className="aspect-video w-full overflow-hidden relative">
                             <img
                               src={hackathon.image || "/placeholder.svg"}
                               alt={hackathon.title}
                               className="object-cover w-full h-full transition-transform group-hover:scale-105"
                             />
-                            <div className="absolute inset-0 bg-black/10 dark:bg-black/20"></div>
+                            {hackathon.featured && (
+                              <div className="absolute top-2 right-2">
+                                <Badge className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white">
+                                  Featured
+                                </Badge>
+                              </div>
+                            )}
                           </div>
                           <CardHeader className="pb-2">
                             <div className="flex items-center justify-between">
                               <Badge
-                                variant="secondary"
-                                className="bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                                variant="outline"
+                                className="text-blue-600 border-blue-300 dark:text-blue-400 dark:border-blue-800"
                               >
-                                Completed
+                                Upcoming
                               </Badge>
                               <div className="flex items-center gap-1">
                                 <Trophy className="h-4 w-4 text-amber-500 fill-amber-500" />
@@ -390,14 +415,21 @@ export default function HackathonsPage() {
                               </span>
                             </div>
                             <div className="flex items-center gap-1">
-                              <Users className="h-4 w-4 text-blue-500" />
-                              <span>{hackathon.participants} participants</span>
+                              <MapPin className="h-4 w-4 text-blue-500" />
+                              <span>{hackathon.location}</span>
                             </div>
                           </CardFooter>
                         </Card>
                       </Link>
                     ))}
-                </div>
+                  </div>
+                ) : (
+                  <EmptyState
+                    icon={<Award className="h-10 w-10 text-purple-500" />}
+                    title="No Past Hackathons"
+                    description="Check back later to see completed hackathons and their winning projects."
+                  />
+                )}
               </TabsContent>
 
               <TabsContent value="my-hackathons" className="mt-0">
@@ -427,48 +459,57 @@ export default function HackathonsPage() {
                 </Button>
               </div>
               <div className="grid gap-6 md:grid-cols-3">
-                {pastWinners.map((winner) => (
-                  <Card key={winner.id} className="border-slate-200 dark:border-slate-800 overflow-hidden">
-                    <div className="aspect-video w-full overflow-hidden">
-                      {winner.images.map((image)=>{return(
-                        <img
-                        src={image || "/placeholder.svg"}
-                        alt={winner.title}
-                        className="object-cover w-full h-full"
-                      />
-                      )})}
-                    </div>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <Badge
-                          variant="secondary"
-                          className="bg-amber-100/80 text-amber-700 border-amber-200 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800"
-                        >
-                          <Trophy className="mr-1 h-3 w-3 fill-amber-500 text-amber-500" />
-                          Winner
-                        </Badge>
-                        <span className="text-xs text-indigo-600 dark:text-indigo-400">{winner.hackathonTitle}</span>
+                {pastWinners.length > 0 ? (
+                  pastWinners.map((winner) => (
+                    <Card key={winner.id} className="border-slate-200 dark:border-slate-800 overflow-hidden">
+                      <div className="aspect-video w-full overflow-hidden">
+                        {winner.images.length > 0 && (
+                          <img
+                            src={winner.images[0] || "/placeholder.svg"}
+                            alt={winner.title}
+                            className="object-cover w-full h-full"
+                          />
+                        )}
                       </div>
-                      <CardTitle className="line-clamp-1 text-slate-800 dark:text-slate-200">
-                        {winner.title}
-                      </CardTitle>
-                      <CardDescription>
-                        by <span className="text-purple-600 dark:text-purple-400 font-medium">{winner.team}</span>
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">{winner.description}</p>
-                    </CardContent>
-                    <CardFooter>
-                      <Button
-                        variant="outline"
-                        className="w-full border-purple-200 text-purple-600 hover:bg-purple-50 hover:text-purple-700 dark:border-purple-800 dark:text-purple-400 dark:hover:bg-purple-950 dark:hover:text-purple-300"
-                      >
-                        View Project
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                ))}
+                      <CardHeader>
+                        <div className="flex items-center justify-between">
+                          <Badge
+                            variant="secondary"
+                            className="bg-amber-100/80 text-amber-700 border-amber-200 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800"
+                          >
+                            <Trophy className="mr-1 h-3 w-3 fill-amber-500 text-amber-500" />
+                            Winner
+                          </Badge>
+                          <span className="text-xs text-indigo-600 dark:text-indigo-400">{winner.hackathonTitle}</span>
+                        </div>
+                        <CardTitle className="line-clamp-1 text-slate-800 dark:text-slate-200">
+                          {winner.title}
+                        </CardTitle>
+                        <CardDescription>
+                          by <span className="text-purple-600 dark:text-purple-400 font-medium">{winner.team}</span>
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">{winner.description}</p>
+                      </CardContent>
+                      <CardFooter>
+                        <Button
+                          variant="outline"
+                          className="w-full border-purple-200 text-purple-600 hover:bg-purple-50 hover:text-purple-700 dark:border-purple-800 dark:text-purple-400 dark:hover:bg-purple-950 dark:hover:text-purple-300"
+                        >
+                          View Project
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  ))
+                ) : (
+                  <EmptyState
+                    icon={<Award className="h-10 w-10 text-purple-500" />}
+                    title="No Winners Yet"
+                    description="Past hackathon winners will be showcased here. Check back after ongoing hackathons are completed."
+                    className="col-span-3"
+                  />
+                )}
               </div>
             </div>
 

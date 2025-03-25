@@ -31,103 +31,91 @@ import {
 import { Switch } from "@/components/ui/switch"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { useCourses } from "@/context/CourseContext"
+import { useToast } from "@/components/ui/use-toast"
+import { CourseLevel, CourseStatus } from "@/types/course"
+import { useRouter } from "next/navigation"
 
 export default function CreateCoursePage() {
   const [activeTab, setActiveTab] = useState("basics")
   const [showContentEditor, setShowContentEditor] = useState(false)
   const [selectedLesson, setSelectedLesson] = useState<any>(null)
+  const { createCourse, updateCourse, publishCourse } = useCourses()
+  const { toast } = useToast()
+  const router = useRouter()
   const [modules, setModules] = useState([
     {
       id: "module-1",
-      title: "Introduction to Blockchain",
-      description: "Learn the fundamentals of blockchain technology and its history",
+      title: "Getting Started",
+      description: "Introduction to the course",
       lessons: [
         {
           id: "lesson-1-1",
-          title: "What is Blockchain?",
+          title: "Welcome to the course",
           type: "video",
-          duration: "15:30",
+          duration: "02:30",
           content: {
-            videoUrl: "https://example.com/videos/blockchain-intro.mp4",
-            description: "This lesson introduces the core concepts of blockchain technology.",
-            transcript: "Hello and welcome to our course on blockchain fundamentals...",
-            attachments: [
-              { name: "Blockchain Basics.pdf", url: "#" },
-              { name: "Lecture Slides.pptx", url: "#" },
-            ],
-            quiz: [
-              {
-                question: "Which of the following is NOT a characteristic of blockchain?",
-                options: ["Decentralization", "Immutability", "Centralized control", "Transparency"],
-                correctAnswer: 2,
-              },
-            ],
+            videoUrl: "https://www.youtube.com/watch?v=9bZkp7q19f0",
+            description: "A brief introduction to the course",
+            transcript: "This is a transcript of the video content",
+            attachments: [],
           },
         },
         {
           id: "lesson-1-2",
-          title: "History of Blockchain",
-          type: "video",
-          duration: "12:45",
+          title: "Course Overview",
+          type: "text",
+          duration: "15:00",
           content: {
-            videoUrl: "https://example.com/videos/blockchain-history.mp4",
-            description: "Learn about the origins and evolution of blockchain technology.",
-            transcript: "The concept of blockchain was first introduced in 2008...",
-            attachments: [{ name: "Blockchain Timeline.pdf", url: "#" }],
+            textContent: "This is the text content of the lesson",
+            attachments: [],
           },
         },
       ],
     },
     {
       id: "module-2",
-      title: "Cryptography Basics",
-      description: "Understand the cryptographic principles that power blockchain",
+      title: "Blockchain Basics",
+      description: "Learn the fundamentals of blockchain technology",
       lessons: [
         {
           id: "lesson-2-1",
-          title: "Cryptographic Hash Functions",
+          title: "What is Blockchain?",
           type: "video",
-          duration: "20:15",
+          duration: "05:00",
           content: {
-            videoUrl: "https://example.com/videos/hash-functions.mp4",
-            description: "Learn about cryptographic hash functions and their role in blockchain.",
-            transcript: "Cryptographic hash functions are the backbone of blockchain security...",
+            videoUrl: "https://www.youtube.com/watch?v=9bZkp7q19f0",
+            description: "An introduction to blockchain technology",
+            transcript: "This is a transcript of the video content",
             attachments: [],
           },
         },
         {
           id: "lesson-2-2",
-          title: "Public Key Cryptography",
-          type: "video",
-          duration: "25:30",
+          title: "Blockchain Use Cases",
+          type: "text",
+          duration: "10:00",
           content: {
-            videoUrl: "https://example.com/videos/public-key-crypto.mp4",
-            description: "Understand how public and private keys work in blockchain systems.",
-            transcript: "Public key cryptography, also known as asymmetric cryptography...",
+            textContent: "This is the text content of the lesson",
             attachments: [],
           },
         },
         {
           id: "lesson-2-3",
-          title: "Cryptography Quiz",
+          title: "Quiz: Blockchain Basics",
           type: "quiz",
-          duration: "15:00",
+          duration: "10:00",
           content: {
-            description: "Test your knowledge of cryptographic principles.",
+            description: "Test your knowledge on blockchain technology",
             quiz: [
               {
-                question: "What is the primary purpose of a hash function in blockchain?",
-                options: [
-                  "To encrypt data",
-                  "To create a fixed-size output from variable input",
-                  "To decrypt private keys",
-                  "To slow down transaction processing",
-                ],
+                question: "What is a blockchain?",
+                options: ["A type of cryptocurrency", "A distributed ledger", "A type of smart contract"],
                 correctAnswer: 1,
               },
               {
-                question: "In public key cryptography, which key is used to encrypt data?",
-                options: ["Private key", "Public key", "Master key", "Symmetric key"],
+                question: "What is a smart contract?",
+                options: ["A legal document", "A self-executing contract", "A type of cryptocurrency"],
                 correctAnswer: 1,
               },
             ],
@@ -136,6 +124,28 @@ export default function CreateCoursePage() {
       ],
     },
   ])
+
+  const [courseData, setCourseData] = useState({
+    title: "",
+    description: "", 
+    level: CourseLevel.BEGINNER,
+    category: "",
+    price: "49.99",
+    language: "en",
+    visibility: "public",
+    modules: modules,
+    requirements: [],
+    whatYouWillLearn: [],
+    featured: false,
+    status: CourseStatus.DRAFT,
+    certificate: true,
+    nftCertificate: false,
+    forum: true,
+    paymentOptions: {
+      crypto: false,
+      acceptedTokens: []
+    }
+  })
 
   const contentTypes = [
     { id: "video", label: "Video", icon: <Video className="h-4 w-4" /> },
@@ -158,26 +168,141 @@ export default function CreateCoursePage() {
     ])
   }
 
-  const handleAddLesson = (moduleId: string) => {
-    const moduleIndex = modules.findIndex((m) => m.id === moduleId)
-    if (moduleIndex === -1) return
-
-    const newLessonId = `lesson-${moduleIndex + 1}-${modules[moduleIndex].lessons.length + 1}`
-    const updatedModules = [...modules]
-    updatedModules[moduleIndex].lessons.push({
-      id: newLessonId,
-      title: "New Lesson",
-      type: "video",
-      duration: "00:00",
-      content: {
-        videoUrl: "",
-        description: "",
-        transcript: "",
-        attachments: [],
-      },
-    })
-    setModules(updatedModules)
+  const handleSaveDraft = async () => {
+    try {
+      // Validate required fields
+      if (!courseData.title || !courseData.description) {
+        toast({
+          title: "Missing required fields",
+          description: "Please fill in all required fields",
+          variant: "destructive"
+        })
+        return
+      }
+  
+      const courseId = await createCourse({
+        ...courseData,
+        modules: modules.map(module => ({
+          ...module,
+          lessons: module.lessons.map(lesson => ({
+            ...lesson,
+            status: 'locked',
+            progress: 0,
+            completedAt: null
+          }))
+        })),
+        status: CourseStatus.DRAFT,
+        totalLessons: modules.reduce((acc, module) => acc + module.lessons.length, 0),
+        duration: modules.reduce((acc, module) => 
+          acc + module.lessons.reduce((sum, lesson) => 
+            sum + parseInt(lesson.duration) || 0, 0
+          ), 0
+        )
+      })
+  
+      toast({
+        title: "Success",
+        description: "Course draft saved successfully"
+      })
+  
+      router.push(`/course/${courseId}`)
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      })
+    }
   }
+  
+  const handlePublish = async () => {
+    try {
+      if (!validateCourse()) {
+        toast({
+          title: "Incomplete course",
+          description: "Please complete all required sections before publishing",
+          variant: "destructive"
+        })
+        return
+      }
+  
+      const courseId = await createCourse({
+        ...courseData,
+        modules: modules.map(module => ({
+          ...module,
+          lessons: module.lessons.map(lesson => ({
+            ...lesson,
+            status: 'unlocked',
+            progress: 0,
+            completedAt: null
+          }))
+        })),
+        status: CourseStatus.PUBLISHED,
+        publishedAt: new Date(),
+        totalLessons: modules.reduce((acc, module) => acc + module.lessons.length, 0),
+        duration: modules.reduce((acc, module) => 
+          acc + module.lessons.reduce((sum, lesson) => 
+            sum + parseInt(lesson.duration) || 0, 0
+          ), 0
+        )
+      })
+  
+      toast({
+        title: "Success",
+        description: "Course published successfully"
+      })
+  
+      router.push(`/course/${courseId}`)
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      })
+    }
+  }
+  
+  const validateCourse = (): boolean => {
+    if (!courseData.title || !courseData.description || !courseData.category) {
+      return false
+    }
+  
+    if (!modules.length) return false
+  
+    for (const module of modules) {
+      if (!module.lessons.length) return false
+      
+      for (const lesson of module.lessons) {
+        if (!validateLesson(lesson)) return false
+      }
+    }
+  
+    return true
+  }
+  
+  const validateLesson = (lesson: any): boolean => {
+    if (!lesson.title || !lesson.type) return false
+  
+    switch (lesson.type) {
+      case 'video':
+        return Boolean(lesson.content?.videoUrl)
+      case 'text':
+        return Boolean(lesson.content?.textContent)
+      case 'quiz':
+        return Boolean(lesson.content?.quiz?.length)
+      default:
+        return true
+    }
+  }
+
+
+  const handleInputChange = (field: keyof typeof courseData, value: any) => {
+    setCourseData(prev => ({
+      ...prev,
+      [field]: value
+    }))
+  }
+
 
   const handleRemoveModule = (moduleId: string) => {
     setModules(modules.filter((m) => m.id !== moduleId))
@@ -358,6 +483,7 @@ export default function CreateCoursePage() {
               <Button
                 variant="outline"
                 className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                onClick={handleSaveDraft}
               >
                 <Save className="mr-2 h-4 w-4" />
                 Save Draft
@@ -368,7 +494,7 @@ export default function CreateCoursePage() {
               >
                 Preview
               </Button>
-              <Button className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white">
+              <Button className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white" onClick={handlePublish}>
                 Publish
               </Button>
             </div>
@@ -417,20 +543,24 @@ export default function CreateCoursePage() {
                     Course Title
                   </Label>
                   <Input
-                    id="title"
-                    placeholder="e.g., Blockchain Fundamentals"
-                    className="border-slate-200 dark:border-slate-700"
-                  />
+  id="title"
+  value={courseData.title}
+  onChange={(e) => handleInputChange('title', e.target.value)}
+  placeholder="e.g., Blockchain Fundamentals"
+  className="border-slate-200 dark:border-slate-700"
+/>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="description" className="text-slate-800 dark:text-slate-200">
                     Course Description
                   </Label>
                   <Textarea
-                    id="description"
-                    placeholder="Describe what students will learn in your course"
-                    className="min-h-[120px] border-slate-200 dark:border-slate-700"
-                  />
+  id="description"
+  value={courseData.description}
+  onChange={(e) => handleInputChange('description', e.target.value)}
+  placeholder="Describe what students will learn in your course"
+  className="min-h-[120px] border-slate-200 dark:border-slate-700"
+/>
                 </div>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">

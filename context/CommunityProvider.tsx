@@ -31,6 +31,7 @@ import {
     CommunityFilters,
     Category,
     Contributor,
+    CommunityEvent,
 } from "@/types/community";
 import { useAuth } from "./AuthProvider";
 
@@ -40,7 +41,7 @@ interface CommunityContextType {
     filters: CommunityFilters;
     categories: Category[];
     topContributors: Contributor[];
-    upcomingEvents: Event[];
+    upcomingEvents: CommunityEvent[];
     setFilters: (filters: CommunityFilters) => void;
     createPost: (
         post: Omit<Post, "id" | "createdAt" | "updatedAt">
@@ -60,7 +61,7 @@ interface CommunityContextType {
     uploadAttachment: (file: File) => Promise<string>;
     getCategories: () => Promise<Category[]>;
     getTopContributors: (limit?: number) => Promise<Contributor[]>;
-    getUpcomingEvents: () => Promise<Event[]>;
+    getUpcomingEvents: () => Promise<CommunityEvent[]>;
     registerForEvent: (eventId: string) => Promise<void>;
     unregisterFromEvent: (eventId: string) => Promise<void>;
 }
@@ -73,7 +74,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
     const [filters, setFilters] = useState<CommunityFilters>({});
     const [categories, setCategories] = useState<Category[]>([]);
     const [topContributors, setTopContributors] = useState<Contributor[]>([]);
-    const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
+    const [upcomingEvents, setUpcomingEvents] = useState<CommunityEvent[]>([]);
     const { user } = useAuth();
 
     useEffect(() => {
@@ -181,7 +182,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
             const events = snapshot.docs.map((doc: any) => ({
                 id: doc.id,
                 ...doc.data(),
-            })) as Event[];
+            })) as CommunityEvent[];
             setUpcomingEvents(events);
             return events;
         } catch (error: any) {
@@ -229,11 +230,11 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
                 registeredAt: serverTimestamp(),
             });
         } catch (error: any) {
-            throw new Error(`Error registering for event: ${error.message}`);
+            throw new Error(`Error registering for attendinevent: ${error.message}`);
         }
     };
 
-    // Unregister from an event
+    // Unregister from an attendinevent
     const unregisterFromEvent = async (eventId: string) => {
         if (!user) throw new Error("Must be logged in");
 
@@ -251,7 +252,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
 
             await deleteDoc(registrationRef);
         } catch (error: any) {
-            throw new Error(`Error unregistering from event: ${error.message}`);
+            throw new Error(`Error unregistering from attendinevent: ${error.message}`);
         }
     };
 
