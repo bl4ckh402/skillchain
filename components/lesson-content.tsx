@@ -1,397 +1,412 @@
-"use client"
+"use client";
 
-import type React from "react"
-
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Play, Pause, Volume2, VolumeX } from "lucide-react"
+import { useState, useEffect } from "react";
+import { Card } from "@/components/ui/card";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { darcula } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { useTheme } from "next-themes";
+import { Button } from "@/components/ui/button";
+import { Copy, CheckCheck, FileText, Download } from "lucide-react";
+import { Lesson } from "@/types/course";
 
 interface LessonContentProps {
   lesson: {
-    id: string
-    title: string
-    type: string
-    duration: string
-    completed?: boolean
-    current?: boolean
-  }
+    id: string;
+    title: string;
+    content?: Lesson; // Changed type to any to handle object content
+    videoUrl?: string;
+    attachments?: { name: string; url: string }[];
+    type?: string;
+    duration?: string;
+    status?: string;
+  };
 }
 
 export default function LessonContent({ lesson }: LessonContentProps) {
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [isMuted, setIsMuted] = useState(false)
-  const [progress, setProgress] = useState(0)
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null)
-  const [isAnswerSubmitted, setIsAnswerSubmitted] = useState(false)
-  const [isAnswerCorrect, setIsAnswerCorrect] = useState(false)
+  const { theme } = useTheme();
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [contentText, setContentText] = useState<string>("");
+  const [videoUrl, setVideoUrl] = useState<string>("");
+  const [attachments, setAttachments] = useState<any[]>([]);
+  const [transcript, setTranscript] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
 
-  // Mock quiz data
-  const quizData = {
-    question: "Which of the following is NOT a characteristic of blockchain technology?",
-    options: [
-      { id: "a", text: "Decentralization" },
-      { id: "b", text: "Immutability" },
-      { id: "c", text: "Centralized control", correct: true },
-      { id: "d", text: "Transparency" },
-    ],
-  }
+  // Extract content based on structure
+  useEffect(() => {
 
-  // Mock exercise data
-  const exerciseData = {
-    title: "Create a Simple Hash Function",
-    description:
-      "In this exercise, you will implement a basic hash function in JavaScript that takes a string input and produces a fixed-size hash output.",
-    instructions: [
-      "Create a function that takes a string as input",
-      "Convert each character to its ASCII code",
-      "Combine the codes using a simple algorithm",
-      "Return a fixed-length hash string",
-    ],
-    codeTemplate: `function simpleHash(input) {
-  // Your code here
   
-  return hash;
-}
+    if (lesson.content && typeof lesson.content === "object") {
+      
+      if (lesson.content.transcript) {
+        setTranscript(lesson.content.transcript);
+      }
+      
+      if (lesson.content.description) {
+        setDescription(lesson.content.description);
+        setContentText(lesson.content.textContent);
+      }
+      
+      // Extract video URL if available in content
+      if (lesson.content.videoUrl) {
+        setVideoUrl(lesson.content.videoUrl);
+      }
+      
+      // Extract attachments if available
+      if (lesson.content.attachments && Array.isArray(lesson.content.attachments)) {
+        setAttachments(lesson.content.attachments);
+      }
+    } 
 
-// Test your function
-console.log(simpleHash("blockchain"));
-console.log(simpleHash("Blockchain"));
-console.log(simpleHash("BlockChain"));`,
-  }
-
-  // Mock project data
-  const projectData = {
-    title: "Build a Simple Blockchain",
-    description:
-      "Apply what you've learned to create a basic blockchain implementation with blocks, hashing, and a simple proof-of-work mechanism.",
-    objectives: [
-      "Create a Block class with appropriate properties",
-      "Implement a Blockchain class to manage blocks",
-      "Add methods for adding blocks and validating the chain",
-      "Implement a simple proof-of-work mechanism",
-    ],
-    deliverables: [
-      "Complete code implementation",
-      "Documentation explaining your design choices",
-      "Test cases demonstrating functionality",
-    ],
-  }
-
-  const handlePlayPause = () => {
-    setIsPlaying(!isPlaying)
-  }
-
-  const handleMuteToggle = () => {
-    setIsMuted(!isMuted)
-  }
-
-  const handleProgressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setProgress(Number.parseInt(e.target.value))
-  }
-
-  const handleAnswerSubmit = () => {
-    if (selectedAnswer) {
-      const correctOption = quizData.options.find((option) => option.correct)
-      const isCorrect = correctOption && selectedAnswer === correctOption.id
-      setIsAnswerCorrect(isCorrect)
-      setIsAnswerSubmitted(true)
+    
+    // If videoUrl is directly on lesson object, use it
+    if (lesson.videoUrl) {
+      setVideoUrl(lesson.videoUrl);
     }
-  }
-
-  // Render different content based on lesson type
-  const renderLessonContent = () => {
-    switch (lesson.type) {
-      case "video":
-        return (
-          <div className="space-y-4">
-            <div className="relative aspect-video bg-slate-900 rounded-lg overflow-hidden">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <img
-                  src="/placeholder.svg?height=720&width=1280"
-                  alt="Video thumbnail"
-                  className="w-full h-full object-cover opacity-50"
-                />
-                {!isPlaying && (
-                  <Button
-                    size="icon"
-                    className="absolute h-16 w-16 rounded-full bg-white/90 hover:bg-white shadow-lg"
-                    onClick={handlePlayPause}
-                  >
-                    <Play className="h-8 w-8 fill-blue-600 text-blue-600" />
-                    <span className="sr-only">Play video</span>
-                  </Button>
-                )}
-              </div>
-
-              {/* Video controls */}
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                <div className="flex flex-col gap-2">
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={progress}
-                    onChange={handleProgressChange}
-                    className="w-full h-1 bg-white/30 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
-                  />
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8 text-white hover:bg-white/20"
-                        onClick={handlePlayPause}
-                      >
-                        {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8 text-white hover:bg-white/20"
-                        onClick={handleMuteToggle}
-                      >
-                        {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-                      </Button>
-                      <span className="text-xs text-white">
-                        {Math.floor(
-                          (progress / 100) * Number.parseInt(lesson.duration.split(":")[0]) * 60 +
-                            Number.parseInt(lesson.duration.split(":")[1]),
-                        )}
-                        s / {lesson.duration}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="prose dark:prose-invert max-w-none">
-              <h2>Public Key Cryptography</h2>
-              <p>
-                Public key cryptography is a cryptographic system that uses pairs of keys: public keys (which may be
-                known to others) and private keys (which are known only to the owner). The generation of such key pairs
-                depends on cryptographic algorithms which are based on mathematical problems termed one-way functions.
-              </p>
-              <p>
-                In this lesson, we'll explore how public key cryptography works, its applications in blockchain
-                technology, and how it enables secure transactions without requiring trust between parties.
-              </p>
-              <h3>Key Concepts</h3>
-              <ul>
-                <li>Asymmetric encryption vs. symmetric encryption</li>
-                <li>Public and private key pairs</li>
-                <li>Digital signatures and verification</li>
-                <li>Applications in blockchain and cryptocurrencies</li>
-              </ul>
-            </div>
-          </div>
-        )
-      case "quiz":
-        return (
-          <div className="space-y-6">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="space-y-4">
-                  <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200">{quizData.question}</h2>
-                  <RadioGroup value={selectedAnswer || ""} onValueChange={setSelectedAnswer}>
-                    {quizData.options.map((option) => (
-                      <div
-                        key={option.id}
-                        className={`flex items-center space-x-2 p-3 rounded-lg border ${
-                          isAnswerSubmitted && option.correct
-                            ? "bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800"
-                            : isAnswerSubmitted && selectedAnswer === option.id && !option.correct
-                              ? "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800"
-                              : "border-slate-200 dark:border-slate-800"
-                        }`}
-                      >
-                        <RadioGroupItem value={option.id} id={option.id} disabled={isAnswerSubmitted} />
-                        <Label htmlFor={option.id} className="flex-1 cursor-pointer">
-                          {option.text}
-                        </Label>
-                        {isAnswerSubmitted && option.correct && (
-                          <span className="text-green-600 dark:text-green-400 text-sm font-medium">Correct</span>
-                        )}
-                        {isAnswerSubmitted && selectedAnswer === option.id && !option.correct && (
-                          <span className="text-red-600 dark:text-red-400 text-sm font-medium">Incorrect</span>
-                        )}
-                      </div>
-                    ))}
-                  </RadioGroup>
-
-                  {isAnswerSubmitted ? (
-                    <div
-                      className={`p-4 rounded-lg ${
-                        isAnswerCorrect
-                          ? "bg-green-50 text-green-800 dark:bg-green-950/30 dark:text-green-300"
-                          : "bg-red-50 text-red-800 dark:bg-red-950/30 dark:text-red-300"
-                      }`}
-                    >
-                      {isAnswerCorrect
-                        ? "Correct! Blockchain technology is decentralized by nature, which means it operates without a central authority."
-                        : "Incorrect. Blockchain technology is decentralized by nature, which means it operates without a central authority. Centralized control is not a characteristic of blockchain."}
-                    </div>
-                  ) : (
-                    <Button
-                      onClick={handleAnswerSubmit}
-                      disabled={!selectedAnswer}
-                      className="w-full bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white"
-                    >
-                      Submit Answer
-                    </Button>
-                  )}
-
-                  {isAnswerSubmitted && (
-                    <Button variant="outline" className="w-full mt-2">
-                      Continue to Next Question
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )
-      case "exercise":
-        return (
-          <div className="space-y-6">
-            <div className="prose dark:prose-invert max-w-none">
-              <h2>{exerciseData.title}</h2>
-              <p>{exerciseData.description}</p>
-              <h3>Instructions:</h3>
-              <ol>
-                {exerciseData.instructions.map((instruction, index) => (
-                  <li key={index}>{instruction}</li>
-                ))}
-              </ol>
-            </div>
-
-            <Card>
-              <CardContent className="pt-6">
-                <Tabs defaultValue="code" className="w-full">
-                  <TabsList className="mb-4">
-                    <TabsTrigger value="code">Code Editor</TabsTrigger>
-                    <TabsTrigger value="preview">Output</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="code">
-                    <div className="relative">
-                      <Textarea
-                        className="min-h-[300px] font-mono text-sm bg-slate-950 text-slate-50 p-4"
-                        defaultValue={exerciseData.codeTemplate}
-                      />
-                    </div>
-                  </TabsContent>
-                  <TabsContent value="preview">
-                    <div className="min-h-[300px] bg-slate-950 text-slate-50 p-4 rounded-md font-mono text-sm">
-                      <p className="text-green-400">// Output will appear here when you run your code</p>
-                    </div>
-                  </TabsContent>
-                </Tabs>
-                <div className="flex justify-end gap-2 mt-4">
-                  <Button variant="outline">Reset</Button>
-                  <Button>Run Code</Button>
-                  <Button className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white">
-                    Submit Solution
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )
-      case "project":
-        return (
-          <div className="space-y-6">
-            <div className="prose dark:prose-invert max-w-none">
-              <h2>{projectData.title}</h2>
-              <p>{projectData.description}</p>
-
-              <h3>Project Objectives:</h3>
-              <ul>
-                {projectData.objectives.map((objective, index) => (
-                  <li key={index}>{objective}</li>
-                ))}
-              </ul>
-
-              <h3>Deliverables:</h3>
-              <ul>
-                {projectData.deliverables.map((deliverable, index) => (
-                  <li key={index}>{deliverable}</li>
-                ))}
-              </ul>
-
-              <h3>Submission Guidelines:</h3>
-              <p>
-                Upload your project files using the form below. Include all source code files, documentation, and any
-                additional resources required to run your implementation.
-              </p>
-            </div>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="grid gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="project-files">Project Files</Label>
-                    <div className="flex items-center justify-center w-full">
-                      <label
-                        htmlFor="project-files"
-                        className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-slate-50 dark:bg-slate-900 border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
-                      >
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                          <p className="mb-2 text-sm text-slate-500 dark:text-slate-400">
-                            <span className="font-semibold">Click to upload</span> or drag and drop
-                          </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">
-                            ZIP, RAR, or individual files (MAX. 10MB)
-                          </p>
-                        </div>
-                        <input id="project-files" type="file" className="hidden" multiple />
-                      </label>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="project-notes">Project Notes</Label>
-                    <Textarea
-                      id="project-notes"
-                      placeholder="Add any notes or comments about your implementation..."
-                      className="min-h-[100px]"
-                    />
-                  </div>
-
-                  <Button className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white">
-                    Submit Project
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )
-      default:
-        return (
-          <div className="flex items-center justify-center h-96">
-            <p className="text-muted-foreground">Content not available</p>
-          </div>
-        )
+    
+    // If attachments are directly on lesson object, use them
+    if (lesson.attachments && Array.isArray(lesson.attachments)) {
+      setAttachments(lesson.attachments);
     }
-  }
+  }, [lesson]);
+
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code).then(() => {
+      setCopiedCode(code);
+      setTimeout(() => setCopiedCode(null), 2000);
+    });
+  };
+
+  // Custom renderers for markdown components
+  const components = {
+    code({ node, inline, className, children, ...props }) {
+      const match = /language-(\w+)/.exec(className || "");
+      const code = String(children).replace(/\n$/, "");
+
+      return !inline && match ? (
+        <div className="relative">
+          <SyntaxHighlighter
+            style={darcula}
+            language={match[1]}
+            PreTag="div"
+            className="rounded-md"
+            {...props}
+          >
+            {code}
+          </SyntaxHighlighter>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute top-2 right-2 h-8 w-8 p-0"
+            onClick={() => handleCopyCode(code)}
+          >
+            {copiedCode === code ? (
+              <CheckCheck className="h-4 w-4 text-green-500" />
+            ) : (
+              <Copy className="h-4 w-4" />
+            )}
+            <span className="sr-only">Copy code</span>
+          </Button>
+        </div>
+      ) : (
+        <code
+          className={`p-1 rounded-md bg-slate-100 dark:bg-slate-800 ${className}`}
+          {...props}
+        >
+          {children}
+        </code>
+      );
+    },
+    h1: ({ children }) => (
+      <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight mb-4 mt-8">
+        {children}
+      </h1>
+    ),
+    h2: ({ children }) => (
+      <h2 className="scroll-m-20 text-3xl font-semibold tracking-tight mb-3 mt-8">
+        {children}
+      </h2>
+    ),
+    h3: ({ children }) => (
+      <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight mb-3 mt-6">
+        {children}
+      </h3>
+    ),
+    h4: ({ children }) => (
+      <h4 className="scroll-m-20 text-xl font-semibold tracking-tight mb-2 mt-4">
+        {children}
+      </h4>
+    ),
+    p: ({ children }) => <p className="leading-7 mb-4">{children}</p>,
+    ul: ({ children }) => (
+      <ul className="list-disc list-inside mb-4 ml-2 space-y-2">{children}</ul>
+    ),
+    ol: ({ children }) => (
+      <ol className="list-decimal list-inside mb-4 ml-2 space-y-2">
+        {children}
+      </ol>
+    ),
+    li: ({ children }) => <li className="leading-7">{children}</li>,
+    blockquote: ({ children }) => (
+      <blockquote className="border-l-4 border-blue-500 pl-4 italic my-4">
+        {children}
+      </blockquote>
+    ),
+    a: ({ href, children }) => (
+      <a
+        href={href}
+        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline"
+      >
+        {children}
+      </a>
+    ),
+    img: ({ src, alt }) => (
+      <img src={src} alt={alt} className="rounded-lg my-4 max-w-full" />
+    ),
+    table: ({ children }) => (
+      <div className="overflow-x-auto mb-4">
+        <table className="w-full border-collapse border border-slate-200 dark:border-slate-700">
+          {children}
+        </table>
+      </div>
+    ),
+    thead: ({ children }) => (
+      <thead className="bg-slate-100 dark:bg-slate-800">{children}</thead>
+    ),
+    th: ({ children }) => (
+      <th className="border border-slate-200 dark:border-slate-700 px-4 py-2 text-left font-medium">
+        {children}
+      </th>
+    ),
+    tr: ({ children }) => <tr>{children}</tr>,
+    td: ({ children }) => (
+      <td className="border border-slate-200 dark:border-slate-700 px-4 py-2">
+        {children}
+      </td>
+    ),
+  };
+
+  // Check if video is available
+  const hasVideo = videoUrl && videoUrl.trim() !== "";
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-200">{lesson.title}</h1>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span className="capitalize">{lesson.type}</span>
-          <span>•</span>
-          <span>{lesson.duration}</span>
+    <Card className="border-blue-100 dark:border-blue-900 overflow-hidden">
+      {hasVideo ? (
+        <Tabs defaultValue="video" className="w-full">
+          <TabsList className="w-full justify-start p-0 rounded-none bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+            <TabsTrigger
+              value="video"
+              className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-950 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 pt-4 pb-3 px-6"
+            >
+              Video
+            </TabsTrigger>
+            <TabsTrigger
+              value="notes"
+              className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-950 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 pt-4 pb-3 px-6"
+            >
+              Notes
+            </TabsTrigger>
+            {transcript && (
+              <TabsTrigger
+                value="transcript"
+                className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-950 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 pt-4 pb-3 px-6"
+              >
+                Transcript
+              </TabsTrigger>
+            )}
+          </TabsList>
+
+          <TabsContent value="video" className="m-0">
+            <div className="aspect-video w-full">
+              {videoUrl?.includes("youtube.com") ||
+              videoUrl?.includes("youtu.be") ? (
+                <iframe
+                  src={videoUrl.replace("watch?v=", "embed/")}
+                  title={lesson.title}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="w-full h-full"
+                ></iframe>
+              ) : videoUrl?.includes("vimeo.com") ? (
+                <iframe
+                  src={videoUrl.replace(
+                    "vimeo.com",
+                    "player.vimeo.com/video"
+                  )}
+                  title={lesson.title}
+                  allow="autoplay; fullscreen; picture-in-picture"
+                  allowFullScreen
+                  className="w-full h-full"
+                ></iframe>
+              ) : (
+                <video
+                  src={videoUrl}
+                  controls
+                  className="w-full h-full"
+                  poster="/images/video-placeholder.jpg"
+                >
+                  Your browser does not support the video tag.
+                </video>
+              )}
+            </div>
+
+            <div className="p-6">
+              <h2 className="text-2xl font-bold mb-4 text-slate-800 dark:text-slate-200">
+                {lesson.title}
+              </h2>
+              
+              {description && (
+                <div className="prose dark:prose-invert max-w-none">
+                  {typeof description === "string" ? (
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      rehypePlugins={[rehypeRaw]}
+                      components={components}
+                    >
+                      {description}
+                    </ReactMarkdown>
+                  ) : (
+                    <p>{JSON.stringify(description)}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="notes" className="p-6 m-0">
+            <h2 className="text-2xl font-bold mb-4 text-slate-800 dark:text-slate-200">
+              {lesson.title}
+            </h2>
+            <div className="prose dark:prose-invert max-w-none">
+              {contentText ? (
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeRaw]}
+                  components={components}
+                >
+                  {contentText}
+                </ReactMarkdown>
+              ) : (
+                <p className="text-slate-600 dark:text-slate-400">
+                  There are no additional notes for this lesson.
+                </p>
+              )}
+            </div>
+          </TabsContent>
+
+          {transcript && (
+            <TabsContent value="transcript" className="p-6 m-0">
+              <h2 className="text-2xl font-bold mb-4 text-slate-800 dark:text-slate-200">
+                Video Transcript
+              </h2>
+              <div className="prose dark:prose-invert max-w-none">
+                {typeof transcript === "string" ? (
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeRaw]}
+                    components={components}
+                  >
+                    {transcript}
+                  </ReactMarkdown>
+                ) : (
+                  <p>{JSON.stringify(transcript)}</p>
+                )}
+              </div>
+            </TabsContent>
+          )}
+        </Tabs>
+      ) : (
+        <div className="p-6">
+          <h2 className="text-2xl font-bold mb-4 text-slate-800 dark:text-slate-200">
+            {lesson.title}
+          </h2>
+          
+          {/* Text content */}
+          <div className="prose dark:prose-invert max-w-none">
+            {contentText ? (
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeRaw]}
+                components={components}
+              >
+                {contentText}
+              </ReactMarkdown>
+            ) : description ? (
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeRaw]}
+                components={components}
+              >
+                {description}
+              </ReactMarkdown>
+            ) : (
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-md text-amber-800">
+                <h3 className="font-medium mb-2 flex items-center">
+                  <FileText className="h-5 w-5 mr-2" />
+                  No Content Available
+                </h3>
+                <p>This lesson doesn't have any text content yet.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Transcript section if available but no video */}
+          {transcript && (
+            <div className="mt-8 border-t pt-6">
+              <h3 className="text-lg font-medium mb-3 text-slate-800 dark:text-slate-200">
+                Transcript
+              </h3>
+              <div className="prose dark:prose-invert max-w-none">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeRaw]}
+                  components={components}
+                >
+                  {transcript}
+                </ReactMarkdown>
+              </div>
+            </div>
+          )}
+
+          {/* Attachments section */}
+          {attachments && attachments.length > 0 && (
+            <div className="mt-8 border-t pt-6">
+              <h3 className="text-lg font-medium mb-3 text-slate-800 dark:text-slate-200">
+                Attachments
+              </h3>
+              <div className="space-y-2">
+                {attachments.map((attachment, index) => (
+                  <a
+                    key={index}
+                    href={attachment.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 p-3 border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors"
+                  >
+                    <div className="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                      <span className="text-blue-600 dark:text-blue-400">
+                        {index + 1}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">
+                        {attachment.name}
+                      </p>
+                    </div>
+                    <Button variant="outline" size="sm">
+                      <Download className="h-4 w-4 mr-1" />
+                      Download
+                    </Button>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-      </div>
-
-      {renderLessonContent()}
-    </div>
-  )
+      )}
+    </Card>
+  );
 }
-

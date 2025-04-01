@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,6 +11,10 @@ import { useJobs } from "@/context/JobsProvider"
 import { toast } from "@/components/ui/use-toast"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { JobStatus, JobType } from "@/types/job"
+import { TipTapEditor } from "@/components/tiptap-editor" // Import the TipTap editor
+import { Card, CardContent } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { WysiwygDisplayer } from "@/components/wysiwyg-displayer"
 
 interface PostJobModalProps {
   open: boolean
@@ -21,6 +25,8 @@ export function PostJobModal({ open, onClose }: PostJobModalProps) {
   const { user } = useAuth()
   const { createJob } = useJobs()
   const [loading, setLoading] = useState(false)
+  const [jobDescription, setJobDescription] = useState('') // State for the WYSIWYG editor
+  const [aboutCompany, setAboutCompany] = useState('') // State for the company description
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -35,11 +41,13 @@ export function PostJobModal({ open, onClose }: PostJobModalProps) {
         location: formData.get("location") as string,
         type: formData.get("type") as string as JobType,
         salary: formData.get("salary") as string,
-        description: formData.get("description") as string,
+        // Use the HTML content from the WYSIWYG editor instead of the form data
+        description: jobDescription,
         requirements: (formData.get("requirements") as string).split("\n"),
         responsibilities: (formData.get("responsibilities") as string).split("\n"),
         tags: (formData.get("tags") as string).split(",").map(tag => tag.trim()),
-        aboutCompany: formData.get("aboutCompany") as string,
+        // Use the HTML content for the about company section
+        aboutCompany: aboutCompany,
         website: formData.get("website") as string,
         postedBy: {
           id: user.uid,
@@ -70,7 +78,7 @@ export function PostJobModal({ open, onClose }: PostJobModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Post a New Job</DialogTitle>
         </DialogHeader>
@@ -128,13 +136,43 @@ export function PostJobModal({ open, onClose }: PostJobModalProps) {
             />
           </div>
 
+          {/* WYSIWYG Editor for Job Description with Preview */}
           <div className="space-y-2">
             <Label htmlFor="description">Job Description</Label>
-            <Textarea 
-              id="description" 
+            <Tabs defaultValue="edit" className="w-full">
+              <TabsList className="mb-2">
+                <TabsTrigger value="edit">Edit</TabsTrigger>
+                <TabsTrigger value="preview">Preview</TabsTrigger>
+              </TabsList>
+              <TabsContent value="edit">
+                <Card className="border border-slate-200 dark:border-slate-800">
+                  <CardContent className="p-0">
+                    <TipTapEditor 
+                      value={jobDescription} 
+                      onChange={setJobDescription} 
+                      placeholder="Write a detailed job description..." 
+                    />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              <TabsContent value="preview">
+                <Card className="border border-slate-200 dark:border-slate-800">
+                  <CardContent className="p-4">
+                    {jobDescription ? (
+                      <WysiwygDisplayer content={jobDescription} />
+                    ) : (
+                      <p className="text-muted-foreground italic">Your description preview will appear here...</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+            {/* Hidden input to make form validation work */}
+            <input 
+              type="hidden" 
               name="description" 
-              rows={5} 
-              required 
+              value={jobDescription} 
+              required
             />
           </div>
 
@@ -158,13 +196,43 @@ export function PostJobModal({ open, onClose }: PostJobModalProps) {
             />
           </div>
 
+          {/* WYSIWYG Editor for About Company with Preview */}
           <div className="space-y-2">
             <Label htmlFor="aboutCompany">About Company</Label>
-            <Textarea 
-              id="aboutCompany" 
+            <Tabs defaultValue="edit" className="w-full">
+              <TabsList className="mb-2">
+                <TabsTrigger value="edit">Edit</TabsTrigger>
+                <TabsTrigger value="preview">Preview</TabsTrigger>
+              </TabsList>
+              <TabsContent value="edit">
+                <Card className="border border-slate-200 dark:border-slate-800">
+                  <CardContent className="p-0">
+                    <TipTapEditor 
+                      value={aboutCompany} 
+                      onChange={setAboutCompany} 
+                      placeholder="Write about your company..." 
+                    />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              <TabsContent value="preview">
+                <Card className="border border-slate-200 dark:border-slate-800">
+                  <CardContent className="p-4">
+                    {aboutCompany ? (
+                      <WysiwygDisplayer content={aboutCompany} />
+                    ) : (
+                      <p className="text-muted-foreground italic">Your company description preview will appear here...</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+            {/* Hidden input to make form validation work */}
+            <input 
+              type="hidden" 
               name="aboutCompany" 
-              rows={5} 
-              required 
+              value={aboutCompany} 
+              required
             />
           </div>
 
@@ -178,7 +246,11 @@ export function PostJobModal({ open, onClose }: PostJobModalProps) {
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading} onClick={()=>{handleSubmit}}>
+          <Button 
+            type="submit" 
+            className="w-full bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white" 
+            disabled={loading}
+          >
             {loading ? "Posting..." : "Post Job"}
           </Button>
         </form>

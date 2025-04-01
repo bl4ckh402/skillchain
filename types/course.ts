@@ -81,6 +81,7 @@ export interface Course {
   
     // Existing course content fields
     modules: Module[]
+    currentModule?: Module
     whatYouWillLearn: string[]
     requirements: string[]
     instructor: {

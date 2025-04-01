@@ -1,4 +1,5 @@
 "use client";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,8 +33,11 @@ import {
   Award,
 } from "lucide-react";
 import { useCommunity } from "@/context/CommunityProvider";
+import { useAuth } from "@/context/AuthProvider";
 import { Post } from "@/types/community";
 import { EmptyState } from "@/components/empty-state";
+import { NewDiscussionModal } from "@/components/new-discussion";
+import { toast } from "@/components/ui/use-toast";
 
 const mapDiscussionToPost = (discussion: any): Post => ({
   id: discussion.id,
@@ -65,7 +69,24 @@ export default function CommunityPage() {
     topContributors,
     upcomingEvents,
     registerForEvent,
+    getPosts,
   } = useCommunity();
+  const { user } = useAuth();
+  const [isNewDiscussionModalOpen, setIsNewDiscussionModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    // Fetch posts when the component mounts
+    loadPosts();
+  }, []);
+
+  const loadPosts = async () => {
+    try {
+      await getPosts({ sortBy: "latest" });
+    } catch (error) {
+      console.error("Failed to load posts:", error);
+    }
+  };
 
   const mappedDiscussions = posts
     .filter((post) => post.type === "discussion")
@@ -74,15 +95,57 @@ export default function CommunityPage() {
       replies: post.comments, // Map comments count to replies for UI
       authorAvatar: post.author.avatar,
       author: post.author.name,
-      date: post.createdAt.toLocaleDateString(),
+      date: post.createdAt instanceof Date 
+        ? post.createdAt.toLocaleDateString() 
+        : new Date(post.createdAt).toLocaleDateString(),
     }));
 
   const handleJoinEvent = async (eventId: string) => {
     try {
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to join this event.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
       await registerForEvent(eventId);
+      
+      toast({
+        title: "Success",
+        description: "You have successfully registered for this event.",
+      });
     } catch (error) {
-      console.error("Failed to join attendinevent:", error);
+      console.error("Failed to join event:", error);
+      toast({
+        title: "Error",
+        description: "Failed to register for this event. Please try again.",
+        variant: "destructive"
+      });
     }
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Implement search functionality
+    if (searchQuery.trim()) {
+      getPosts({ search: searchQuery });
+    }
+  };
+
+  const openNewDiscussionModal = () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to create a discussion.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsNewDiscussionModalOpen(true);
   };
 
   return (
@@ -101,23 +164,27 @@ export default function CommunityPage() {
                 Connect with blockchain enthusiasts, ask questions, and share
                 your knowledge
               </p>
-              <div className="flex flex-col sm:flex-row gap-3">
+              <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="search"
                     placeholder="Search discussions..."
                     className="pl-9 bg-background border-purple-100 dark:border-purple-900 h-12"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
                 <Button
+                  type="button"
                   size="lg"
                   className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+                  onClick={openNewDiscussionModal}
                 >
                   <PlusCircle className="mr-2 h-4 w-4" />
                   New Discussion
                 </Button>
-              </div>
+              </form>
             </div>
           </div>
         </div>
@@ -134,21 +201,42 @@ export default function CommunityPage() {
                 <CardContent className="pt-6">
                   <div className="space-y-2">
                     {categories.length > 0 ? (
-                      <Link
-                        href="/community"
-                        className="flex items-center justify-between rounded-md p-2 text-slate-700 dark:text-slate-300 hover:bg-purple-50 hover:text-purple-700 dark:hover:bg-purple-950/50 dark:hover:text-purple-300 transition-colors"
-                      >
-                        <div className="flex items-center gap-2">
-                          <MessageSquare className="h-4 w-4" />
-                          <span>All Discussions</span>
-                        </div>
-                        <Badge
-                          variant="secondary"
-                          className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
+                      <>
+                        <Link
+                          href="/community"
+                          className="flex items-center justify-between rounded-md p-2 text-slate-700 dark:text-slate-300 hover:bg-purple-50 hover:text-purple-700 dark:hover:bg-purple-950/50 dark:hover:text-purple-300 transition-colors"
                         >
-                          {mappedDiscussions.length}
-                        </Badge>
-                      </Link>
+                          <div className="flex items-center gap-2">
+                            <MessageSquare className="h-4 w-4" />
+                            <span>All Discussions</span>
+                          </div>
+                          <Badge
+                            variant="secondary"
+                            className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
+                          >
+                            {mappedDiscussions.length}
+                          </Badge>
+                        </Link>
+                        
+                        {categories.map((category) => (
+                          <Link
+                            key={category.name}
+                            href={`/community/category/${category.name.toLowerCase().replace(/\s+/g, '-')}`}
+                            className="flex items-center justify-between rounded-md p-2 text-slate-700 dark:text-slate-300 hover:bg-purple-50 hover:text-purple-700 dark:hover:bg-purple-950/50 dark:hover:text-purple-300 transition-colors"
+                          >
+                            <div className="flex items-center gap-2">
+                              <MessageSquare className="h-4 w-4" />
+                              <span>{category.name}</span>
+                            </div>
+                            <Badge
+                              variant="secondary"
+                              className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
+                            >
+                              {category.count}
+                            </Badge>
+                          </Link>
+                        ))}
+                      </>
                     ) : (
                       <EmptyState
                         icon={
@@ -157,9 +245,7 @@ export default function CommunityPage() {
                         title="No Categories"
                         description="Categories will appear here once they are created."
                       />
-                    )
-
-                    }
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -225,6 +311,7 @@ export default function CommunityPage() {
                   <Button
                     size="sm"
                     className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+                    onClick={openNewDiscussionModal}
                   >
                     <PlusCircle className="mr-2 h-4 w-4" />
                     New Discussion
@@ -237,18 +324,21 @@ export default function CommunityPage() {
                   <TabsTrigger
                     value="latest"
                     className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-950 data-[state=active]:text-purple-600 rounded-md"
+                    onClick={() => getPosts({ sortBy: "latest" })}
                   >
                     Latest
                   </TabsTrigger>
                   <TabsTrigger
                     value="trending"
                     className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-950 data-[state=active]:text-purple-600 rounded-md"
+                    onClick={() => getPosts({ sortBy: "popular" })}
                   >
                     Trending
                   </TabsTrigger>
                   <TabsTrigger
                     value="unanswered"
                     className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-950 data-[state=active]:text-purple-600 rounded-md"
+                    onClick={() => getPosts({ sortBy: "unanswered" })}
                   >
                     Unanswered
                   </TabsTrigger>
@@ -390,6 +480,10 @@ export default function CommunityPage() {
                       }
                       title="No Discussions Yet"
                       description="Be the first to start a discussion in our community!"
+                      action={{
+                        label: "New Discussion",
+                        onClick: openNewDiscussionModal
+                      }}
                     />
                   )}
                 </TabsContent>
@@ -398,164 +492,384 @@ export default function CommunityPage() {
                   <div className="space-y-4">
                     {mappedDiscussions
                       .filter((d) => d.isHot)
-                      .map((discussion) => (
-                        <Link
-                          href={`/community/discussion/${discussion.id}`}
-                          key={discussion.id}
-                        >
-                          <Card
-                            className={`transition-all hover:shadow-md ${discussion.isPinned
-                              ? "border-2 border-purple-300 dark:border-purple-700"
-                              : "border-slate-200 dark:border-slate-800"
-                              }`}
+                      .length > 0 ? (
+                      mappedDiscussions
+                        .filter((d) => d.isHot)
+                        .map((discussion) => (
+                          <Link
+                            href={`/community/discussion/${discussion.id}`}
+                            key={discussion.id}
                           >
-                            <CardContent className="p-6">
-                              <div className="flex flex-col gap-4">
-                                <div className="flex items-start justify-between">
-                                  <div className="flex-1 space-y-1">
-                                    <div className="flex items-center gap-2">
-                                      {discussion.isPinned && (
-                                        <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
-                                          <Pin className="mr-1 h-3 w-3" />
-                                          Pinned
-                                        </Badge>
-                                      )}
-                                      {discussion.isHot && (
-                                        <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300">
-                                          <TrendingUp className="mr-1 h-3 w-3" />
-                                          Hot
-                                        </Badge>
-                                      )}
-                                      <Badge
-                                        variant="outline"
-                                        className="border-blue-200 text-blue-600 dark:border-blue-800 dark:text-blue-400"
-                                      >
-                                        {discussion.category}
-                                      </Badge>
-                                    </div>
-                                    <h3 className="font-bold text-xl text-slate-800 dark:text-slate-200 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
-                                      {discussion.title}
-                                    </h3>
-                                    <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
-                                      {discussion.preview}
-                                    </p>
-                                    <div className="flex flex-wrap gap-2 mt-2">
-                                      {discussion.tags.map((tag, index) => (
+                            <Card
+                              className={`transition-all hover:shadow-md ${discussion.isPinned
+                                ? "border-2 border-purple-300 dark:border-purple-700"
+                                : "border-slate-200 dark:border-slate-800"
+                                }`}
+                            >
+                              <CardContent className="p-6">
+                                <div className="flex flex-col gap-4">
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex-1 space-y-1">
+                                      <div className="flex items-center gap-2">
+                                        {discussion.isPinned && (
+                                          <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
+                                            <Pin className="mr-1 h-3 w-3" />
+                                            Pinned
+                                          </Badge>
+                                        )}
+                                        {discussion.isHot && (
+                                          <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300">
+                                            <TrendingUp className="mr-1 h-3 w-3" />
+                                            Hot
+                                          </Badge>
+                                        )}
                                         <Badge
-                                          key={index}
-                                          variant="secondary"
-                                          className="font-normal text-purple-700 bg-purple-100 hover:bg-purple-200 dark:text-purple-300 dark:bg-purple-900 dark:hover:bg-purple-800"
+                                          variant="outline"
+                                          className="border-blue-200 text-blue-600 dark:border-blue-800 dark:text-blue-400"
                                         >
-                                          {tag}
+                                          {discussion.category}
                                         </Badge>
-                                      ))}
+                                      </div>
+                                      <h3 className="font-bold text-xl text-slate-800 dark:text-slate-200 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                                        {discussion.title}
+                                      </h3>
+                                      <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
+                                        {discussion.preview}
+                                      </p>
+                                      <div className="flex flex-wrap gap-2 mt-2">
+                                        {discussion.tags.map((tag, index) => (
+                                          <Badge
+                                            key={index}
+                                            variant="secondary"
+                                            className="font-normal text-purple-700 bg-purple-100 hover:bg-purple-200 dark:text-purple-300 dark:bg-purple-900 dark:hover:bg-purple-800"
+                                          >
+                                            {tag}
+                                          </Badge>
+                                        ))}
+                                      </div>
+                                    </div>
+                                    <div className="flex flex-col items-end gap-2 text-sm">
+                                      <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                                        <MessageCircle className="h-4 w-4 text-purple-500" />
+                                        <span>{discussion.replies} replies</span>
+                                      </div>
+                                      <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                                        <Eye className="h-4 w-4 text-blue-500" />
+                                        <span>{discussion.views} views</span>
+                                      </div>
+                                      <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                                        <Heart className="h-4 w-4 text-red-500" />
+                                        <span>{discussion.likes} likes</span>
+                                      </div>
                                     </div>
                                   </div>
-                                  <div className="flex flex-col items-end gap-2 text-sm">
-                                    <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
-                                      <MessageCircle className="h-4 w-4 text-purple-500" />
-                                      <span>{discussion.replies} replies</span>
+                                  <Separator />
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <Avatar className="h-8 w-8">
+                                        <AvatarImage
+                                          src={discussion.authorAvatar}
+                                          alt={discussion.author}
+                                        />
+                                        <AvatarFallback className="bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300">
+                                          {discussion.author.charAt(0)}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                      <div className="text-sm">
+                                        <span className="font-medium text-slate-700 dark:text-slate-300">
+                                          {discussion.author}
+                                        </span>
+                                        <span className="text-slate-500 dark:text-slate-400">
+                                          {" "}
+                                          • {discussion.date}
+                                        </span>
+                                      </div>
                                     </div>
-                                    <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
-                                      <Eye className="h-4 w-4 text-blue-500" />
-                                      <span>{discussion.views} views</span>
-                                    </div>
-                                    <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
-                                      <Heart className="h-4 w-4 text-red-500" />
-                                      <span>{discussion.likes} likes</span>
+                                    <div className="flex items-center gap-2">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
+                                      >
+                                        <Share2 className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
+                                      >
+                                        <Bookmark className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
+                                      >
+                                        <MoreHorizontal className="h-4 w-4" />
+                                      </Button>
                                     </div>
                                   </div>
                                 </div>
-                                <Separator />
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-2">
-                                    <Avatar className="h-8 w-8">
-                                      <AvatarImage
-                                        src={discussion.authorAvatar}
-                                        alt={discussion.author}
-                                      />
-                                      <AvatarFallback className="bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300">
-                                        {discussion.author.charAt(0)}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                    <div className="text-sm">
-                                      <span className="font-medium text-slate-700 dark:text-slate-300">
-                                        {discussion.author}
-                                      </span>
-                                      <span className="text-slate-500 dark:text-slate-400">
-                                        {" "}
-                                        • {discussion.date}
-                                      </span>
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
-                                    >
-                                      <Share2 className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
-                                    >
-                                      <Bookmark className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
-                                    >
-                                      <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
-                                  </div>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </Link>
-                      ))}
+                              </CardContent>
+                            </Card>
+                          </Link>
+                        ))
+                    ) : (
+                      <EmptyState
+                        icon={<TrendingUp className="h-10 w-10 text-purple-500" />}
+                        title="No Trending Discussions"
+                        description="Check back later for trending discussions or start a new discussion that might become popular."
+                        action={{
+                          label: "New Discussion",
+                          onClick: openNewDiscussionModal
+                        }}
+                      />
+                    )}
                   </div>
                 </TabsContent>
 
                 <TabsContent value="unanswered" className="mt-0">
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="rounded-full bg-purple-100 dark:bg-purple-900/30 p-6">
-                      <MessageSquare className="h-10 w-10 text-purple-500" />
+                  {mappedDiscussions.filter(d => d.replies === 0).length > 0 ? (
+                    <div className="space-y-4">
+                      {mappedDiscussions
+                        .filter(d => d.replies === 0)
+                        .map((discussion) => (
+                          <Link
+                            href={`/community/discussion/${discussion.id}`}
+                            key={discussion.id}
+                          >
+                            <Card className="transition-all hover:shadow-md border-slate-200 dark:border-slate-800">
+                              <CardContent className="p-6">
+                                {/* Discussion content */}
+                                <div className="flex flex-col gap-4">
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex-1 space-y-1">
+                                      <div className="flex items-center gap-2">
+                                        <Badge
+                                          variant="outline"
+                                          className="border-blue-200 text-blue-600 dark:border-blue-800 dark:text-blue-400"
+                                        >
+                                          {discussion.category}
+                                        </Badge>
+                                      </div>
+                                      <h3 className="font-bold text-xl text-slate-800 dark:text-slate-200 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                                        {discussion.title}
+                                      </h3>
+                                      <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
+                                        {discussion.preview}
+                                      </p>
+                                      <div className="flex flex-wrap gap-2 mt-2">
+                                        {discussion.tags.map((tag, index) => (
+                                          <Badge
+                                            key={index}
+                                            variant="secondary"
+                                            className="font-normal text-purple-700 bg-purple-100 hover:bg-purple-200 dark:text-purple-300 dark:bg-purple-900 dark:hover:bg-purple-800"
+                                          >
+                                            {tag}
+                                          </Badge>
+                                        ))}
+                                      </div>
+                                    </div>
+                                    <div className="flex flex-col items-end gap-2 text-sm">
+                                      <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                                        <MessageCircle className="h-4 w-4 text-purple-500" />
+                                        <span>0 replies</span>
+                                      </div>
+                                      <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                                        <Eye className="h-4 w-4 text-blue-500" />
+                                        <span>{discussion.views} views</span>
+                                      </div>
+                                      <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                                        <Heart className="h-4 w-4 text-red-500" />
+                                        <span>{discussion.likes} likes</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <Separator />
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <Avatar className="h-8 w-8">
+                                        <AvatarImage
+                                          src={discussion.authorAvatar}
+                                          alt={discussion.author}
+                                        />
+                                        <AvatarFallback className="bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300">
+                                          {discussion.author.charAt(0)}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                      <div className="text-sm">
+                                        <span className="font-medium text-slate-700 dark:text-slate-300">
+                                          {discussion.author}
+                                        </span>
+                                        <span className="text-slate-500 dark:text-slate-400">
+                                          {" "}
+                                          • {discussion.date}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
+                                      >
+                                        <Share2 className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
+                                      >
+                                        <Bookmark className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
+                                      >
+                                        <MoreHorizontal className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </Link>
+                        ))}
                     </div>
-                    <h3 className="mt-4 text-lg font-medium text-slate-800 dark:text-slate-200">
-                      No unanswered discussions
-                    </h3>
-                    <p className="mt-2 text-sm text-muted-foreground max-w-sm">
-                      All discussions have been answered. Check back later or
-                      start a new discussion.
-                    </p>
-                    <Button className="mt-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white">
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                      New Discussion
-                    </Button>
-                  </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <div className="rounded-full bg-purple-100 dark:bg-purple-900/30 p-6">
+                        <MessageSquare className="h-10 w-10 text-purple-500" />
+                      </div>
+                      <h3 className="mt-4 text-lg font-medium text-slate-800 dark:text-slate-200">
+                        No unanswered discussions
+                      </h3>
+                      <p className="mt-2 text-sm text-muted-foreground max-w-sm">
+                        All discussions have been answered. Check back later or
+                        start a new discussion.
+                      </p>
+                      <Button 
+                        className="mt-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+                        onClick={openNewDiscussionModal}
+                      >
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        New Discussion
+                      </Button>
+                    </div>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="my-discussions" className="mt-0">
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="rounded-full bg-purple-100 dark:bg-purple-900/30 p-6">
-                      <MessageCircle className="h-10 w-10 text-purple-500" />
+                  {user && mappedDiscussions.filter(d => d.author.id === user.uid).length > 0 ? (
+                    <div className="space-y-4">
+                      {mappedDiscussions
+                        .filter(d => d.author.id === user.uid)
+                        .map((discussion) => (
+                          <Link
+                            href={`/community/discussion/${discussion.id}`}
+                            key={discussion.id}
+                          >
+                            <Card className="transition-all hover:shadow-md border-slate-200 dark:border-slate-800">
+                              <CardContent className="p-6">
+                                {/* Discussion content */}
+                                <div className="flex flex-col gap-4">
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex-1 space-y-1">
+                                      <div className="flex items-center gap-2">
+                                        <Badge
+                                          variant="outline"
+                                          className="border-blue-200 text-blue-600 dark:border-blue-800 dark:text-blue-400"
+                                        >
+                                          {discussion.category}
+                                        </Badge>
+                                      </div>
+                                      <h3 className="font-bold text-xl text-slate-800 dark:text-slate-200 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                                        {discussion.title}
+                                      </h3>
+                                      <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
+                                        {discussion.preview}
+                                      </p>
+                                      <div className="flex flex-wrap gap-2 mt-2">
+                                        {discussion.tags.map((tag, index) => (
+                                          <Badge
+                                            key={index}
+                                            variant="secondary"
+                                            className="font-normal text-purple-700 bg-purple-100 hover:bg-purple-200 dark:text-purple-300 dark:bg-purple-900 dark:hover:bg-purple-800"
+                                          >
+                                            {tag}
+                                          </Badge>
+                                        ))}
+                                      </div>
+                                    </div>
+                                    <div className="flex flex-col items-end gap-2 text-sm">
+                                      <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                                        <MessageCircle className="h-4 w-4 text-purple-500" />
+                                        <span>{discussion.replies} replies</span>
+                                      </div>
+                                      <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                                        <Eye className="h-4 w-4 text-blue-500" />
+                                        <span>{discussion.views} views</span>
+                                      </div>
+                                      <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                                        <Heart className="h-4 w-4 text-red-500" />
+                                        <span>{discussion.likes} likes</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <Separator />
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <div className="text-sm">
+                                        <span className="text-slate-500 dark:text-slate-400">
+                                          Posted on {discussion.date}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
+                                      >
+                                        <Share2 className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
+                                      >
+                                        <MoreHorizontal className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </Link>
+                        ))}
                     </div>
-                    <h3 className="mt-4 text-lg font-medium text-slate-800 dark:text-slate-200">
-                      No discussions yet
-                    </h3>
-                    <p className="mt-2 text-sm text-muted-foreground max-w-sm">
-                      You haven't started any discussions yet. Start a new
-                      discussion to engage with the community.
-                    </p>
-                    <Button className="mt-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white">
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                      New Discussion
-                    </Button>
-                  </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <div className="rounded-full bg-purple-100 dark:bg-purple-900/30 p-6">
+                        <MessageCircle className="h-10 w-10 text-purple-500" />
+                      </div>
+                      <h3 className="mt-4 text-lg font-medium text-slate-800 dark:text-slate-200">
+                        No discussions yet
+                      </h3>
+                      <p className="mt-2 text-sm text-muted-foreground max-w-sm">
+                        {user ? "You haven't started any discussions yet. Start a new discussion to engage with the community." 
+                             : "Sign in to create discussions and see your posts here."}
+                      </p>
+                      <Button 
+                        className="mt-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+                        onClick={openNewDiscussionModal}
+                      >
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        New Discussion
+                      </Button>
+                    </div>
+                  )}
                 </TabsContent>
               </Tabs>
             </div>
@@ -570,28 +884,31 @@ export default function CommunityPage() {
                 <CardContent className="pt-6">
                   <div className="space-y-4">
                     {upcomingEvents.length > 0 ? (
-                      upcomingEvents.map((attendinevent, index) => (
+                      upcomingEvents.map((event, index) => (
                         <div key={index} className="space-y-2">
                           <h3 className="font-medium text-slate-800 dark:text-slate-200">
-                            {attendinevent.title}
+                            {event.title}
                           </h3>
                           <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                             <Calendar className="h-4 w-4 text-purple-500" />
                             <span>
-                              {attendinevent.date?.toString()},{" "}
-                              {attendinevent.time?.toString()}
+                              {typeof event.date === 'string' 
+                                ? event.date 
+                                : new Date(event.date).toLocaleDateString()}, {" "}
+                              {event.time}
                             </span>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                             <Users className="h-4 w-4 text-blue-500" />
-                            <span>{attendinevent.participants} participants</span>
+                            <span>{event.participants} participants</span>
                           </div>
                           <Button
                             variant="outline"
                             size="sm"
                             className="w-full border-purple-200 text-purple-600 hover:bg-purple-50 hover:text-purple-700 dark:border-purple-800 dark:text-purple-400 dark:hover:bg-purple-950 dark:hover:text-purple-300"
+                            onClick={() => handleJoinEvent(event.id)}
                           >
-                            Join CommunityEvent
+                            Join Event
                           </Button>
                         </div>
                       ))
@@ -600,22 +917,18 @@ export default function CommunityPage() {
                         icon={<Calendar className="h-10 w-10 text-purple-500" />}
                         title="No Upcoming Events"
                         description="Stay tuned for upcoming community events!"
-                        // action={{
-                        //   label: "Create Event",
-                        //   onClick: () => {/* Add your logic here */ }
-                        // }}
                       />
                     )}
                   </div>
                 </CardContent>
-                <CardFooter>
+                {/* <CardFooter>
                   <Button
                     variant="outline"
                     className="w-full border-purple-200 text-purple-600 hover:bg-purple-50 hover:text-purple-700 dark:border-purple-800 dark:text-purple-400 dark:hover:bg-purple-950 dark:hover:text-purple-300"
                   >
                     View All Events
                   </Button>
-                </CardFooter>
+                </CardFooter> */}
               </Card>
 
               <Card className="border-purple-100 dark:border-purple-900">
@@ -633,20 +946,26 @@ export default function CommunityPage() {
                     <p>• Respect intellectual property rights</p>
                   </div>
                 </CardContent>
-                <CardFooter>
+                {/* <CardFooter>
                   <Button
                     variant="outline"
                     className="w-full border-purple-200 text-purple-600 hover:bg-purple-50 hover:text-purple-700 dark:border-purple-800 dark:text-purple-400 dark:hover:bg-purple-950 dark:hover:text-purple-300"
                   >
                     Read Full Guidelines
                   </Button>
-                </CardFooter>
+                </CardFooter> */}
               </Card>
             </div>
           </div>
         </div>
       </main>
       <Footer />
+      
+      {/* New Discussion Modal */}
+      <NewDiscussionModal 
+        open={isNewDiscussionModalOpen} 
+        onClose={() => setIsNewDiscussionModalOpen(false)} 
+      />
     </div>
   );
 }

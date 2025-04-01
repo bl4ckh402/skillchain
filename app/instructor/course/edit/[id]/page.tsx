@@ -34,7 +34,7 @@ import {
 } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useEffect, useState } from "react"
-import { doc, getDoc, updateDoc } from "firebase/firestore"
+import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore"
 import { db } from "@/lib/firebase" 
 
 export default function CourseEditPage({ params }: { params: { id: string } }) {
@@ -69,42 +69,56 @@ export default function CourseEditPage({ params }: { params: { id: string } }) {
   }, [resolvedParams.id])
 
   const handleSave = async () => {
-    setSaveStatus("saving")
-    try {
-      const courseRef = doc(db, "courses", resolvedParams.id)
-      await updateDoc(courseRef, {
-        title: course.title,
-        description: course.description,
-        shortDescription: course.shortDescription,
-        level: course.level,
-        category: course.category,
-        subcategory: course.subcategory,
-        language: course.language,
-        price: course.price,
-        discountPrice: course.discountPrice,
-        duration: course.duration,
-        status: course.status,
-        featured: course.featured,
-        thumbnail: course.thumbnail,
-        previewVideo: course.previewVideo,
-        welcomeMessage: course.welcomeMessage,
-        congratulationsMessage: course.congratulationsMessage,
-        modules: course.modules,
-        whatYouWillLearn: course.whatYouWillLearn,
-        requirements: course.requirements,
-        tags: course.tags,
-        seoTitle: course.seoTitle,
-        seoDescription: course.seoDescription,
-        seoKeywords: course.seoKeywords,
-        // Add any other fields you want to update
-      })
-      setSaveStatus("saved")
-      setTimeout(() => setSaveStatus(null), 3000)
-    } catch (error) {
-      console.error("Error updating course:", error)
-      setSaveStatus("error")
-    }
+  setSaveStatus("saving");
+  try {
+    const courseRef = doc(db, "courses", resolvedParams.id);
+    
+    // Create an object with only defined values
+    const updateData = {
+      updatedAt: serverTimestamp()
+    };
+
+    // Only add fields that exist and aren't undefined
+    const fieldsToUpdate = [
+      'title',
+      'description', 
+      'shortDescription',
+      'level',
+      'category',
+      'subcategory',
+      'language',
+      'price',
+      'discountPrice',
+      'duration',
+      'status',
+      'featured',
+      'thumbnail',
+      'previewVideo',
+      'welcomeMessage',
+      'congratulationsMessage',
+      'modules',
+      'whatYouWillLearn',
+      'requirements',
+      'tags',
+      'seoTitle',
+      'seoDescription',
+      'seoKeywords'
+    ];
+
+    fieldsToUpdate.forEach(field => {
+      if (course[field] !== undefined) {
+        updateData[field] = course[field];
+      }
+    });
+
+    await updateDoc(courseRef, updateData);
+    setSaveStatus("saved");
+    setTimeout(() => setSaveStatus(null), 3000);
+  } catch (error) {
+    console.error("Error updating course:", error);
+    setSaveStatus("error");
   }
+};
 
   const handleInputChange = (field: string, value: any) => {
     setCourse(prev => ({

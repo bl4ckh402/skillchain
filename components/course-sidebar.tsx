@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -8,81 +8,64 @@ import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { CheckCircle2, ChevronDown, ChevronRight, Play, FileText, Code2, Award } from "lucide-react"
+import { doc, getDoc } from "firebase/firestore"
+import { db } from "@/lib/firebase"
+import { Course } from "@/types/course"
 
 interface CourseSidebarProps {
   courseId: string
   currentLessonId: string
+  isInstructor?: boolean
 }
 
-export default function CourseSidebar({ courseId, currentLessonId }: CourseSidebarProps) {
-  // This would normally be fetched from an API
-  const course = {
-    id: courseId,
-    title: "Blockchain Fundamentals",
-    progress: 35,
-    modules: [
-      {
-        id: "module-1",
-        title: "Introduction to Blockchain",
-        completed: true,
-        lessons: [
-          { id: "lesson-1-1", title: "What is Blockchain?", duration: "15:30", type: "video", completed: true },
-          { id: "lesson-1-2", title: "History of Blockchain", duration: "12:45", type: "video", completed: true },
-          {
-            id: "lesson-1-3",
-            title: "Blockchain vs. Traditional Databases",
-            duration: "18:20",
-            type: "video",
-            completed: true,
-          },
-          { id: "lesson-1-4", title: "Module Quiz", duration: "10:00", type: "quiz", completed: true },
-        ],
-      },
-      {
-        id: "module-2",
-        title: "Cryptography Basics",
-        completed: false,
-        lessons: [
-          {
-            id: "lesson-2-1",
-            title: "Cryptographic Hash Functions",
-            duration: "20:15",
-            type: "video",
-            completed: true,
-          },
-          { id: "lesson-2-2", title: "Public Key Cryptography", duration: "25:30", type: "video", completed: false },
-          { id: "lesson-2-3", title: "Digital Signatures", duration: "18:45", type: "video", completed: false },
-          { id: "lesson-2-4", title: "Hands-on Exercise", duration: "30:00", type: "exercise", completed: false },
-          { id: "lesson-2-5", title: "Cryptography Quiz", duration: "15:00", type: "quiz", completed: false },
-        ],
-      },
-      {
-        id: "module-3",
-        title: "Consensus Mechanisms",
-        completed: false,
-        lessons: [
-          { id: "lesson-3-1", title: "Proof of Work", duration: "22:10", type: "video", completed: false },
-          { id: "lesson-3-2", title: "Proof of Stake", duration: "24:30", type: "video", completed: false },
-          { id: "lesson-3-3", title: "Other Consensus Algorithms", duration: "18:15", type: "video", completed: false },
-          { id: "lesson-3-4", title: "Consensus Mechanisms Quiz", duration: "15:00", type: "quiz", completed: false },
-          { id: "lesson-3-5", title: "Final Project", duration: "45:00", type: "project", completed: false },
-        ],
-      },
-    ],
+export default function CourseSidebar({ courseId, currentLessonId, isInstructor = false }: CourseSidebarProps) {
+  const [course, setCourse] = useState<Course | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [openModules, setOpenModules] = useState<Record<string, boolean>>({})
+
+  useEffect(() => {
+    const fetchCourse = async () => {
+      try {
+        const courseRef = doc(db, "courses", courseId)
+        const courseSnap = await getDoc(courseRef)
+
+        if (courseSnap.exists()) {
+          const courseData = { 
+            id: courseSnap.id, 
+            ...courseSnap.data() 
+          } as Course
+
+          setCourse(courseData)
+
+          // Set initial open state for modules
+          const initialState: Record<string, boolean> = {}
+          courseData.modules?.forEach((module) => {
+            const hasCurrentLesson = module.lessons.some(
+              (lesson) => lesson.id === currentLessonId
+            )
+            initialState[module.id] = hasCurrentLesson
+          })
+          setOpenModules(initialState)
+        } else {
+          setError("Course not found")
+        }
+      } catch (error) {
+        console.error("Error fetching course:", error)
+        setError("Error loading course")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchCourse()
+  }, [courseId, currentLessonId])
+
+  const getLessonUrl = (lessonId: string) => {
+    return isInstructor
+      ? `/instructor/course/preview/${courseId}/lesson/${lessonId}`
+      : `/course/${courseId}/lesson/${lessonId}`
   }
-
-  // Initialize open state for modules
-  const [openModules, setOpenModules] = useState<Record<string, boolean>>(() => {
-    const initialState: Record<string, boolean> = {}
-
-    // Find which module contains the current lesson and open it
-    course.modules.forEach((module) => {
-      const hasCurrentLesson = module.lessons.some((lesson) => lesson.id === currentLessonId)
-      initialState[module.id] = hasCurrentLesson
-    })
-
-    return initialState
-  })
 
   const toggleModule = (moduleId: string) => {
     setOpenModules((prev) => ({
@@ -91,28 +74,62 @@ export default function CourseSidebar({ courseId, currentLessonId }: CourseSideb
     }))
   }
 
+  if (loading) {
+    return (
+      <div className="p-4">
+        <div className="animate-pulse space-y-4">
+          <div className="h-4 bg-slate-200 rounded w-3/4"></div>
+          <div className="h-2 bg-slate-200 rounded w-1/2"></div>
+          <div className="space-y-2">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-12 bg-slate-200 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !course) {
+    return (
+      <div className="p-4 text-red-500">
+        {error || "Failed to load course content"}
+      </div>
+    )
+  }
+
   return (
     <ScrollArea className="h-full">
       <div className="p-4 space-y-6">
         <div className="space-y-2">
-          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Course Content</h2>
+          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
+            Course Content
+          </h2>
           <div className="flex items-center gap-2">
             <Progress
-              value={course.progress}
+              value={course.progress || 0}
               className="h-2 flex-1 bg-blue-100 dark:bg-blue-900"
               indicatorClassName="bg-gradient-to-r from-blue-600 to-teal-600"
             />
-            <span className="text-sm font-medium text-blue-600 dark:text-blue-400">{course.progress}%</span>
+            <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
+              {course.progress || 0}%
+            </span>
           </div>
           <div className="text-sm text-muted-foreground">
-            <span>{course.modules.length} modules</span>
+            <span>{course.modules?.length || 0} modules</span>
             <span> • </span>
-            <span>{course.modules.reduce((acc, module) => acc + module.lessons.length, 0)} lessons</span>
+            <span>
+              {course.modules?.reduce(
+                (acc, module) => acc + (module.lessons?.length || 0),
+                0
+              ) || 0}{" "}
+              lessons
+            </span>
           </div>
         </div>
 
         <div className="space-y-2">
-          {course.modules.map((module) => (
+          {course.modules?.map((module) => (
             <Collapsible
               key={module.id}
               open={openModules[module.id]}
@@ -133,8 +150,12 @@ export default function CourseSidebar({ courseId, currentLessonId }: CourseSideb
                       )}
                     </div>
                     <div>
-                      <div className="font-medium text-slate-800 dark:text-slate-200">{module.title}</div>
-                      <div className="text-sm text-muted-foreground">{module.lessons.length} lessons</div>
+                      <div className="font-medium text-slate-800 dark:text-slate-200">
+                        {module.title}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {module.lessons?.length || 0} lessons
+                      </div>
                     </div>
                   </div>
                   {openModules[module.id] ? (
@@ -145,12 +166,14 @@ export default function CourseSidebar({ courseId, currentLessonId }: CourseSideb
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="divide-y border-t">
-                {module.lessons.map((lesson) => (
+                {module.lessons?.map((lesson) => (
                   <Link
                     key={lesson.id}
-                    href={`/course/${courseId}/lesson/${lesson.id}`}
+                    href={getLessonUrl(lesson.id)}
                     className={`flex items-center gap-3 p-3 hover:bg-slate-100 dark:hover:bg-slate-800 ${
-                      currentLessonId === lesson.id ? "bg-blue-50 dark:bg-blue-950/30" : ""
+                      currentLessonId === lesson.id
+                        ? "bg-blue-50 dark:bg-blue-950/30"
+                        : ""
                     }`}
                   >
                     <div className="flex-shrink-0 w-6 text-center">
@@ -176,7 +199,9 @@ export default function CourseSidebar({ courseId, currentLessonId }: CourseSideb
                         <span>{lesson.duration}</span>
                       </div>
                     </div>
-                    {currentLessonId === lesson.id && <Badge className="bg-blue-500 text-white">Current</Badge>}
+                    {currentLessonId === lesson.id && (
+                      <Badge className="bg-blue-500 text-white">Current</Badge>
+                    )}
                   </Link>
                 ))}
               </CollapsibleContent>
@@ -187,4 +212,3 @@ export default function CourseSidebar({ courseId, currentLessonId }: CourseSideb
     </ScrollArea>
   )
 }
-

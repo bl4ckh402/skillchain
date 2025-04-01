@@ -19,6 +19,8 @@ interface JobsContextType {
   getJobsByUser: (userId: string) => Promise<Job[]>
   applyForJob: (jobId: string) => Promise<void>
   saveJob: (jobId: string) => Promise<void>
+  checkIfUserApplied: (jobId: string) => Promise<boolean>
+  getSimilarJobs: (job: Job, count?: number) => Promise<Job[]>
 }
 
 const JobsContext = createContext<JobsContextType | null>(null)
@@ -87,6 +89,24 @@ export function JobsProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+
+  const checkIfUserApplied = async (jobId: string): Promise<boolean> => {
+    try {
+      if (!auth.currentUser) return false
+      
+      const jobRef = doc(db, 'jobs', jobId)
+      const jobSnap = await getDoc(jobRef)
+      
+      if (!jobSnap.exists()) return false
+      
+      const jobData = jobSnap.data()
+      return jobData.applications?.includes(auth.currentUser.uid) || false
+    } catch (error) {
+      console.error('Error checking application status:', error)
+      return false
+    }
+  }
+
   const getFeaturedJobs = async () => {
     try {
       const featuredQuery = query(
@@ -139,6 +159,82 @@ export function JobsProvider({ children }: { children: React.ReactNode }) {
       applications: arrayUnion(auth.currentUser.uid)
     })
   }
+
+    /**
+   * Get similar jobs based on tags and job type
+   * @param job The current job to find similar jobs for
+   * @param count Number of similar jobs to return, defaults to 3
+   * @returns Array of similar jobs
+   */
+  const getSimilarJobs = async (job: Job, count: number = 3): Promise<Job[]> => {
+    try {
+      if (!job.id) return []
+
+      // Get jobs with similar tags or job type
+      // First try to find jobs with matching tags
+      let similarQuery = query(
+        collection(db, 'jobs'),
+        where('tags', 'array-contains-any', job.tags),
+        where('id', '!=', job.id),
+        limit(count * 2)
+      )
+
+      let snapshot = await getDocs(similarQuery)
+      let similarJobs = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Job[]
+
+      if (similarJobs.length < count) {
+        const typeQuery = query(
+          collection(db, 'jobs'),
+          where('type', '==', job.type),
+          where('id', '!=', job.id),
+          limit(count * 2)
+        )
+        
+        const typeSnapshot = await getDocs(typeQuery)
+        const typeJobs = typeSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Job[]
+        
+        const existingIds = new Set(similarJobs.map(j => j.id))
+        typeJobs.forEach(job => {
+          if (!existingIds.has(job.id!)) {
+            similarJobs.push(job)
+          }
+        })
+      }
+
+      const scoredJobs = similarJobs.map(similarJob => {
+        let score = 0
+        
+        // Score based on matching tags
+        const matchingTags = similarJob.tags.filter(tag => job.tags.includes(tag))
+        score += matchingTags.length * 10
+        
+        // Score based on same job type
+        if (similarJob.type === job.type) score += 5
+        
+        // Score based on same location
+        if (similarJob.location === job.location) score += 3
+        
+        return { job: similarJob, score }
+      })
+      
+      // Sort by score and take the top 'count'
+      const sortedJobs = scoredJobs
+        .sort((a, b) => b.score - a.score)
+        .slice(0, count)
+        .map(scored => scored.job)
+      
+      return sortedJobs
+    } catch (error: any) {
+      console.error("Error fetching similar jobs:", error)
+      return []
+    }
+  }
   
   const saveJob = async (jobId: string) => {
     if (!auth.currentUser) throw new Error('Must be logged in')
@@ -161,7 +257,9 @@ export function JobsProvider({ children }: { children: React.ReactNode }) {
     getFeaturedJobs,
     getJobsByUser,
     applyForJob,
-    saveJob
+    saveJob,
+    checkIfUserApplied,
+    getSimilarJobs,
   }
 
   return (

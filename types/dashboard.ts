@@ -7,14 +7,16 @@ import { CommunityEvent } from "./community"
 import { Timestamp } from "firebase/firestore"
 
 export interface DashboardStats {
-  coursesEnrolled: number
-  hoursLearned: number
-  achievements: number
-  certificates: number
-  projectsCompleted: number
-  hackathonsParticipated: number
-  jobsApplied: number
-  eventsAttended: number
+  coursesEnrolled?: number
+  hoursLearned?: number
+  achievements?: number
+  certificates?: number
+  // totalRevenue?: number;
+  // monthlyRevenue?: number;
+  projectsCompleted?: number
+  hackathonsParticipated?: number
+  jobsApplied?: number
+  eventsAttended?: number
 }
 
 export interface FirestoreEnrolledCourse {

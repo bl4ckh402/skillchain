@@ -22,14 +22,16 @@ import {
   GraduationCap,
   Bookmark,
   Share2,
+  X,
 } from "lucide-react"
 import { useJobs } from "@/context/JobsProvider"
 import { useAuth } from "@/context/AuthProvider"
 import { PostButton } from "@/components/post-button"
 import { useEffect, useState } from "react"
-import { Job, JobFilters } from "@/types/job"
+import { Job, JobFilters, JobType } from "@/types/job"
 import { toast } from "@/components/ui/use-toast"
 import { EmptyState } from "@/components/empty-state"
+import { WysiwygDisplayer } from "@/components/wysiwyg-displayer"
 
 export default function JobsPage() {
   const { jobs, loading, filters, setFilters, getJobs, getFeaturedJobs } = useJobs()
@@ -47,13 +49,22 @@ export default function JobsPage() {
     location: [],
     tags: [],
     experience: [],
-    salaryRange: undefined
+    salaryRange: undefined,
+    search: undefined
   })
+  const [currentPage, setCurrentPage] = useState(1)
+  const [sortBy, setSortBy] = useState("newest")
+  const jobsPerPage = 5
 
   useEffect(() => {
     loadJobs()
     loadFeaturedCompanies()
   }, [])
+
+  useEffect(() => {
+    // Apply filters whenever they change in the context
+    setActiveFilters(filters)
+  }, [filters])
 
   const loadJobs = async () => {
     try {
@@ -67,11 +78,253 @@ export default function JobsPage() {
     }
   }
 
+  const loadFeaturedCompanies = async () => {
+    try {
+      const featured = await getFeaturedJobs()
+      
+      const companies = featured.reduce<Company[]>((acc, job) => {
+        const company = acc.find(c => c.name === job.company)
+        if (!company) {
+          acc.push({
+            name: job.company,
+            logo: job.logo,
+            openPositions: 1
+          })
+        } else {
+          company.openPositions++
+        }
+        return acc
+      }, [])
+      setFeaturedCompanies(companies)
+    } catch (error) {
+      console.error("Failed to load featured companies:", error)
+    }
+  }
 
-  const JobsList = ({ jobs }: { jobs: any[] }) => {
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    // Update the active filters with search query
+    const newFilters = {
+      ...activeFilters,
+      search: searchQuery
+    }
+    
+    // Apply the filters
+    setFilters(newFilters)
+    setCurrentPage(1) // Reset to first page
+  }
+
+  const handleFilterChange = (filterType: keyof JobFilters, value: string) => {
+    setActiveFilters(prev => {
+      const currentFilters = { ...prev }
+      
+      // Handle different filter types
+      switch (filterType) {
+        case 'type':
+        case 'location':
+        case 'tags':
+        case 'experience':
+          const arrayFilter = [...(currentFilters[filterType] as string[])]
+          if (arrayFilter.includes(value)) {
+            // Remove the value if it already exists
+            const newArray = arrayFilter.filter(v => v !== value)
+            return { ...currentFilters, [filterType]: newArray }
+          } else {
+            // Add the value if it doesn't exist
+            return { ...currentFilters, [filterType]: [...arrayFilter, value] }
+          }
+          
+        case 'salaryRange':
+          // Parse salary range from value string (format: "50-80", "80-100", etc.)
+          const [min, max] = value.split('-').map(Number)
+          return { ...currentFilters, salaryRange: { min, max } }
+          
+        default:
+          return currentFilters
+      }
+    })
+  }
+
+  const handleClearFilter = (filterType: keyof JobFilters, value?: string) => {
+    setActiveFilters(prev => {
+      const currentFilters = { ...prev }
+      
+      if (value && (filterType === 'type' || filterType === 'location' || filterType === 'tags' || filterType === 'experience')) {
+        // Remove specific value from array filter
+        const arrayFilter = [...(currentFilters[filterType] as string[])]
+        return { ...currentFilters, [filterType]: arrayFilter.filter(v => v !== value) }
+      } else {
+        // Clear the entire filter
+        switch (filterType) {
+          case 'type':
+          case 'location':
+          case 'tags':
+          case 'experience':
+            return { ...currentFilters, [filterType]: [] }
+          case 'salaryRange':
+            return { ...currentFilters, salaryRange: undefined }
+          case 'search':
+            setSearchQuery('')
+            return { ...currentFilters, search: undefined }
+          default:
+            return currentFilters
+        }
+      }
+    })
+  }
+
+  const applyFilters = () => {
+    setFilters(activeFilters)
+    setCurrentPage(1) // Reset to first page when applying new filters
+  }
+
+  const clearAllFilters = () => {
+    const emptyFilters: JobFilters = {
+      type: [],
+      location: [],
+      tags: [],
+      experience: [],
+      salaryRange: undefined,
+      search: undefined
+    }
+    setActiveFilters(emptyFilters)
+    setFilters(emptyFilters)
+    setSearchQuery('')
+    setCurrentPage(1)
+  }
+
+  // Filter jobs based on current active filters (client-side filtering)
+  const filteredJobs = jobs.filter(job => {
+    // Filter by search query (title, company, tags)
+    if (activeFilters.search) {
+      const searchLower = activeFilters.search.toLowerCase()
+      const matchesSearch = 
+        job.title.toLowerCase().includes(searchLower) ||
+        job.company.toLowerCase().includes(searchLower) ||
+        job.tags.some(tag => tag.toLowerCase().includes(searchLower))
+      
+      if (!matchesSearch) return false
+    }
+    
+    // Filter by job type
+    if (activeFilters.type.length > 0 && !activeFilters.type.includes(job.type)) {
+      return false
+    }
+    
+    // Filter by location
+    if (activeFilters.location.length > 0) {
+      const locationMatches = activeFilters.location.some(loc => 
+        job.location.toLowerCase().includes(loc.toLowerCase())
+      )
+      if (!locationMatches) return false
+    }
+    
+    // Filter by tags/skills
+    if (activeFilters.tags.length > 0) {
+      const hasMatchingTag = activeFilters.tags.some(tag => 
+        job.tags.some(jobTag => jobTag.toLowerCase().includes(tag.toLowerCase()))
+      )
+      if (!hasMatchingTag) return false
+    }
+    
+    // Filter by salary range
+    if (activeFilters.salaryRange) {
+      // Extract numeric values from salary string (e.g. "$80K - $100K" -> [80, 100])
+      const salaryText = job.salary.replace(/[^0-9-]/g, '')
+      const salaryParts = salaryText.split('-').map(part => parseInt(part.trim()))
+      
+      if (salaryParts.length >= 2) {
+        const minSalary = salaryParts[0]
+        const maxSalary = salaryParts[1]
+        
+        if (minSalary > activeFilters.salaryRange.max || maxSalary < activeFilters.salaryRange.min) {
+          return false
+        }
+      }
+    }
+    
+    return true
+  })
+
+  // Sort the filtered jobs
+  const sortedJobs = [...filteredJobs].sort((a, b) => {
+    switch (sortBy) {
+      case 'newest':
+        return new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime()
+      case 'salary-high':
+        // Extract the max salary for comparison
+        const aMax = parseInt(a.salary.replace(/[^0-9-]/g, '').split('-')[1] || '0')
+        const bMax = parseInt(b.salary.replace(/[^0-9-]/g, '').split('-')[1] || '0')
+        return bMax - aMax
+      case 'salary-low':
+        const aMin = parseInt(a.salary.replace(/[^0-9-]/g, '').split('-')[0] || '0')
+        const bMin = parseInt(b.salary.replace(/[^0-9-]/g, '').split('-')[0] || '0')
+        return aMin - bMin
+      case 'relevance':
+        // If there's a search query, sort by how well the job matches the query
+        if (activeFilters.search) {
+          const query = activeFilters.search.toLowerCase()
+          const scoreA = getRelevanceScore(a, query)
+          const scoreB = getRelevanceScore(b, query)
+          return scoreB - scoreA
+        }
+        return 0
+      default:
+        return 0
+    }
+  })
+
+  // Calculate relevance score for sorting by relevance
+  const getRelevanceScore = (job: Job, query: string) => {
+    let score = 0
+    if (job.title.toLowerCase().includes(query)) score += 5
+    if (job.company.toLowerCase().includes(query)) score += 3
+    score += job.tags.filter(tag => tag.toLowerCase().includes(query)).length * 2
+    return score
+  }
+
+  // Pagination
+  const totalPages = Math.ceil(sortedJobs.length / jobsPerPage)
+  const paginatedJobs = sortedJobs.slice(
+    (currentPage - 1) * jobsPerPage,
+    currentPage * jobsPerPage
+  )
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  // Categorize jobs by field
+  const jobsByCategory = {
+    development: sortedJobs.filter(job =>
+      job.tags.some(tag => ["Solidity", "Smart Contracts", "Web3.js", "Ethereum", "React"].includes(tag))
+    ),
+    design: sortedJobs.filter(job =>
+      job.tags.some(tag => ["UI", "UX", "Design", "Figma"].includes(tag))
+    ),
+    marketing: sortedJobs.filter(job =>
+      job.tags.some(tag => ["Marketing", "Content", "Social Media", "Growth"].includes(tag))
+    ),
+    business: sortedJobs.filter(job =>
+      job.tags.some(tag => ["Product Management", "Finance", "DeFi"].includes(tag))
+    )
+  }
+
+  // Active filter count
+  const activeFilterCount = 
+    activeFilters.type.length +
+    activeFilters.location.length +
+    activeFilters.tags.length +
+    activeFilters.experience.length +
+    (activeFilters.salaryRange ? 1 : 0) +
+    (activeFilters.search ? 1 : 0)
+
+  const JobsList = ({ jobs }: { jobs: Job[] }) => {
     return (
       <div className="space-y-4">
-        {filteredJobs.map((job: any) => (
+        {jobs.map((job) => (
           <Link href={`/jobs/${job.id}`} key={job.id}>
             <Card
               className={`transition-all hover:shadow-md ${job.featured ? "border-2 border-blue-300 dark:border-blue-700" : "border-slate-200 dark:border-slate-800"}`}
@@ -99,11 +352,12 @@ export default function JobsPage() {
                         {job.company}
                       </div>
                     </div>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
-                      {job.description}
-                    </p>
+                    <div className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
+                      {/* Use WysiwygDisplayer to properly render HTML content */}
+                      <WysiwygDisplayer content={job.description} />
+                    </div>
                     <div className="flex flex-wrap gap-2">
-                      {job.tags.map((tag: any, index: any) => (
+                      {job.tags.slice(0, 3).map((tag, index) => (
                         <Badge
                           key={index}
                           variant="secondary"
@@ -112,21 +366,26 @@ export default function JobsPage() {
                           {tag}
                         </Badge>
                       ))}
+                      {job.tags.length > 3 && (
+                        <Badge variant="outline" className="font-normal">
+                          +{job.tags.length - 3} more
+                        </Badge>
+                      )}
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-2 text-sm">
                     <Badge
                       variant={
-                        job.type === "Full-time"
+                        job.type === JobType.FULL_TIME
                           ? "default"
-                          : job.type === "Contract"
+                          : job.type === JobType.CONTRACT
                             ? "outline"
                             : "secondary"
                       }
                       className={
-                        job.type === "Full-time"
+                        job.type === JobType.FULL_TIME
                           ? "bg-green-500 hover:bg-green-600 text-white"
-                          : job.type === "Contract"
+                          : job.type === JobType.CONTRACT
                             ? "border-amber-300 text-amber-700 dark:border-amber-800 dark:text-amber-400"
                             : ""
                       }
@@ -158,106 +417,6 @@ export default function JobsPage() {
       </div>
     )
   }
-
-  const loadFeaturedCompanies = async () => {
-    try {
-      const featured = await getFeaturedJobs()
-      interface Company {
-        name: string;
-        logo: string;
-        openPositions: number;
-      }
-
-      const companies = featured.reduce<Company[]>((acc, job) => {
-        const company = acc.find(c => c.name === job.company)
-        if (!company) {
-          acc.push({
-            name: job.company,
-            logo: job.logo,
-            openPositions: 1
-          })
-        } else {
-          company.openPositions++
-        }
-        return acc
-      }, [])
-      setFeaturedCompanies(companies)
-    } catch (error) {
-      console.error("Failed to load featured companies:", error)
-    }
-  }
-
-  const jobsByCategory = {
-    development: jobs.filter(job =>
-      job.tags.some(tag => ["Solidity", "Smart Contracts", "Web3.js", "Ethereum", "React"].includes(tag))
-    ),
-    design: jobs.filter(job =>
-      job.tags.some(tag => ["UI", "UX", "Design", "Figma"].includes(tag))
-    ),
-    marketing: jobs.filter(job =>
-      job.tags.some(tag => ["Marketing", "Content", "Social Media", "Growth"].includes(tag))
-    ),
-    business: jobs.filter(job =>
-      job.tags.some(tag => ["Product Management", "Finance", "DeFi"].includes(tag))
-    )
-  }
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    setFilters({
-      ...filters,
-      search: searchQuery
-    })
-  }
-
-  const handleFilterChange = (filterType: keyof JobFilters, value: string) => {
-    setActiveFilters(prev => {
-      const currentFilters = { ...prev }
-      
-      // Handle different filter types
-      switch (filterType) {
-        case 'type':
-        case 'location':
-        case 'tags':
-        case 'experience':
-          const arrayFilter = currentFilters[filterType] as string[]
-          if (arrayFilter.includes(value)) {
-            currentFilters[filterType] = arrayFilter.filter(v => v !== value)
-          } else {
-            currentFilters[filterType] = [...arrayFilter, value]
-          }
-          break
-          
-        case 'search':
-          currentFilters.search = value
-          break
-          
-        case 'salaryRange':
-          
-          const [min, max] = value.split('-').map(Number)
-          currentFilters.salaryRange = { min, max }
-          break
-      }
-  
-      return currentFilters
-    })
-  }
-
-  const applyFilters = () => {
-    setFilters(activeFilters)
-  }
-
-  const filteredJobs = jobs.filter(job => {
-    if (searchQuery) {
-      const searchLower = searchQuery.toLowerCase()
-      return (
-        job.title.toLowerCase().includes(searchLower) ||
-        job.company.toLowerCase().includes(searchLower) ||
-        job.tags.some(tag => tag.toLowerCase().includes(searchLower))
-      )
-    }
-    return true
-  })
 
   return (
     <div className="flex flex-col">
@@ -299,15 +458,7 @@ export default function JobsPage() {
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
-                >
-                  <Filter className="mr-2 h-4 w-4" />
-                  Filters
-                </Button>
-                <Select defaultValue="newest">
+                <Select value={sortBy} onValueChange={setSortBy}>
                   <SelectTrigger className="w-[180px] border-blue-200 dark:border-blue-800">
                     <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
@@ -320,9 +471,76 @@ export default function JobsPage() {
                 </Select>
               </div>
               <div className="text-sm text-slate-500 dark:text-slate-400">
-                Showing <span className="font-medium text-slate-700 dark:text-slate-300">{filteredJobs.length}</span> jobs
+                Showing <span className="font-medium text-slate-700 dark:text-slate-300">{sortedJobs.length}</span> jobs
               </div>
             </div>
+
+            {/* Active filters display */}
+            {activeFilterCount > 0 && (
+              <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium">Active Filters</h3>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={clearAllFilters}
+                    className="h-8 text-xs"
+                  >
+                    Clear All
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {activeFilters.search && (
+                    <Badge variant="secondary" className="text-xs px-2 py-1 gap-1 font-normal">
+                      Search: {activeFilters.search}
+                      <button onClick={() => handleClearFilter('search')} className="ml-1">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  )}
+                  {activeFilters.type.map(type => (
+                    <Badge key={type} variant="secondary" className="text-xs px-2 py-1 gap-1 font-normal">
+                      Type: {type}
+                      <button onClick={() => handleClearFilter('type', type)} className="ml-1">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                  {activeFilters.location.map(location => (
+                    <Badge key={location} variant="secondary" className="text-xs px-2 py-1 gap-1 font-normal">
+                      Location: {location}
+                      <button onClick={() => handleClearFilter('location', location)} className="ml-1">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                  {activeFilters.tags.map(tag => (
+                    <Badge key={tag} variant="secondary" className="text-xs px-2 py-1 gap-1 font-normal">
+                      Skill: {tag}
+                      <button onClick={() => handleClearFilter('tags', tag)} className="ml-1">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                  {activeFilters.experience.map(exp => (
+                    <Badge key={exp} variant="secondary" className="text-xs px-2 py-1 gap-1 font-normal">
+                      Experience: {exp}
+                      <button onClick={() => handleClearFilter('experience', exp)} className="ml-1">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                  {activeFilters.salaryRange && (
+                    <Badge variant="secondary" className="text-xs px-2 py-1 gap-1 font-normal">
+                      Salary: ${activeFilters.salaryRange.min}K - ${activeFilters.salaryRange.max}K
+                      <button onClick={() => handleClearFilter('salaryRange')} className="ml-1">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-[250px_1fr]">
               <div className="space-y-6">
@@ -335,7 +553,7 @@ export default function JobsPage() {
                       <div>
                         <h3 className="mb-2 font-medium text-slate-800 dark:text-slate-200">Job Type</h3>
                         <div className="space-y-1">
-                          {["Full-time", "Part-time", "Contract", "Freelance"].map(type => (
+                          {[JobType.FULL_TIME, JobType.PART_TIME, JobType.CONTRACT, JobType.FREELANCE].map(type => (
                             <div key={type} className="flex items-center space-x-2">
                               <input
                                 type="checkbox"
@@ -355,46 +573,23 @@ export default function JobsPage() {
                       <div>
                         <h3 className="mb-2 font-medium text-slate-800 dark:text-slate-200">Location</h3>
                         <div className="space-y-1">
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="remote"
-                              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600"
-                            />
-                            <label htmlFor="remote" className="text-sm text-slate-700 dark:text-slate-300">
-                              Remote
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="us"
-                              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600"
-                            />
-                            <label htmlFor="us" className="text-sm text-slate-700 dark:text-slate-300">
-                              United States
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="europe"
-                              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600"
-                            />
-                            <label htmlFor="europe" className="text-sm text-slate-700 dark:text-slate-300">
-                              Europe
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="asia"
-                              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600"
-                            />
-                            <label htmlFor="asia" className="text-sm text-slate-700 dark:text-slate-300">
-                              Asia
-                            </label>
-                          </div>
+                          {["Remote", "United States", "Europe", "Asia"].map(location => (
+                            <div key={location} className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id={location.toLowerCase().replace(/\s+/g, '-')}
+                                checked={activeFilters.location.includes(location)}
+                                onChange={() => handleFilterChange("location", location)}
+                                className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600"
+                              />
+                              <label 
+                                htmlFor={location.toLowerCase().replace(/\s+/g, '-')} 
+                                className="text-sm text-slate-700 dark:text-slate-300"
+                              >
+                                {location}
+                              </label>
+                            </div>
+                          ))}
                         </div>
                       </div>
 
@@ -403,36 +598,23 @@ export default function JobsPage() {
                       <div>
                         <h3 className="mb-2 font-medium text-slate-800 dark:text-slate-200">Experience Level</h3>
                         <div className="space-y-1">
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="entry"
-                              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600"
-                            />
-                            <label htmlFor="entry" className="text-sm text-slate-700 dark:text-slate-300">
-                              Entry Level
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="mid"
-                              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600"
-                            />
-                            <label htmlFor="mid" className="text-sm text-slate-700 dark:text-slate-300">
-                              Mid Level
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="senior"
-                              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600"
-                            />
-                            <label htmlFor="senior" className="text-sm text-slate-700 dark:text-slate-300">
-                              Senior Level
-                            </label>
-                          </div>
+                          {["Entry Level", "Mid Level", "Senior Level"].map(exp => (
+                            <div key={exp} className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id={exp.toLowerCase().replace(/\s+/g, '-')}
+                                checked={activeFilters.experience.includes(exp)}
+                                onChange={() => handleFilterChange("experience", exp)}
+                                className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600"
+                              />
+                              <label 
+                                htmlFor={exp.toLowerCase().replace(/\s+/g, '-')} 
+                                className="text-sm text-slate-700 dark:text-slate-300"
+                              >
+                                {exp}
+                              </label>
+                            </div>
+                          ))}
                         </div>
                       </div>
 
@@ -441,46 +623,23 @@ export default function JobsPage() {
                       <div>
                         <h3 className="mb-2 font-medium text-slate-800 dark:text-slate-200">Skills</h3>
                         <div className="space-y-1">
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="solidity"
-                              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600"
-                            />
-                            <label htmlFor="solidity" className="text-sm text-slate-700 dark:text-slate-300">
-                              Solidity
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="web3js"
-                              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600"
-                            />
-                            <label htmlFor="web3js" className="text-sm text-slate-700 dark:text-slate-300">
-                              Web3.js
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="react"
-                              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600"
-                            />
-                            <label htmlFor="react" className="text-sm text-slate-700 dark:text-slate-300">
-                              React
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="rust"
-                              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600"
-                            />
-                            <label htmlFor="rust" className="text-sm text-slate-700 dark:text-slate-300">
-                              Rust
-                            </label>
-                          </div>
+                          {["Solidity", "Web3.js", "React", "Rust"].map(skill => (
+                            <div key={skill} className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id={skill.toLowerCase()}
+                                checked={activeFilters.tags.includes(skill)}
+                                onChange={() => handleFilterChange("tags", skill)}
+                                className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600"
+                              />
+                              <label 
+                                htmlFor={skill.toLowerCase()} 
+                                className="text-sm text-slate-700 dark:text-slate-300"
+                              >
+                                {skill}
+                              </label>
+                            </div>
+                          ))}
                         </div>
                       </div>
 
@@ -489,46 +648,28 @@ export default function JobsPage() {
                       <div>
                         <h3 className="mb-2 font-medium text-slate-800 dark:text-slate-200">Salary Range</h3>
                         <div className="space-y-1">
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="salary-50"
-                              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600"
-                            />
-                            <label htmlFor="salary-50" className="text-sm text-slate-700 dark:text-slate-300">
-                              $50K - $80K
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="salary-80"
-                              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600"
-                            />
-                            <label htmlFor="salary-80" className="text-sm text-slate-700 dark:text-slate-300">
-                              $80K - $100K
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="salary-100"
-                              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600"
-                            />
-                            <label htmlFor="salary-100" className="text-sm text-slate-700 dark:text-slate-300">
-                              $100K - $130K
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="salary-130"
-                              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600"
-                            />
-                            <label htmlFor="salary-130" className="text-sm text-slate-700 dark:text-slate-300">
-                              $130K+
-                            </label>
-                          </div>
+                          {[
+                            { id: "salary-50-80", label: "$50K - $80K", value: "50-80" },
+                            { id: "salary-80-100", label: "$80K - $100K", value: "80-100" },
+                            { id: "salary-100-130", label: "$100K - $130K", value: "100-130" },
+                            { id: "salary-130-200", label: "$130K+", value: "130-200" }
+                          ].map(salary => (
+                            <div key={salary.id} className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id={salary.id}
+                                checked={activeFilters.salaryRange?.min === parseInt(salary.value.split('-')[0])}
+                                onChange={() => handleFilterChange("salaryRange", salary.value)}
+                                className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600"
+                              />
+                              <label 
+                                htmlFor={salary.id} 
+                                className="text-sm text-slate-700 dark:text-slate-300"
+                              >
+                                {salary.label}
+                              </label>
+                            </div>
+                          ))}
                         </div>
                       </div>
 
