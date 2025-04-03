@@ -35,7 +35,14 @@ export default function DashboardPage() {
   const { user } = useAuth()
   const [activeTab, setActiveTab] = useState("overview")
   const { dashboardData, loading, error, updateCourseProgress, issueCertificate } = useDashboard()
+  const [expandedJobs, setExpandedJobs] = useState<Record<string, boolean>>({})
 
+  const toggleJobExpand = (jobId: string) => {
+    setExpandedJobs((prev) => ({
+      ...prev,
+      [jobId]: !prev[jobId],
+    }))
+  }
   if (loading) {
     // Helper function to safely get nested properties
   const getSafe = (obj, path, fallback = '') => {
@@ -96,69 +103,8 @@ export default function DashboardPage() {
     certificates = []
   } = dashboardData
 
-  // Placeholder notifications (these would come from a real notifications system)
-  const notifications = [
-    {
-      id: 1,
-      title: "New lesson available",
-      message: "A new lesson on 'Advanced Cryptography' has been added to your Blockchain Fundamentals course.",
-      time: "2 hours ago",
-      read: false,
-      type: "course",
-    },
-    {
-      id: 2,
-      title: "Achievement unlocked",
-      message: "Congratulations! You've earned the 'Smart Contract Specialist' achievement.",
-      time: "1 day ago",
-      read: true,
-      type: "achievement",
-    },
-    {
-      id: 3,
-      title: "Course completion reminder",
-      message: "You're 68% through Smart Contract Development. Keep going!",
-      time: "3 days ago",
-      read: true,
-      type: "reminder",
-    },
-    {
-      id: 4,
-      title: "New comment on your question",
-      message: "Maria Garcia replied to your question about gas optimization.",
-      time: "1 week ago",
-      read: true,
-      type: "comment",
-    },
-  ]
 
-  // Sample recommended courses (this would come from a recommendation system)
-  const recommendedCourses = [
-    {
-      id: "rec1",
-      title: "DeFi Protocols and Applications",
-      instructor: "David Kim",
-      instructorAvatar: "/images/instructors/david-kim.jpg",
-      level: "Advanced",
-      rating: 4.7,
-      reviews: 82,
-      price: "$89.99",
-      image: "/images/courses/defi-protocols.jpg",
-      tags: ["DeFi", "Yield Farming", "Liquidity"],
-    },
-    {
-      id: "rec2",
-      title: "Web3 Frontend Development",
-      instructor: "James Wilson",
-      instructorAvatar: "/images/instructors/james-wilson.jpg",
-      level: "Intermediate",
-      rating: 4.8,
-      reviews: 56,
-      price: "$74.99",
-      image: "/images/courses/web3-frontend.jpg",
-      tags: ["React", "Web3.js", "dApps"],
-    },
-  ]
+
 
   // Format stats for display
   const statsArray = [
@@ -251,6 +197,40 @@ export default function DashboardPage() {
     }
   }
 
+
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "applied":
+        return <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">Applied</Badge>
+      case "under_review":
+        return <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300">Under Review</Badge>
+      case "interview":
+        return (
+          <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">Interview</Badge>
+        )
+      case "accepted":
+        return (
+          <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+            <CheckCircle2 className="mr-1 h-3 w-3" />
+            Accepted
+          </Badge>
+        )
+      case "rejected":
+        return (
+          <Badge variant="outline" className="border-red-200 text-red-700 dark:border-red-800 dark:text-red-400">
+            Rejected
+          </Badge>
+        )
+      default:
+        return <Badge variant="outline">{status}</Badge>
+    }
+  }
+
+  // Helper function to check if application is instructor application
+  const isInstructorApplication = (application) => {
+    return application.isInstructorApplication === true
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex-1">
@@ -259,10 +239,10 @@ export default function DashboardPage() {
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div className="flex items-center gap-4">
                 <Avatar className="h-16 w-16 border-4 border-white dark:border-slate-800">
-                  <AvatarImage src={user?.photoURL || "/images/users/user-avatar.jpg"} alt={user?.displayName || "User"} />
-                  <AvatarFallback className="bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300 text-xl">
+                  <AvatarImage src={user?.photoURL! } alt={user?.displayName || "User"} />
+                  {/* <AvatarFallback className="bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300 text-xl">
                     {user?.displayName ? user.displayName.substring(0, 2).toUpperCase() : "U"}
-                  </AvatarFallback>
+                  </AvatarFallback> */}
                 </Avatar>
                 <div>
                   <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-200">
@@ -278,7 +258,7 @@ export default function DashboardPage() {
                 >
                   <Bell className="mr-2 h-4 w-4" />
                   Notifications
-                  <Badge className="ml-2 bg-blue-500 text-white">{notifications.filter((n) => !n.read).length}</Badge>
+                  {/* <Badge className="ml-2 bg-blue-500 text-white">{notifications.filter((n) => !n.read).length}</Badge> */}
                 </Button>
                 <Button className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white" asChild>
                   <Link href="/courses">
@@ -325,6 +305,12 @@ export default function DashboardPage() {
                 My Courses
               </TabsTrigger>
               <TabsTrigger
+                value="applied-jobs"
+                className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-950 data-[state=active]:text-blue-600 rounded-md"
+              >
+                Applied Jobs
+              </TabsTrigger>
+              <TabsTrigger
                 value="achievements"
                 className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-950 data-[state=active]:text-blue-600 rounded-md"
               >
@@ -345,12 +331,12 @@ export default function DashboardPage() {
                 <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-4">Continue Learning</h2>
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {enrolledCourses.length > 0 ? (
-                    enrolledCourses.map((course) => (
-                      <Link href={`/course/${course.courseId}`} key={course.courseId} className="group">
+                    enrolledCourses.map((course, index) => (
+                      <Link href={`/course/${course.courseId}`} key={index} className="group">
                         <Card className="overflow-hidden transition-all hover:shadow-lg border-slate-200 dark:border-slate-800">
                           <div className="aspect-video w-full overflow-hidden relative">
                             <img
-                              src={course.courseData.image || "/placeholder.svg"}
+                              src={course.courseData.thumbnail!}
                               alt={course.courseData.title}
                               className="object-cover w-full h-full transition-transform group-hover:scale-105"
                             />
@@ -362,11 +348,11 @@ export default function DashboardPage() {
                                     <span className="text-sm font-medium">Continue</span>
                                   </div>
                                   <div className="text-sm">
-                                    {(course.progress?.completedLessons?.length || 0)}/{course.progress?.totalLessons || 0} lessons
+                                    {(course.progress?.completedLessons?.length || 0)} lessons completed
                                   </div>
                                 </div>
                                 <Progress
-                                  value={course.progress?.progress || 0}
+                                  value={course.progress || 0}
                                   className="h-1.5 bg-white/30"
                                   indicatorClassName="bg-blue-500"
                                 />
@@ -558,97 +544,6 @@ export default function DashboardPage() {
                   </Card>
                 </div>
               </div>
-
-              {/* Recommended Courses */}
-              <div>
-                <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-4">Recommended for You</h2>
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {recommendedCourses.map((course) => (
-                    <Link href={`/course/${course.id}`} key={course.id} className="group">
-                      <Card className="overflow-hidden transition-all hover:shadow-lg border-slate-200 dark:border-slate-800">
-                        <div className="aspect-video w-full overflow-hidden">
-                          <img
-                            src={course.image || "/placeholder.svg"}
-                            alt={course.title}
-                            className="object-cover w-full h-full transition-transform group-hover:scale-105"
-                          />
-                        </div>
-                        <CardHeader className="pb-2">
-                          <div className="flex items-center justify-between">
-                            <Badge
-                              className={`${
-                                course.level === "Beginner"
-                                  ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-                                  : course.level === "Intermediate"
-                                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
-                                    : "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
-                              }`}
-                            >
-                              {course.level}
-                            </Badge>
-                            <div className="flex items-center gap-1">
-                              <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
-                              <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
-                                {course.rating}
-                              </span>
-                              <span className="text-xs text-slate-500 dark:text-slate-400">({course.reviews})</span>
-                            </div>
-                          </div>
-                          <CardTitle className="line-clamp-1 text-xl text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                            {course.title}
-                          </CardTitle>
-                          <CardDescription className="flex items-center gap-1">
-                            <Avatar className="h-4 w-4">
-                              <AvatarImage src={course.instructorAvatar} alt={course.instructor} />
-                              <AvatarFallback className="text-[8px] bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
-                                {course.instructor.substring(0, 2).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-xs">{course.instructor}</span>
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent className="pb-2">
-                          <div className="flex flex-wrap gap-2 mb-3">
-                            {course.tags.map((tag, index) => (
-                              <Badge
-                                key={index}
-                                variant="secondary"
-                                className="font-normal text-blue-700 bg-blue-100 hover:bg-blue-200 dark:text-blue-300 dark:bg-blue-900 dark:hover:bg-blue-800"
-                              >
-                                {tag}
-                              </Badge>
-                            ))}
-                          </div>
-                        </CardContent>
-                        <CardFooter className="flex items-center justify-between">
-                          <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{course.price}</div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
-                          >
-                            View Course
-                          </Button>
-                        </CardFooter>
-                      </Card>
-                    </Link>
-                  ))}
-
-                  {/* Browse more courses card */}
-                  <Card className="overflow-hidden border-dashed border-2 border-blue-200 dark:border-blue-800 flex flex-col items-center justify-center p-6 text-center h-full">
-                    <div className="rounded-full bg-blue-50 p-4 dark:bg-blue-950 mb-4">
-                      <Bookmark className="h-6 w-6 text-blue-500" />
-                    </div>
-                    <h3 className="font-medium text-slate-800 dark:text-slate-200 mb-2">Discover More Courses</h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                      Find more courses tailored to your interests and learning goals
-                    </p>
-                    <Button className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white" asChild>
-                      <Link href="/courses">Browse Marketplace</Link>
-                    </Button>
-                  </Card>
-                </div>
-              </div>
             </TabsContent>
 
             {/* My Courses Tab */}
@@ -693,16 +588,16 @@ export default function DashboardPage() {
                     {enrolledCourses.filter(course => course.status === 'active' && (course.progress?.progress || 0) < 100).length > 0 ? (
                       enrolledCourses
                         .filter(course => course.status === 'active' && (course.progress?.progress || 0) < 100)
-                        .map((course) => (
+                        .map((course, index) => (
                           <Card
-                            key={course.courseId}
+                            key={index}
                             className="overflow-hidden transition-all hover:shadow-md border-slate-200 dark:border-slate-800"
                           >
                             <div className="flex flex-col md:flex-row">
                               <div className="w-full md:w-1/4 lg:w-1/5">
                                 <div className="aspect-video md:h-full w-full overflow-hidden">
                                   <img
-                                    src={course.courseData.image || "/placeholder.svg"}
+                                    src={course.courseData.thumbnail}
                                     alt={course.courseData.title}
                                     className="object-cover w-full h-full"
                                   />
@@ -803,7 +698,7 @@ export default function DashboardPage() {
                               <div className="w-full md:w-1/4 lg:w-1/5">
                                 <div className="aspect-video md:h-full w-full overflow-hidden">
                                   <img
-                                    src={course.courseData.image || "/placeholder.svg"}
+                                    src={course.courseData.thumbnail || "/placeholder.svg"}
                                     alt={course.courseData.title}
                                     className="object-cover w-full h-full"
                                   />
@@ -1010,7 +905,7 @@ export default function DashboardPage() {
                               </div>
                               <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                                 <Certificate className="h-4 w-4 text-teal-500" />
-                                <span>NFT Token ID: {certificate.tokenId}</span>
+                                <span>Certificate ID: {certificate.tokenId}</span>
                               </div>
                             </div>
                             <div className="flex items-center gap-2">

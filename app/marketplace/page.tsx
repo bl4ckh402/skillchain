@@ -42,7 +42,7 @@ import { Course, CourseFilters, CourseLevel } from "@/types/course";
 import { EmptyState } from "@/components/empty-state";
 
 export default function MarketplacePage() {
-  const { courses, loading, filters, setFilters, getFeaturedCourses } =
+  const { courses, loading, filters, setFilters, getFeaturedCourses, getPublishedCourses } =
     useCourses();
   const [featuredCourses, setFeaturedCourses] = useState<Course[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -62,6 +62,16 @@ export default function MarketplacePage() {
       count: number;
     }[]
   >([]);
+
+  const fetchFeaturedCourses = async () => {
+      const featured = await getFeaturedCourses();
+      setFeaturedCourses(featured);
+    };
+
+    const fetchPublishedCourses = async () => {
+      const publishedCourses = await getPublishedCourses();
+      setAllCourses(courses);
+    }
 
   useEffect(() => {
     if (!courses.length) return;
@@ -208,6 +218,11 @@ export default function MarketplacePage() {
 
     setAllCourses(filtered);
   }, [courses, activeFilters, sortBy]);
+
+  useEffect(() => {
+    fetchFeaturedCourses();
+    fetchPublishedCourses();
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -724,7 +739,7 @@ export default function MarketplacePage() {
                         >
                           <div className="aspect-video w-full overflow-hidden relative">
                             <img
-                              src={course.image || "/placeholder.svg"}
+                              src={course.thumbnail!}
                               alt={course.title}
                               className="object-cover w-full h-full transition-transform group-hover:scale-105"
                             />
@@ -811,7 +826,6 @@ export default function MarketplacePage() {
                             <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
                               {course.price === 0 ? "Free" : `$${course.price}`}
                             </div>
-                            <Link href={`/course/${course.id}`}>
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -819,7 +833,6 @@ export default function MarketplacePage() {
                               >
                                 View Course
                               </Button>
-                            </Link>
                           </CardFooter>
                         </Card>
                       </Link>

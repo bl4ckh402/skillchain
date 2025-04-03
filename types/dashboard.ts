@@ -19,33 +19,33 @@ export interface DashboardStats {
   eventsAttended?: number
 }
 
-export interface FirestoreEnrolledCourse {
-  courseId: string;
-  userId: string;
-  enrolledAt: Timestamp;
-  status: 'active' | 'completed' | 'paused';
-  progress: {
-    progress: number;
-    lastAccessed: Timestamp;
-    completedLessons: string[];
-    totalLessons: number;
-    nextLesson: string;
-    currentLesson: string;
-  };
-  courseData: {
-    id: string;
-    title: string;
-    description: string;
-    image?: string;
-    instructor: {
-      id: string;
-      name: string;
-      avatar: string;
-      bio: string;
-    };
-    // [key: string]: any;
-  };
-}
+// export interface FirestoreEnrolledCourse {
+//   courseId: string;
+//   userId: string;
+//   enrolledAt: Timestamp;
+//   status: 'active' | 'completed' | 'paused';
+//   progress: {
+//     progress: number;
+//     lastAccessed: Timestamp;
+//     completedLessons: string[];
+//     totalLessons: number;
+//     nextLesson: string;
+//     currentLesson: string;
+//   };
+//   courseData: {
+//     id: string;
+//     title: string;
+//     description: string;
+//     image?: string;
+//     instructor: {
+//       id: string;
+//       name: string;
+//       avatar: string;
+//       bio: string;
+//     };
+//     // [key: string]: any;
+//   };
+// }
 
 export interface EnrollmentDocument {
   id: string;
@@ -97,7 +97,7 @@ export interface Certificate {
   issuedAt: Date
   instructorId: string
   tokenId: string
-  image: string    // Add this
+  image: string
   metadata: {
     grade: number
     skills: string[]
@@ -107,7 +107,7 @@ export interface Certificate {
 
 export interface DashboardData {
   stats: DashboardStats
-  enrolledCourses: FirestoreEnrolledCourse[]
+  enrolledCourses: Course[]
   participatedHackathons: Hackathon[]
   appliedJobs: Job[]
   completedProjects: Project[]

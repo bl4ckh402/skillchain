@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { User, onAuthStateChanged } from 'firebase/auth'
-import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { collection, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase'
 import { 
   signInWithEmailAndPassword, 
@@ -22,6 +22,7 @@ interface UserProfile {
   photoURL?: string
   enrolledCourses?: string[]
   createdCourses?: string[]
+  role: 'student' | 'instructor' | 'admin'
 }
 
 interface AuthContextType {
@@ -79,25 +80,64 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       firstName,
       lastName,
       enrolledCourses: [],
-      createdCourses: []
+      createdCourses: [],
+      role: 'student'
     })
   }
 
   const signIn = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password)
+  try {
+    // Sign in with Firebase Authentication
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const { user } = userCredential;
+    
+    // Get the user document from Firestore
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    
+    // If user exists in Firestore
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      
+      // If user doesn't have a role assigned yet
+      if (!userData.role) {
+        // Check if user has created courses
+        const coursesQuery = query(
+          collection(db, 'courses'),
+          where('instructor.id', '==', user.uid)
+        );
+        
+        const coursesSnapshot = await getDocs(coursesQuery);
+        
+        // If user has created at least one course, assign instructor role
+        if (!coursesSnapshot.empty) {
+          await updateDoc(doc(db, 'users', user.uid), {
+            role: 'instructor'
+          });
+
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error signing in:", error);
+    throw error;
   }
+};
+
+
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider()
     const { user } = await signInWithPopup(auth, provider)
     const names = user.displayName?.split(' ') || ['', '']
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
     await createUserProfile(user.uid, {
       email: user.email,
       firstName: names[0],
       lastName: names[1],
       photoURL: user.photoURL!,
       enrolledCourses: [],
-      createdCourses: []
+      createdCourses: [],
+      role: userDoc.exists() ? userDoc.data().role : 'student'
     })
   }
 
@@ -105,13 +145,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const provider = new GithubAuthProvider()
     const { user } = await signInWithPopup(auth, provider)
     const names = user.displayName?.split(' ') || ['', '']
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
     await createUserProfile(user.uid, {
       email: user.email,
       firstName: names[0],
       lastName: names[1],
       photoURL: user.photoURL!,
       enrolledCourses: [],
-      createdCourses: []
+      createdCourses: [],
+      role: userDoc.exists() ? userDoc.data().role : 'student'
     })
   }
 

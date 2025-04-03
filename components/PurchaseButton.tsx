@@ -106,7 +106,7 @@ export function PurchaseButton({
   }
 
   const handleViewCertificate = () => {
-    router.push(`/dashboard/certificates?courseId=${courseId}`)
+    router.push(`/dashboard?courseId=${courseId}`)
   }
 
   // Show loading state while checking enrollment

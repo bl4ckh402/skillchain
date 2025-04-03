@@ -21,6 +21,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from "@/lib/firebase";
 import { Course, CourseFilters, CourseStatus } from "@/types/course";
 import { useAuth } from "./AuthProvider";
+import { FirestoreEnrolledCourse } from "@/types/dashboard";
 
 interface CourseContextType {
   courses: Course[];
@@ -34,6 +35,8 @@ interface CourseContextType {
   deleteCourse: (id: string) => Promise<void>;
   publishCourse: (id: string) => Promise<void>;
   archiveCourse: (id: string) => Promise<void>;
+  getPublishedCourses: () => Promise<void>;
+  issueCertificate: (courseId: string) => Promise<void>;
   getCourseById: (id: string) => Promise<Course | null>;
   getFeaturedCourses: () => Promise<Course[]>;
   getMyCourses: () => Promise<Course[]>;
@@ -369,6 +372,24 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const getPublishedCourses = async () => {
+    try {
+      const q = query(
+        collection(db, "courses"),
+        where("status", "==", CourseStatus.PUBLISHED),
+        orderBy("createdAt", "desc")
+      );
+      const snapshot = await getDocs(q);
+      let coursesData = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as Record<string, any>),
+      })) as Course[];
+      setCourses(coursesData);
+    } catch (error: any) {
+      throw new Error(`Error fetching published courses: ${error.message}`);
+    }
+  };
+
   const value = {
     courses,
     loading,
@@ -388,6 +409,8 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
     getCourseById,
     trackProgress,
     getCourseProgress,
+    getPublishedCourses,
+    issueCertificate,
   };
 
   return (

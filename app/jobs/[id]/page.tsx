@@ -303,7 +303,7 @@ export default function JobDetailPage() {
                 </CardContent>
               </Card>
 
-              {job.relatedCourses && job.relatedCourses.length > 0 && (
+              {/* {job.relatedCourses && job.relatedCourses.length > 0 && (
                 <Card>
                   <CardHeader>
                     <CardTitle>Recommended Courses</CardTitle>
@@ -338,7 +338,7 @@ export default function JobDetailPage() {
                     </div>
                   </CardContent>
                 </Card>
-              )}
+              )} */}
             </div>
 
             <div className="space-y-6">

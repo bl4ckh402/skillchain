@@ -36,7 +36,6 @@ import {
   DashboardData,
   DashboardStats,
   EnrollmentDocument,
-  FirestoreEnrolledCourse,
   UserAchievement,
   UserProgress,
 } from "@/types/dashboard";

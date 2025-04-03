@@ -24,7 +24,7 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/dashboard/courses" className="text-muted-foreground hover:text-foreground">
+                <Link href="/dashboard" className="text-muted-foreground hover:text-foreground">
                   My Courses
                 </Link>
               </li>

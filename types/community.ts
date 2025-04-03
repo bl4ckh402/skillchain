@@ -13,7 +13,7 @@ export interface Post {
     }
     tags: string[]
     likes: number
-    comments: number
+    comments: Comment[]
     views: number
     replies?: number // For discussions
     createdAt: Date
@@ -97,6 +97,7 @@ export interface CommunityFilters {
 
 export interface Category {
     name: string
+    id: string
     count: number
     icon?: ReactNode
 }

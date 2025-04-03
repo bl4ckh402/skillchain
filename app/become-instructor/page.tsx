@@ -19,17 +19,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useInstructorApplication } from "@/context/InstructorApllicationContext"
 import { useAuth } from "@/context/AuthProvider"
 import { toast } from "@/components/ui/use-toast"
-
-// Required course details
-const requiredCourse = {
-  id: "blockchain-fundamentals-101", // Match this with the ID in the context
-  title: "Blockchain Fundamentals",
-  instructor: "Alex Johnson",
-  modules: 8,
-  lessons: 24,
-  duration: "12 hours",
-  image: "/images/courses/blockchain-fundamentals-hero.jpg",
-}
+import { collection, query, orderBy, limit, getDocs } from "firebase/firestore"
+import { db } from "@/lib/firebase"
 
 export default function BecomeInstructorPage() {
   const router = useRouter()
@@ -45,6 +36,17 @@ export default function BecomeInstructorPage() {
   const [step, setStep] = useState(1)
   const [eligibilityChecked, setEligibilityChecked] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isLoadingCourse, setIsLoadingCourse] = useState(true)
+  const [requiredCourse, setRequiredCourse] = useState({
+    id: "",
+    title: "Loading...",
+    instructor: "Loading...",
+    modules: 0,
+    lessons: 0,
+    duration: "Loading...",
+    image: "/placeholder.svg"
+  })
+  
   const [formData, setFormData] = useState({
     fullName: "",
     expertise: "",
@@ -58,7 +60,54 @@ export default function BecomeInstructorPage() {
     motivation: "",
     timeCommitment: "",
     agreedToTerms: false,
+    isInstructorApplication: true,
   })
+
+  // Fetch the first course ever posted (for eligibility check)
+  useEffect(() => {
+    const fetchFirstCourse = async () => {
+      try {
+        setIsLoadingCourse(true)
+        const coursesQuery = query(
+          collection(db, "courses"),
+          orderBy("createdAt"),
+          limit(1)
+        )
+        
+        const coursesSnapshot = await getDocs(coursesQuery)
+        
+        if (!coursesSnapshot.empty) {
+          const courseDoc = coursesSnapshot.docs[0]
+          const courseData = {
+            id: courseDoc.id,
+            ...courseDoc.data()
+          }
+          
+          // Set the required course with actual data
+          setRequiredCourse({
+            id: courseDoc.id,
+            title: courseData.title || "",
+            instructor: courseData.instructor?.name || "",
+            modules: courseData.modules?.length || 0,
+            lessons: courseData.totalLessons || 0,
+            duration: courseData.duration || "",
+            image: courseData.thumbnail || ""
+          })
+        }
+      } catch (error) {
+        console.error("Error fetching first course:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load eligibility information. Please refresh the page.",
+          variant: "destructive"
+        })
+      } finally {
+        setIsLoadingCourse(false)
+      }
+    }
+    
+    fetchFirstCourse()
+  }, [])
 
   useEffect(() => {
     // If the user is not logged in, redirect to login page
@@ -79,32 +128,32 @@ export default function BecomeInstructorPage() {
     if (eligible) {
       toast({
         title: "Eligible!",
-        description: "You've completed the required course and are eligible to apply.",
+        description: `You've completed the ${requiredCourse.title} course and are eligible to apply.`,
       })
     } else if (hasCompletedRequiredCourse === false) {
       toast({
         title: "Not Eligible",
-        description: "You need to complete the Blockchain Fundamentals course before applying.",
+        description: `You need to complete the ${requiredCourse.title} course before applying.`,
         variant: "destructive"
       })
     }
   }
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: any) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleCheckboxChange = (e) => {
+  const handleCheckboxChange = (e: any) => {
     const { name, checked } = e.target
     setFormData((prev) => ({ ...prev, [name]: checked }))
   }
 
-  const handleRadioChange = (name, value) => {
+  const handleRadioChange = (name: any, value: any) => {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault()
     setIsSubmitting(true)
 
@@ -118,7 +167,7 @@ export default function BecomeInstructorPage() {
       
       // Redirect to success page
       router.push("/become-instructor/success")
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error submitting application:", error)
       toast({
         title: "Error",
@@ -174,78 +223,85 @@ export default function BecomeInstructorPage() {
                     <Info className="h-4 w-4" />
                     <AlertTitle>Important</AlertTitle>
                     <AlertDescription>
-                      To become an instructor, you must have completed our foundational course: Blockchain Fundamentals
+                      To become an instructor, you must have completed our foundational course: {requiredCourse.title}
                     </AlertDescription>
                   </Alert>
 
                   <div className="space-y-4">
                     <h3 className="text-lg font-medium">Required Course</h3>
-                    <Card className="overflow-hidden border-blue-100 dark:border-blue-900">
-                      <div className="flex flex-col sm:flex-row">
-                        <div className="w-full sm:w-1/3">
-                          <div className="aspect-video w-full h-full overflow-hidden">
-                            <img
-                              src={requiredCourse.image || "/placeholder.svg?height=200&width=300"}
-                              alt={requiredCourse.title}
-                              className="object-cover w-full h-full"
-                            />
-                          </div>
-                        </div>
-                        <div className="flex-1 p-4">
-                          <h4 className="font-bold text-lg text-slate-800 dark:text-slate-200">
-                            {requiredCourse.title}
-                          </h4>
-                          <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
-                            Instructor: {requiredCourse.instructor}
-                          </p>
-                          <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400 mb-4">
-                            <div className="flex items-center gap-1">
-                              <FileText className="h-4 w-4 text-blue-500" />
-                              <span>{requiredCourse.modules} modules</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Clock className="h-4 w-4 text-teal-500" />
-                              <span>{requiredCourse.duration}</span>
-                            </div>
-                          </div>
-                          {!eligibilityChecked ? (
-                            <Button onClick={handleCheckEligibility} className="w-full sm:w-auto">
-                              {isEligibilityLoading ? (
-                                <>
-                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                  Checking...
-                                </>
-                              ) : (
-                                "Check Eligibility"
-                              )}
-                            </Button>
-                          ) : isEligible ? (
-                            <Alert className="bg-green-50 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800">
-                              <CheckCircle2 className="h-4 w-4" />
-                              <AlertTitle>Eligible!</AlertTitle>
-                              <AlertDescription>
-                                You've completed the required course and are eligible to apply.
-                              </AlertDescription>
-                            </Alert>
-                          ) : (
-                            <Alert className="bg-red-50 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800">
-                              <X className="h-4 w-4" />
-                              <AlertTitle>Not Eligible</AlertTitle>
-                              <AlertDescription>
-                                You need to complete the Blockchain Fundamentals course before applying.
-                                <div className="mt-2">
-                                  <Link href={`/course/${requiredCourse.id}`}>
-                                    <Button variant="outline" size="sm">
-                                      Enroll in Course
-                                    </Button>
-                                  </Link>
-                                </div>
-                              </AlertDescription>
-                            </Alert>
-                          )}
-                        </div>
+                    {isLoadingCourse ? (
+                      <div className="flex items-center justify-center p-8">
+                        <Loader2 className="h-8 w-8 animate-spin text-blue-500 mr-2" />
+                        <span>Loading course information...</span>
                       </div>
-                    </Card>
+                    ) : (
+                      <Card className="overflow-hidden border-blue-100 dark:border-blue-900">
+                        <div className="flex flex-col sm:flex-row">
+                          <div className="w-full sm:w-1/3">
+                            <div className="aspect-video w-full h-full overflow-hidden">
+                              <img
+                                src={requiredCourse.image || "/placeholder.svg"}
+                                alt={requiredCourse.title}
+                                className="object-cover w-full h-full"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex-1 p-4">
+                            <h4 className="font-bold text-lg text-slate-800 dark:text-slate-200">
+                              {requiredCourse.title}
+                            </h4>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
+                              Instructor: {requiredCourse.instructor}
+                            </p>
+                            <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400 mb-4">
+                              <div className="flex items-center gap-1">
+                                <FileText className="h-4 w-4 text-blue-500" />
+                                <span>{requiredCourse.modules} modules</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-4 w-4 text-teal-500" />
+                                <span>{requiredCourse.duration}</span>
+                              </div>
+                            </div>
+                            {!eligibilityChecked ? (
+                              <Button onClick={handleCheckEligibility} className="w-full sm:w-auto">
+                                {isEligibilityLoading ? (
+                                  <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Checking...
+                                  </>
+                                ) : (
+                                  "Check Eligibility"
+                                )}
+                              </Button>
+                            ) : isEligible ? (
+                              <Alert className="bg-green-50 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800">
+                                <CheckCircle2 className="h-4 w-4" />
+                                <AlertTitle>Eligible!</AlertTitle>
+                                <AlertDescription>
+                                  You've completed the required course and are eligible to apply.
+                                </AlertDescription>
+                              </Alert>
+                            ) : (
+                              <Alert className="bg-red-50 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800">
+                                <X className="h-4 w-4" />
+                                <AlertTitle>Not Eligible</AlertTitle>
+                                <AlertDescription>
+                                  You need to complete the {requiredCourse.title} course before applying.
+                                  <div className="mt-2">
+                                    <Link href={`/course/${requiredCourse.id}`}>
+                                      <Button variant="outline" size="sm">
+                                        Enroll in Course
+                                      </Button>
+                                    </Link>
+                                  </div>
+                                </AlertDescription>
+                              </Alert>
+                            )}
+                          </div>
+                        </div>
+                      </Card>
+                    )}
                   </div>
 
                   <div className="space-y-4">

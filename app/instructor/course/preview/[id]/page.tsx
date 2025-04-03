@@ -34,14 +34,10 @@ import { useEffect, useState, use } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Course } from "@/types/course";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
-export default function CoursePreviewPage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const resolvedParams = use(params);
+export default function CoursePreviewPage() {
+  const params = useParams();
   const [course, setCourse] = useState<Course | null>(null); // Add proper type
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +46,10 @@ export default function CoursePreviewPage({
   useEffect(() => {
     const fetchCourse = async () => {
       try {
-        const courseRef = doc(db, "courses", resolvedParams.id);
+        if (!params.id) {
+          throw new Error("Course ID is undefined");
+        }
+        const courseRef = doc(db, "courses", params.id);
         const courseSnap = await getDoc(courseRef);
 
         if (courseSnap.exists()) {
@@ -66,7 +65,7 @@ export default function CoursePreviewPage({
       }
     };
     fetchCourse();
-  }, [resolvedParams.id]);
+  }, [params.id]);
 
   const navigateToLesson = (lessonId: string) => {
     router.push(
@@ -107,11 +106,7 @@ export default function CoursePreviewPage({
 
   const courseData = {
     ...course,
-    instructor: course.instructor || {
-      name: "Unknown Instructor",
-      bio: "No bio available",
-      avatar: "/placeholder-avatar.png",
-    },
+    instructor: course.instructor!,
     modules: course.modules || [],
     whatYouWillLearn: course.whatYouWillLearn || [],
     requirements: course.requirements || [],

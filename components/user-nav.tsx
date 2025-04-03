@@ -18,10 +18,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Menu, Code2 } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
+import { useAuthRoles } from "@/lib/auth"
 
 export function UserNav() {
   const { user, userProfile, signOut } = useAuth()
   const router = useRouter()
+    const { isInstructor, isAdmin } = useAuthRoles()
 
   const handleSignOut = async () => {
     try {
@@ -58,9 +60,38 @@ export function UserNav() {
           <Link href="/marketplace" className="text-lg font-medium">
             Marketplace
           </Link>
+          <Link href="/jobs" className="text-lg font-medium">
+            Jobs
+          </Link>
+          <Link href="/hackathons" className="text-lg font-medium">
+            Hackathons
+          </Link>
           <Link href="/community" className="text-lg font-medium">
             Community
           </Link>
+          {user && (<Link href="/create" className="text-lg font-medium">
+            Dashboard
+          </Link>)}
+
+          {isInstructor || isAdmin && (
+                <Link href="/create" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                  Create Course
+                </Link>
+              )}
+
+          {/* Instructor-only navigation */}
+              {isInstructor && (
+                <Link href="/instructor/dashboard" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                  Instructor Dashboard
+                </Link>
+              )}
+              
+              {/* Admin-only navigation */}
+              {isAdmin && (
+                <Link href="/admin" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                  Admin Panel
+                </Link>
+              )}
         </nav>
       </SheetContent>
     </Sheet>
@@ -115,20 +146,13 @@ export function UserNav() {
             <DropdownMenuItem asChild>
               <Link href="/dashboard">Dashboard</Link>
             </DropdownMenuItem>
-            {/* <DropdownMenuItem asChild>
-              <Link href="/dashboard/courses">My Courses</Link>
-            </DropdownMenuItem> */}
+
             {Array.isArray(userProfile?.createdCourses) && userProfile.createdCourses.length > 0 && (
               <DropdownMenuItem asChild>
-                <Link href="/dashboard/creator">Creator Dashboard</Link>
+                <Link href="/instructor/dashboard">Creator Dashboard</Link>
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem asChild>
-              <Link href="/dashboard/wallet">Wallet</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/dashboard/settings">Settings</Link>
-            </DropdownMenuItem>
+
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleSignOut}>

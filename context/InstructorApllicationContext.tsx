@@ -10,14 +10,38 @@ import {
   getDoc, 
   setDoc, 
   updateDoc, 
-  serverTimestamp 
+  serverTimestamp, 
+  orderBy,
+  limit
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { useAuth } from '@/context/AuthProvider'
 import { toast } from '@/components/ui/use-toast'
 
 // Required course ID for instructor eligibility
-const REQUIRED_COURSE_ID = "blockchain-fundamentals-101" // Replace with your actual intro course ID
+let REQUIRED_COURSE_ID = "" // Replace with your actual intro course ID
+
+const getFirstCourseId = async (): Promise<string> => {
+  try {
+    const coursesQuery = query(
+      collection(db, "courses"),
+      orderBy("createdAt"),
+      limit(1)
+    );
+    
+    const coursesSnapshot = await getDocs(coursesQuery);
+    
+    if (!coursesSnapshot.empty) {
+      return coursesSnapshot.docs[0].id;
+    }
+    
+    return "";
+  } catch (error) {
+    console.error("Error fetching first course:", error);
+    return "";
+  }
+};
+
 
 export interface InstructorApplication {
   id: string
@@ -40,6 +64,7 @@ export interface InstructorApplication {
   reviewedBy?: string
   feedback?: string
   nextSteps?: string
+  isInstructorApplication: boolean
 }
 
 interface InstructorApplicationContextType {
@@ -51,6 +76,7 @@ interface InstructorApplicationContextType {
   hasCompletedRequiredCourse: boolean | null
 }
 
+
 const InstructorApplicationContext = createContext<InstructorApplicationContextType | null>(null)
 
 export function InstructorApplicationProvider({ children }: { children: ReactNode }) {
@@ -58,6 +84,13 @@ export function InstructorApplicationProvider({ children }: { children: ReactNod
   const [isEligibilityLoading, setIsEligibilityLoading] = useState(false)
   const [isEligible, setIsEligible] = useState<boolean | null>(null)
   const [hasCompletedRequiredCourse, setHasCompletedRequiredCourse] = useState<boolean | null>(null)
+
+  // Function to set the required course ID (used by component)
+  const setRequiredCourseId = (courseId: string) => {
+    if (courseId) {
+      REQUIRED_COURSE_ID = courseId;
+    }
+  };
 
   /**
    * Check if the user is eligible to apply to become an instructor
@@ -75,6 +108,20 @@ export function InstructorApplicationProvider({ children }: { children: ReactNod
 
     setIsEligibilityLoading(true)
     try {
+      // If REQUIRED_COURSE_ID is empty, try to get it
+      if (!REQUIRED_COURSE_ID) {
+        REQUIRED_COURSE_ID = await getFirstCourseId();
+        
+        if (!REQUIRED_COURSE_ID) {
+          toast({
+            title: "Error",
+            description: "Could not determine the required course. Please try again.",
+            variant: "destructive"
+          });
+          return false;
+        }
+      }
+      
       // Check if the user has already been approved as an instructor
       const userDoc = await getDoc(doc(db, 'users', user.uid))
       const userData = userDoc.data()
@@ -98,7 +145,22 @@ export function InstructorApplicationProvider({ children }: { children: ReactNod
         return false
       }
 
-      // Check if the user has completed the required course
+      // First check enrollments
+      const enrollmentRef = doc(db, 'enrollments', `${user.uid}_${REQUIRED_COURSE_ID}`);
+      const enrollmentSnap = await getDoc(enrollmentRef);
+      
+      if (enrollmentSnap.exists()) {
+        const enrollmentData = enrollmentSnap.data();
+        // Check if course is completed (100% progress or status 'completed')
+        const courseCompleted = (enrollmentData.progress?.progress === 100) || 
+                              (enrollmentData.status === 'completed');
+        
+        setHasCompletedRequiredCourse(courseCompleted);
+        setIsEligible(courseCompleted);
+        return courseCompleted;
+      }
+      
+      // Fallback to progress collection if enrollment doesn't show completion
       const progressDoc = await getDoc(doc(db, `users/${user.uid}/progress`, REQUIRED_COURSE_ID))
       
       if (progressDoc.exists()) {
@@ -167,9 +229,7 @@ export function InstructorApplicationProvider({ children }: { children: ReactNod
   /**
    * Submit a new instructor application
    */
-  const submitApplication = async (
-    application: Omit<InstructorApplication, 'id' | 'userId' | 'email' | 'status' | 'submittedAt'>
-  ): Promise<string> => {
+  const submitApplication = async (application: Partial<InstructorApplication>): Promise<string> => {
     if (!user) {
       throw new Error("You must be logged in to submit an application")
     }
@@ -186,6 +246,7 @@ export function InstructorApplicationProvider({ children }: { children: ReactNod
         email: user.email,
         status: 'pending',
         submittedAt: serverTimestamp(),
+        isInstructorApplication: true, // Flag to identify this record
       })
 
       return applicationId
@@ -201,7 +262,8 @@ export function InstructorApplicationProvider({ children }: { children: ReactNod
     submitApplication,
     isEligibilityLoading,
     isEligible,
-    hasCompletedRequiredCourse
+    hasCompletedRequiredCourse,
+    setRequiredCourseId
   }
 
   return (

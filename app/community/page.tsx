@@ -95,9 +95,9 @@ export default function CommunityPage() {
       replies: post.comments, // Map comments count to replies for UI
       authorAvatar: post.author.avatar,
       author: post.author.name,
-      date: post.createdAt instanceof Date 
-        ? post.createdAt.toLocaleDateString() 
-        : new Date(post.createdAt).toLocaleDateString(),
+      date: post.createdAt 
+        ? new Date(post.createdAt.timestamp * 1000 + post.createdAt.nanoseconds / 1000000)
+        : new Date(),
     }));
 
   const handleJoinEvent = async (eventId: string) => {
@@ -219,11 +219,7 @@ export default function CommunityPage() {
                         </Link>
                         
                         {categories.map((category) => (
-                          <Link
-                            key={category.name}
-                            href={`/community/category/${category.name.toLowerCase().replace(/\s+/g, '-')}`}
-                            className="flex items-center justify-between rounded-md p-2 text-slate-700 dark:text-slate-300 hover:bg-purple-50 hover:text-purple-700 dark:hover:bg-purple-950/50 dark:hover:text-purple-300 transition-colors"
-                          >
+                            <div key={category.id} className="flex items-center justify-between rounded-md p-2 text-slate-700 dark:text-slate-300 hover:bg-purple-50 hover:text-purple-700 dark:hover:bg-purple-950/50 dark:hover:text-purple-300 transition-colors">
                             <div className="flex items-center gap-2">
                               <MessageSquare className="h-4 w-4" />
                               <span>{category.name}</span>
@@ -234,7 +230,7 @@ export default function CommunityPage() {
                             >
                               {category.count}
                             </Badge>
-                          </Link>
+                            </div>
                         ))}
                       </>
                     ) : (
@@ -250,7 +246,7 @@ export default function CommunityPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-purple-100 dark:border-purple-900">
+              {/* <Card className="border-purple-100 dark:border-purple-900">
                 <CardHeader className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/50 dark:to-blue-950/50 rounded-t-lg">
                   <CardTitle className="text-lg text-slate-800 dark:text-slate-200">
                     Top Contributors
@@ -267,7 +263,7 @@ export default function CommunityPage() {
                               alt={contributor.name}
                             />
                             <AvatarFallback className="bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300">
-                              {contributor.name.charAt(0)}
+                              {contributor.name?.charAt(0)!}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1 min-w-0">
@@ -291,7 +287,7 @@ export default function CommunityPage() {
                     )}
                   </div>
                 </CardContent>
-              </Card>
+              </Card> */}
             </div>
 
             <div>
@@ -439,7 +435,7 @@ export default function CommunityPage() {
                                       </span>
                                       <span className="text-slate-500 dark:text-slate-400">
                                         {" "}
-                                        • {discussion.date}
+                                        • {discussion.date.toDateString()}
                                       </span>
                                     </div>
                                   </div>
@@ -581,7 +577,7 @@ export default function CommunityPage() {
                                         </span>
                                         <span className="text-slate-500 dark:text-slate-400">
                                           {" "}
-                                          • {discussion.date}
+                                          • {discussion.date.toLocaleDateString()}
                                         </span>
                                       </div>
                                     </div>

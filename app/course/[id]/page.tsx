@@ -186,7 +186,7 @@ export default function CoursePage() {
               <div className="flex items-center justify-center lg:justify-end">
                 <div className="relative aspect-video w-full max-w-[600px] overflow-hidden rounded-xl border shadow-xl">
                   <img
-                    src={course.image || "/placeholder.svg"}
+                    src={course.thumbnail!}
                     alt={course.title}
                     className="object-cover w-full h-full"
                   />

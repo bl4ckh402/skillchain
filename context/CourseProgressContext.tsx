@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState } from 'react'
-import { doc, getDoc, updateDoc, collection, query, where, getDocs, serverTimestamp } from 'firebase/firestore'
+import { doc, getDoc, updateDoc, setDoc, collection, query, where, getDocs, serverTimestamp, increment } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { useAuth } from './AuthProvider'
 
@@ -16,6 +16,7 @@ interface CourseProgressContextType {
   getEnrollmentStatus: (courseId: string) => Promise<EnrollmentStatus>
   getCachedProgress: (courseId: string, userId: string) => CourseProgressData | null
   setCachedProgress: (courseId: string, userId: string, data: CourseProgressData) => void
+  checkAccessStatus: (courseId: string) => Promise<{ hasAccess: boolean, enrollmentStatus: EnrollmentStatus | null }>
 }
 
 export interface CourseProgressData {
@@ -36,6 +37,7 @@ export interface EnrollmentStatus {
   currentLesson: string | null
   nextLesson: string | null
   certificateIssued: boolean
+  enrolledAt?: Date
 }
 
 const CourseProgressContext = createContext<CourseProgressContextType | null>(null)
@@ -55,19 +57,233 @@ export function CourseProgressProvider({ children }: { children: React.ReactNode
     setProgressCache(new Map(progressCache.set(key, data)));
   };
 
-  const updateLessonProgress = async (courseId, lessonId, completed) => {
-    const cached = getCachedProgress(courseId, user.uid);
-    if (cached) {
-      return cached;
+  // Check if user has access to a course
+  const checkAccessStatus = async (courseId: string): Promise<{ hasAccess: boolean, enrollmentStatus: EnrollmentStatus | null }> => {
+    if (!user) {
+      return { hasAccess: false, enrollmentStatus: null };
     }
 
-    const result = await updateProgress(courseId, lessonId, completed);
-    setCachedProgress(courseId, user.uid, result);
-    return result;
+    try {
+      // Get enrollment status
+      const enrollmentStatus = await getEnrollmentStatus(courseId);
+      
+      // User has access if they're enrolled
+      if (enrollmentStatus.enrolled) {
+        return { hasAccess: true, enrollmentStatus };
+      }
+      
+      // Check if it's a free course
+      const courseRef = doc(db, 'courses', courseId);
+      const courseSnap = await getDoc(courseRef);
+      
+      if (courseSnap.exists()) {
+        const courseData = courseSnap.data();
+        if (courseData.price === "0" || courseData.price === "0.00" || courseData.price === "" || !courseData.price) {
+          // Free course - automatically enroll the user
+          await setDoc(doc(db, 'enrollments', `${user.uid}_${courseId}`), {
+            userId: user.uid,
+            courseId: courseId,
+            enrolledAt: serverTimestamp(),
+            status: 'active',
+            progress: {
+              progress: 0,
+              completedLessons: [],
+              lastAccessed: serverTimestamp(),
+              totalLessons: calculateTotalLessons(courseData)
+            }
+          });
+          
+          // Update course student count
+          await updateDoc(courseRef, {
+            students: increment(1)
+          });
+          
+          // Return updated status
+          return { 
+            hasAccess: true, 
+            enrollmentStatus: {
+              enrolled: true,
+              progress: 0,
+              completed: false,
+              currentLesson: null,
+              nextLesson: null,
+              certificateIssued: false,
+              enrolledAt: new Date()
+            }
+          };
+        }
+      }
+      
+      // Not enrolled and not a free course
+      return { hasAccess: false, enrollmentStatus };
+    } catch (error) {
+      console.error('Error checking access status:', error);
+      return { hasAccess: false, enrollmentStatus: null };
+    }
+  };
+
+  // Calculate total number of lessons in a course
+  const calculateTotalLessons = (courseData) => {
+    let totalLessons = 0;
+    if (courseData.modules && Array.isArray(courseData.modules)) {
+      courseData.modules.forEach(module => {
+        if (module.lessons && Array.isArray(module.lessons)) {
+          totalLessons += module.lessons.length;
+        }
+      });
+    }
+    return totalLessons;
+  };
+
+  // Calculate course progress based on completed lessons
+  const calculateProgress = (completedLessons: string[], totalLessons: number): number => {
+    if (totalLessons === 0) return 0;
+    return Math.min(Math.round((completedLessons.length / totalLessons) * 100), 100);
+  };
+
+  // Find the next lesson after the current one in course structure
+  const findNextLesson = (courseData, currentLessonId: string): string | null => {
+    let foundCurrent = false;
+    let nextLessonId = null;
+    
+    // Iterate through modules and lessons
+    for (const module of courseData.modules) {
+      for (let i = 0; i < module.lessons.length; i++) {
+        const lesson = module.lessons[i];
+        
+        // If we found the current lesson in the previous iteration, this is the next one
+        if (foundCurrent) {
+          nextLessonId = lesson.id;
+          return nextLessonId;
+        }
+        
+        // Mark that we found the current lesson
+        if (lesson.id === currentLessonId) {
+          foundCurrent = true;
+          
+          // Check if there's another lesson in this module
+          if (i < module.lessons.length - 1) {
+            nextLessonId = module.lessons[i + 1].id;
+            return nextLessonId;
+          }
+        }
+      }
+      
+      // If we found the current lesson but didn't find a next lesson in the same module,
+      // look for the first lesson in the next module
+      if (foundCurrent && module.lessons.length > 0) {
+        const moduleIndex = courseData.modules.findIndex(m => m.id === module.id);
+        if (moduleIndex < courseData.modules.length - 1) {
+          const nextModule = courseData.modules[moduleIndex + 1];
+          if (nextModule.lessons && nextModule.lessons.length > 0) {
+            nextLessonId = nextModule.lessons[0].id;
+            return nextLessonId;
+          }
+        }
+      }
+    }
+    
+    return nextLessonId;
+  };
+
+  // Update lesson progress for a user
+  const updateLessonProgress = async (courseId: string, lessonId: string, completed: boolean): Promise<void> => {
+    if (!user) throw new Error('Authentication required');
+    
+    setLoading(true);
+    
+    try {
+      // Get the course data to calculate progress and find next lesson
+      const courseRef = doc(db, 'courses', courseId);
+      const courseSnap = await getDoc(courseRef);
+      
+      if (!courseSnap.exists()) {
+        throw new Error('Course not found');
+      }
+      
+      const courseData = courseSnap.data();
+      const totalLessons = calculateTotalLessons(courseData);
+      
+      // Get enrollment data
+      const enrollmentRef = doc(db, 'enrollments', `${user.uid}_${courseId}`);
+      const enrollmentSnap = await getDoc(enrollmentRef);
+      
+      // If not enrolled yet, create enrollment
+      if (!enrollmentSnap.exists()) {
+        await setDoc(enrollmentRef, {
+          userId: user.uid,
+          courseId: courseId,
+          enrolledAt: serverTimestamp(),
+          status: 'active',
+          progress: {
+            progress: completed ? (1 / totalLessons) * 100 : 0,
+            completedLessons: completed ? [lessonId] : [],
+            currentLesson: lessonId,
+            nextLesson: findNextLesson(courseData, lessonId),
+            lastAccessed: serverTimestamp(),
+            totalLessons: totalLessons
+          }
+        });
+        
+        // Update course student count
+        await updateDoc(courseRef, {
+          students: increment(1)
+        });
+        
+        return;
+      }
+      
+      // Update existing enrollment
+      const enrollmentData = enrollmentSnap.data();
+      const completedLessons = enrollmentData.progress?.completedLessons || [];
+      
+      let updatedLessons = [...completedLessons];
+      if (completed && !updatedLessons.includes(lessonId)) {
+        updatedLessons.push(lessonId);
+      } else if (!completed && updatedLessons.includes(lessonId)) {
+        updatedLessons = updatedLessons.filter(id => id !== lessonId);
+      }
+      
+      // Calculate new progress percentage
+      const newProgress = calculateProgress(updatedLessons, totalLessons);
+      
+      // Determine if the course is completed
+      const courseCompleted = newProgress >= 100;
+      
+      // Find the next lesson
+      let nextLessonId = findNextLesson(courseData, lessonId);
+      
+      // Update enrollment document
+      await updateDoc(enrollmentRef, {
+        "progress.progress": newProgress,
+        "progress.completedLessons": updatedLessons,
+        "progress.currentLesson": lessonId,
+        "progress.nextLesson": nextLessonId,
+        "progress.lastAccessed": serverTimestamp(),
+        "status": courseCompleted ? 'completed' : 'active'
+      });
+      
+      // If course is completed, issue certificate
+      if (courseCompleted && enrollmentData.status !== 'completed') {
+        await markCourseCompleted(courseId);
+      }
+      
+    } catch (error) {
+      console.error('Error updating lesson progress:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getUserCourseProgress = async (courseId: string): Promise<CourseProgressData | null> => {
     if (!user) return null
+    
+    // Check if we have cached data
+    const cachedData = getCachedProgress(courseId, user.uid);
+    if (cachedData) {
+      return cachedData;
+    }
     
     setLoading(true)
     
@@ -81,16 +297,21 @@ export function CourseProgressProvider({ children }: { children: React.ReactNode
       
       const enrollmentData = enrollmentSnap.data()
       
-      return {
-        progress: enrollmentData.progress.progress || 0,
-        completedLessons: enrollmentData.progress.completedLessons || [],
-        lastAccessedAt: enrollmentData.progress.lastAccessed?.toDate() || new Date(),
-        currentLesson: enrollmentData.progress.currentLesson || '',
-        nextLesson: enrollmentData.progress.nextLesson || '',
+      const progressData = {
+        progress: enrollmentData.progress?.progress || 0,
+        completedLessons: enrollmentData.progress?.completedLessons || [],
+        lastAccessedAt: enrollmentData.progress?.lastAccessed?.toDate() || new Date(),
+        currentLesson: enrollmentData.progress?.currentLesson || '',
+        nextLesson: enrollmentData.progress?.nextLesson || '',
         status: enrollmentData.status || 'active',
-        totalLessons: enrollmentData.progress.totalLessons || 0,
-        moduleProgress: enrollmentData.progress.moduleProgress || {}
+        totalLessons: enrollmentData.progress?.totalLessons || 0,
+        moduleProgress: enrollmentData.progress?.moduleProgress || {}
       }
+      
+      // Cache the data
+      setCachedProgress(courseId, user.uid, progressData);
+      
+      return progressData;
     } catch (error) {
       console.error('Error getting user course progress:', error)
       return null
@@ -98,7 +319,6 @@ export function CourseProgressProvider({ children }: { children: React.ReactNode
       setLoading(false)
     }
   }
-
 
   // Mark a course as completed and issue certificate
   const markCourseCompleted = async (courseId: string): Promise<void> => {
@@ -366,7 +586,8 @@ export function CourseProgressProvider({ children }: { children: React.ReactNode
         completed: enrollmentData.status === 'completed',
         currentLesson: enrollmentData.progress?.currentLesson || null,
         nextLesson: enrollmentData.progress?.nextLesson || null,
-        certificateIssued
+        certificateIssued,
+        enrolledAt: enrollmentData.enrolledAt?.toDate() || null
       }
     } catch (error) {
       console.error('Error getting enrollment status:', error)
@@ -393,7 +614,8 @@ export function CourseProgressProvider({ children }: { children: React.ReactNode
         markCourseCompleted,
         getEnrollmentStatus,
         getCachedProgress,
-        setCachedProgress
+        setCachedProgress,
+        checkAccessStatus
       }}
     >
       {children}

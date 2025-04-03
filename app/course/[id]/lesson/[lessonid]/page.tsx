@@ -1,3 +1,4 @@
+// LessonPage.jsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -15,7 +16,7 @@ import LessonNotes from "@/components/lesson-notes";
 import LessonDiscussion from "@/components/lesson-discussion";
 import CourseSidebar from "@/components/course-sidebar";
 import LessonClient from "./client";
-import { Course, Module } from "@/types/course";
+import { LessonType } from "@/types/course";
 import {
   ChevronLeft,
   ChevronRight,
@@ -46,6 +47,7 @@ export default function LessonPage() {
   const [prevLesson, setPrevLesson] = useState(null);
   const [nextLesson, setNextLesson] = useState(null);
   const [progress, setProgress] = useState(0);
+  const [lessonCompleted, setLessonCompleted] = useState(false);
 
   const fetchCourseData = async () => {
     try {
@@ -81,6 +83,10 @@ export default function LessonPage() {
       if (enrollmentSnap?.exists()) {
         const enrollmentData = enrollmentSnap.data();
         setProgress(enrollmentData.progress?.progress || 0);
+        
+        // Check if this lesson is completed
+        const completedLessons = enrollmentData.completedLessons || [];
+        setLessonCompleted(completedLessons.includes(lessonId));
       }
 
       // Process lesson navigation
@@ -113,7 +119,10 @@ export default function LessonPage() {
           foundLesson = true;
           currentModuleIndex = moduleIndex;
           currentLessonIndex = lessonIndex;
-          setCurrentLesson(lesson);
+          
+          // Ensure lesson has the expected structure
+          const normalizedLesson = normalizeLesson(lesson);
+          setCurrentLesson(normalizedLesson);
           setCurrentModule(module);
           break;
         }
@@ -129,6 +138,46 @@ export default function LessonPage() {
 
     // Set navigation
     setupNavigation(modules, currentModuleIndex, currentLessonIndex);
+  };
+
+  // Helper function to normalize lesson data structure
+  const normalizeLesson = (lesson) => {
+    // Ensure lesson has content object
+    if (!lesson.content) {
+      lesson.content = {};
+    }
+    
+    // For older lesson formats that might have properties directly on the lesson object
+    if (lesson.videoUrl && !lesson.content.videoUrl) {
+      lesson.content.videoUrl = lesson.videoUrl;
+    }
+    
+    if (lesson.transcript && !lesson.content.transcript) {
+      lesson.content.transcript = lesson.transcript;
+    }
+    
+    if (lesson.description && !lesson.content.description) {
+      lesson.content.description = lesson.description;
+    }
+    
+    // If textContent is not set but there's description, use it
+    if (!lesson.content.textContent && lesson.content.description) {
+      lesson.content.textContent = lesson.content.description;
+    }
+    
+    // Ensure lesson has a type
+    if (!lesson.type) {
+      // Determine type based on content
+      if (lesson.content.videoUrl) {
+        lesson.type = LessonType.VIDEO;
+      } else if (lesson.content.quiz && lesson.content.quiz.length > 0) {
+        lesson.type = LessonType.QUIZ;
+      } else {
+        lesson.type = LessonType.TEXT;
+      }
+    }
+    
+    return lesson;
   };
 
   // Helper function to set up navigation
@@ -156,17 +205,20 @@ export default function LessonPage() {
 
   useEffect(() => {
     fetchCourseData();
+  }, [courseId, lessonId]);
 
-    if (user && currentLesson) {
+  useEffect(() => {
+    if (user && currentLesson && !lessonCompleted) {
       updateLessonProgress(courseId, lessonId, false).catch((err) => {
         console.error("Failed to update current lesson:", err);
       });
     }
-  }, [courseId, lessonId, user]);
+  }, [user, currentLesson, lessonCompleted, courseId, lessonId]);
 
   const handleMarkComplete = async () => {
     try {
       await updateLessonProgress(courseId, lessonId, true);
+      setLessonCompleted(true);
 
       if (nextLesson) {
         router.push(`/course/${courseId}/lesson/${nextLesson.id}`);
@@ -198,6 +250,9 @@ export default function LessonPage() {
       </div>
     );
   }
+
+  // Determine which tab to show by default based on lesson type
+  const defaultTab = currentLesson.type === LessonType.QUIZ ? "quiz" : "lesson";
 
   return (
     <CourseAccessGuard
@@ -300,20 +355,32 @@ export default function LessonPage() {
                 </p>
               </div>
 
-              <Tabs defaultValue="lesson" className="w-full">
+              <Tabs defaultValue={defaultTab} className="w-full">
                 <TabsList className="mb-4 w-full justify-start bg-slate-100 dark:bg-slate-800/50 p-1 rounded-lg">
                   <TabsTrigger
                     value="lesson"
                     className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-950 data-[state=active]:text-blue-600 rounded-md"
                   >
-                    Lesson
+                    {currentLesson.type === LessonType.VIDEO ? "Video" : 
+                     currentLesson.type === LessonType.QUIZ ? "Instructions" : "Lesson"}
                   </TabsTrigger>
+                  
+                  {currentLesson.type === LessonType.QUIZ && (
+                    <TabsTrigger
+                      value="quiz"
+                      className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-950 data-[state=active]:text-blue-600 rounded-md"
+                    >
+                      Quiz
+                    </TabsTrigger>
+                  )}
+                  
                   <TabsTrigger
                     value="notes"
                     className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-950 data-[state=active]:text-blue-600 rounded-md"
                   >
                     Notes
                   </TabsTrigger>
+                  
                   <TabsTrigger
                     value="discussion"
                     className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-950 data-[state=active]:text-blue-600 rounded-md"
@@ -331,7 +398,6 @@ export default function LessonPage() {
                       </div>
                     }
                   >
-                    {/* THIS IS THE FIX: Pass the currentLesson to LessonContent */}
                     <LessonContent lesson={currentLesson} />
                   </Suspense>
 
@@ -360,8 +426,14 @@ export default function LessonPage() {
                         href={`/course/${courseId}/lesson/${nextLesson.id}`}
                         className="w-full sm:w-auto"
                       >
-                        <Button className="w-full sm:w-auto justify-end gap-2 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white">
-                          <span>Next: {nextLesson.title}</span>
+                        <Button 
+                          className="w-full sm:w-auto justify-end gap-2 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white"
+                          onClick={handleMarkComplete}
+                        >
+                          <span>
+                            {lessonCompleted ? "Next:" : "Mark Complete & Continue:"}
+                          </span>
+                          <span className="truncate max-w-28">{nextLesson.title}</span>
                           <ChevronRight className="h-4 w-4" />
                         </Button>
                       </Link>
@@ -370,7 +442,10 @@ export default function LessonPage() {
                         href={`/course/${courseId}`}
                         className="w-full sm:w-auto"
                       >
-                        <Button className="w-full sm:w-auto justify-end gap-2 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white">
+                        <Button 
+                          className="w-full sm:w-auto justify-end gap-2 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white"
+                          onClick={() => updateLessonProgress(courseId, lessonId, true)}
+                        >
                           <span>Complete Course</span>
                           <CheckCircle className="h-4 w-4" />
                         </Button>
@@ -378,8 +453,64 @@ export default function LessonPage() {
                     )}
                   </div>
 
-                  <LessonCompletion lessonId={lessonId} courseId={courseId} />
+                  {currentLesson.type !== LessonType.QUIZ && (
+                    <LessonCompletion 
+                      lessonId={lessonId} 
+                      courseId={courseId} 
+                      isCompleted={lessonCompleted}
+                      onComplete={handleMarkComplete}
+                    />
+                  )}
                 </TabsContent>
+
+                {currentLesson.type === LessonType.QUIZ && (
+                  <TabsContent value="quiz" className="space-y-6">
+                    <Suspense
+                      fallback={
+                        <div className="h-96 flex items-center justify-center">
+                          <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" />
+                          <span>Loading quiz content...</span>
+                        </div>
+                      }
+                    >
+                      {/* You'll need to create and import a QuizComponent */}
+                      {/* <QuizComponent
+                        quiz={currentLesson.content.quiz}
+                        lessonId={lessonId}
+                        courseId={courseId}
+                        onComplete={handleMarkComplete}
+                      /> */}
+                      
+                      {/* Temporary quiz display until you create a proper component */}
+                      <div className="border rounded-lg p-6">
+                        <h2 className="text-2xl font-bold mb-4">Quiz: {currentLesson.title}</h2>
+                        {currentLesson.content.quiz && currentLesson.content.quiz.map((q, i) => (
+                          <div key={i} className="mb-6">
+                            <h3 className="text-lg font-medium mb-2">Q{i+1}: {q.question}</h3>
+                            <ul className="space-y-2">
+                              {q.options.map((option, j) => (
+                                <li key={j} className="flex items-start gap-2">
+                                  <div className="flex-shrink-0 h-6 w-6 mt-0.5 border rounded-full flex items-center justify-center">
+                                    {j === q.correctAnswer ? "✓" : String.fromCharCode(97 + j)}
+                                  </div>
+                                  <span>{option}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ))}
+                        
+                        <Button 
+                          className="w-full sm:w-auto justify-center mt-6 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white"
+                          onClick={handleMarkComplete}
+                        >
+                          <span>Mark Quiz as Complete</span>
+                          <CheckCircle className="h-4 w-4 ml-2" />
+                        </Button>
+                      </div>
+                    </Suspense>
+                  </TabsContent>
+                )}
 
                 <TabsContent value="notes" className="space-y-6">
                   <LessonNotes lessonId={lessonId} courseId={courseId} />

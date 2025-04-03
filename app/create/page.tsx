@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -33,10 +34,8 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useCourses } from "@/context/CourseContext";
-import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthProvider";
 import { CourseLevel, CourseStatus } from "@/types/course";
 import {
   Plus,
@@ -48,7 +47,7 @@ import {
   Award,
   Upload,
   Save,
-  Image,
+  Image as ImageIcon,
   FileQuestion,
   Info,
   ArrowLeft,
@@ -57,16 +56,35 @@ import {
   PenTool,
   DollarSign,
   Code2,
+  Link as LinkIcon,
+  AlertTriangle,
+  Loader2,
 } from "lucide-react";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import { TipTapEditor } from "@/components/tiptap-editor";
 
 export default function CreateCoursePage() {
   const [activeTab, setActiveTab] = useState("basic");
   const [showContentEditor, setShowContentEditor] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState(null);
   const [saveStatus, setSaveStatus] = useState(null);
-  const { createCourse, updateCourse, publishCourse } = useCourses();
+  const [isUploading, setIsUploading] = useState(false);
+  const { createCourse, updateCourse, publishCourse, uploadCourseImage } = useCourses();
   const { toast } = useToast();
   const router = useRouter();
+  const { user, userProfile } = useAuth();
+
+  // Redirect if not instructor or admin
+  useEffect(() => {
+    if (user && userProfile && userProfile.role !== 'instructor' && userProfile.role !== 'admin') {
+      toast({
+        title: "Access Denied",
+        description: "You must be an instructor to create courses",
+        variant: "destructive",
+      });
+      router.push("/dashboard");
+    }
+  }, [user, userProfile, router, toast]);
 
   const [modules, setModules] = useState([
     {
@@ -125,6 +143,30 @@ export default function CreateCoursePage() {
     }));
   };
 
+  const handleThumbnailUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      setIsUploading(true);
+      const url = await uploadCourseImage(file);
+      handleInputChange("thumbnail", url);
+      toast({
+        title: "Success",
+        description: "Image uploaded successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to upload image",
+        variant: "destructive",
+      });
+      console.error("Error uploading image:", error);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleSaveDraft = async () => {
     setSaveStatus("saving");
     try {
@@ -155,15 +197,7 @@ export default function CreateCoursePage() {
           (acc, module) => acc + module.lessons.length,
           0
         ),
-        duration: modules.reduce(
-          (acc, module) =>
-            acc +
-            module.lessons.reduce(
-              (sum, lesson) => sum + parseInt(lesson.duration) || 0,
-              0
-            ),
-          0
-        ),
+        duration: calculateTotalDuration(),
       });
 
       setSaveStatus("saved");
@@ -215,15 +249,7 @@ export default function CreateCoursePage() {
           (acc, module) => acc + module.lessons.length,
           0
         ),
-        duration: modules.reduce(
-          (acc, module) =>
-            acc +
-            module.lessons.reduce(
-              (sum, lesson) => sum + parseInt(lesson.duration) || 0,
-              0
-            ),
-          0
-        ),
+        duration: calculateTotalDuration(),
       });
 
       setSaveStatus("saved");
@@ -241,6 +267,35 @@ export default function CreateCoursePage() {
         description: error.message,
         variant: "destructive",
       });
+    }
+  };
+
+  const calculateTotalDuration = () => {
+    // Calculate total duration from all lessons
+    let totalMinutes = 0;
+    
+    modules.forEach(module => {
+      module.lessons.forEach(lesson => {
+        const durationParts = lesson.duration.split(':');
+        if (durationParts.length === 2) {
+          // Format: MM:SS
+          totalMinutes += parseInt(durationParts[0]) + (parseInt(durationParts[1]) / 60);
+        } else {
+          // Try to parse as minutes
+          const mins = parseFloat(lesson.duration);
+          if (!isNaN(mins)) totalMinutes += mins;
+        }
+      });
+    });
+    
+    // Format total duration
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = Math.round(totalMinutes % 60);
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes > 0 ? minutes + 'm' : ''}`;
+    } else {
+      return `${minutes}m`;
     }
   };
 
@@ -278,55 +333,60 @@ export default function CreateCoursePage() {
   };
 
   const handleAddModule = () => {
-  // Find the highest module number
-  const moduleNumbers = modules.map(m => {
-    const match = m.id.match(/module-(\d+)/);
-    return match ? parseInt(match[1]) : 0;
-  });
-  
-  const nextModuleNumber = moduleNumbers.length > 0 ? Math.max(...moduleNumbers) + 1 : 1;
-  const newModuleId = `module-${nextModuleNumber}`;
-  
-  setModules([
-    ...modules,
-    {
-      id: newModuleId,
-      title: `New Module`,
-      description: "Add a description for this module",
-      lessons: [],
-    },
-  ]);
-};
+    // Find the highest module number
+    const moduleNumbers = modules.map(m => {
+      const match = m.id.match(/module-(\d+)/);
+      return match ? parseInt(match[1]) : 0;
+    });
+    
+    const nextModuleNumber = moduleNumbers.length > 0 ? Math.max(...moduleNumbers) + 1 : 1;
+    const newModuleId = `module-${nextModuleNumber}`;
+    
+    setModules([
+      ...modules,
+      {
+        id: newModuleId,
+        title: `New Module`,
+        description: "Add a description for this module",
+        lessons: [],
+      },
+    ]);
+  };
 
-const handleAddLesson = (moduleId) => {
-  const moduleIndex = modules.findIndex((m) => m.id === moduleId);
-  if (moduleIndex === -1) return;
-  
-  // Extract module number from moduleId
-  const moduleMatch = moduleId.match(/module-(\d+)/);
-  if (!moduleMatch) return;
-  const moduleNumber = moduleMatch[1];
-  
-  // Find the highest lesson number for this module
-  const lessonNumbers = modules[moduleIndex].lessons.map(lesson => {
-    const match = lesson.id.match(/lesson-\d+-(\d+)/);
-    return match ? parseInt(match[1]) : 0;
-  });
-  
-  const nextLessonNumber = lessonNumbers.length > 0 ? Math.max(...lessonNumbers) + 1 : 1;
-  const newLessonId = `lesson-${moduleNumber}-${nextLessonNumber}`;
-  
-  const updatedModules = [...modules];
-  updatedModules[moduleIndex].lessons.push({
-    id: newLessonId,
-    title: "New Lesson",
-    type: "video",
-    duration: "00:00",
-    content: {},
-  });
-  
-  setModules(updatedModules);
-};
+  const handleAddLesson = (moduleId) => {
+    const moduleIndex = modules.findIndex((m) => m.id === moduleId);
+    if (moduleIndex === -1) return;
+    
+    // Extract module number from moduleId
+    const moduleMatch = moduleId.match(/module-(\d+)/);
+    if (!moduleMatch) return;
+    const moduleNumber = moduleMatch[1];
+    
+    // Find the highest lesson number for this module
+    const lessonNumbers = modules[moduleIndex].lessons.map(lesson => {
+      const match = lesson.id.match(/lesson-\d+-(\d+)/);
+      return match ? parseInt(match[1]) : 0;
+    });
+    
+    const nextLessonNumber = lessonNumbers.length > 0 ? Math.max(...lessonNumbers) + 1 : 1;
+    const newLessonId = `lesson-${moduleNumber}-${nextLessonNumber}`;
+    
+    const updatedModules = [...modules];
+    updatedModules[moduleIndex].lessons.push({
+      id: newLessonId,
+      title: "New Lesson",
+      type: "video",
+      duration: "00:00",
+      content: {
+        videoUrl: "",
+        description: "",
+        transcript: "",
+        attachments: [],
+      },
+    });
+    
+    setModules(updatedModules);
+  };
 
   const handleDeleteModule = (moduleId) => {
     setModules(modules.filter((m) => m.id !== moduleId));
@@ -386,6 +446,54 @@ const handleAddLesson = (moduleId) => {
 
     const updatedModules = [...modules];
     updatedModules[moduleIndex].lessons[lessonIndex].type = newType;
+    
+    // Initialize default content based on lesson type
+    const currentContent = updatedModules[moduleIndex].lessons[lessonIndex].content || {};
+    
+    switch (newType) {
+      case "video":
+        updatedModules[moduleIndex].lessons[lessonIndex].content = {
+          ...currentContent,
+          videoUrl: currentContent.videoUrl || "",
+          description: currentContent.description || "",
+          transcript: currentContent.transcript || "",
+        };
+        break;
+      case "text":
+        updatedModules[moduleIndex].lessons[lessonIndex].content = {
+          ...currentContent,
+          textContent: currentContent.textContent || "",
+        };
+        break;
+      case "quiz":
+        updatedModules[moduleIndex].lessons[lessonIndex].content = {
+          ...currentContent,
+          quiz: currentContent.quiz || [
+            {
+              question: "Sample question",
+              options: ["Option 1", "Option 2", "Option 3", "Option 4"],
+              correctAnswer: 0,
+            }
+          ]
+        };
+        break;
+      case "exercise":
+        updatedModules[moduleIndex].lessons[lessonIndex].content = {
+          ...currentContent,
+          instructions: currentContent.instructions || "",
+          solution: currentContent.solution || "",
+        };
+        break;
+      case "project":
+        updatedModules[moduleIndex].lessons[lessonIndex].content = {
+          ...currentContent,
+          description: currentContent.description || "",
+          requirements: currentContent.requirements || "",
+          rubric: currentContent.rubric || "",
+        };
+        break;
+    }
+    
     setModules(updatedModules);
   };
 
@@ -400,6 +508,74 @@ const handleAddLesson = (moduleId) => {
 
     const updatedModules = [...modules];
     updatedModules[moduleIndex].lessons[lessonIndex].duration = newDuration;
+    setModules(updatedModules);
+  };
+
+  const handleVideoUrlChange = (moduleId, lessonId, videoUrl) => {
+    const moduleIndex = modules.findIndex((m) => m.id === moduleId);
+    if (moduleIndex === -1) return;
+
+    const lessonIndex = modules[moduleIndex].lessons.findIndex(
+      (l) => l.id === lessonId
+    );
+    if (lessonIndex === -1) return;
+
+    const updatedModules = [...modules];
+    if (!updatedModules[moduleIndex].lessons[lessonIndex].content) {
+      updatedModules[moduleIndex].lessons[lessonIndex].content = {};
+    }
+    updatedModules[moduleIndex].lessons[lessonIndex].content.videoUrl = videoUrl;
+    setModules(updatedModules);
+  };
+
+  const handleTextContentChange = (moduleId, lessonId, textContent) => {
+    const moduleIndex = modules.findIndex((m) => m.id === moduleId);
+    if (moduleIndex === -1) return;
+
+    const lessonIndex = modules[moduleIndex].lessons.findIndex(
+      (l) => l.id === lessonId
+    );
+    if (lessonIndex === -1) return;
+
+    const updatedModules = [...modules];
+    if (!updatedModules[moduleIndex].lessons[lessonIndex].content) {
+      updatedModules[moduleIndex].lessons[lessonIndex].content = {};
+    }
+    updatedModules[moduleIndex].lessons[lessonIndex].content.textContent = textContent;
+    setModules(updatedModules);
+  };
+
+  const handleDescriptionChange = (moduleId, lessonId, description) => {
+    const moduleIndex = modules.findIndex((m) => m.id === moduleId);
+    if (moduleIndex === -1) return;
+
+    const lessonIndex = modules[moduleIndex].lessons.findIndex(
+      (l) => l.id === lessonId
+    );
+    if (lessonIndex === -1) return;
+
+    const updatedModules = [...modules];
+    if (!updatedModules[moduleIndex].lessons[lessonIndex].content) {
+      updatedModules[moduleIndex].lessons[lessonIndex].content = {};
+    }
+    updatedModules[moduleIndex].lessons[lessonIndex].content.description = description;
+    setModules(updatedModules);
+  };
+
+  const handleTranscriptChange = (moduleId, lessonId, transcript) => {
+    const moduleIndex = modules.findIndex((m) => m.id === moduleId);
+    if (moduleIndex === -1) return;
+
+    const lessonIndex = modules[moduleIndex].lessons.findIndex(
+      (l) => l.id === lessonId
+    );
+    if (lessonIndex === -1) return;
+
+    const updatedModules = [...modules];
+    if (!updatedModules[moduleIndex].lessons[lessonIndex].content) {
+      updatedModules[moduleIndex].lessons[lessonIndex].content = {};
+    }
+    updatedModules[moduleIndex].lessons[lessonIndex].content.transcript = transcript;
     setModules(updatedModules);
   };
 
@@ -586,6 +762,28 @@ const handleAddLesson = (moduleId) => {
     }));
   };
 
+  // Validate video URL format
+  const isValidVideoUrl = (url) => {
+    // Check if URL is empty
+    if (!url) return true;
+    
+    // Basic URL validation
+    try {
+      new URL(url);
+    } catch (e) {
+      return false;
+    }
+    
+    // Check for common video hosting domains
+    const supportedDomains = [
+      'youtube.com', 'youtu.be', 'vimeo.com', 
+      'wistia.com', 'dailymotion.com', 'twitch.tv',
+      'facebook.com', 'drive.google.com', 'dropbox.com'
+    ];
+    
+    return supportedDomains.some(domain => url.includes(domain));
+  };
+
   useEffect(() => {
     // Update the courseData.modules whenever modules state changes
     setCourseData((prev) => ({
@@ -593,6 +791,35 @@ const handleAddLesson = (moduleId) => {
       modules: modules,
     }));
   }, [modules]);
+
+  if (!user || !userProfile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 mx-auto mb-4 animate-spin text-blue-600" />
+          <h3 className="text-lg font-medium">Loading...</h3>
+          <p className="text-muted-foreground mt-2">Please wait while we check your credentials</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (userProfile.role !== 'instructor' && userProfile.role !== 'admin') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-amber-500" />
+          <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
+          <p className="mb-4 text-muted-foreground">
+            You need to be an instructor to create courses. Please apply to become an instructor first.
+          </p>
+          <Button asChild className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700">
+            <Link href="/instructor/apply">Apply to Become an Instructor</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -854,8 +1081,77 @@ const handleAddLesson = (moduleId) => {
                         className="border-blue-100 dark:border-blue-900"
                       />
                       <p className="text-xs text-muted-foreground">
-                        Total length of all video content
+                        Total length of all video content (auto-calculated from lessons)
                       </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <Label>Course Thumbnail</Label>
+                    <div className="border-2 border-dashed border-blue-200 dark:border-blue-800 rounded-lg p-4 text-center">
+                      {courseData.thumbnail ? (
+                        <div className="space-y-4">
+                          <div className="aspect-video w-full overflow-hidden rounded-lg">
+                            <img
+                              src={courseData.thumbnail}
+                              alt="Course thumbnail"
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="flex justify-center gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              disabled={isUploading}
+                              onClick={() => document.getElementById('thumbnail-upload').click()}
+                            >
+                              {isUploading ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              ) : (
+                                <Upload className="mr-2 h-4 w-4" />
+                              )}
+                              Change
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
+                              onClick={() => handleInputChange("thumbnail", "")}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Remove
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="py-8">
+                          <ImageIcon className="h-12 w-12 text-blue-500 mx-auto mb-4" />
+                          <h3 className="text-lg font-medium text-slate-800 dark:text-slate-200 mb-2">
+                            Upload Thumbnail
+                          </h3>
+                          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                            Recommended size: 1280x720px (16:9 ratio)
+                          </p>
+                          <Button
+                            disabled={isUploading}
+                            onClick={() => document.getElementById('thumbnail-upload').click()}
+                          >
+                            {isUploading ? (
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                              <Upload className="mr-2 h-4 w-4" />
+                            )}
+                            Upload Image
+                          </Button>
+                          <input
+                            id="thumbnail-upload"
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleThumbnailUpload}
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -865,23 +1161,47 @@ const handleAddLesson = (moduleId) => {
                       {courseData.previewVideo ? (
                         <div className="space-y-4">
                           <div className="aspect-video w-full overflow-hidden rounded-lg bg-slate-900 flex items-center justify-center">
-                            <Video className="h-12 w-12 text-blue-500" />
+                            {courseData.previewVideo.includes('youtube.com') || courseData.previewVideo.includes('youtu.be') ? (
+                              <iframe
+                                src={courseData.previewVideo.replace('watch?v=', 'embed/')}
+                                title="Preview video"
+                                className="w-full h-full"
+                                allowFullScreen
+                              ></iframe>
+                            ) : (
+                              <Video className="h-12 w-12 text-blue-500" />
+                            )}
                           </div>
                           <p className="text-sm text-slate-600 dark:text-slate-400">
-                            {courseData.previewVideo.split("/").pop()}
+                            {courseData.previewVideo}
                           </p>
                           <div className="flex justify-center gap-2">
-                            <Button variant="outline" size="sm">
-                              <Upload className="mr-2 h-4 w-4" />
-                              Change
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => {
+                                const url = window.prompt('Enter video URL:', courseData.previewVideo);
+                                if (url) {
+                                  if (isValidVideoUrl(url)) {
+                                    handleInputChange("previewVideo", url);
+                                  } else {
+                                    toast({
+                                      title: "Invalid Video URL",
+                                      description: "Please enter a valid URL from YouTube, Vimeo, or other supported platforms.",
+                                      variant: "destructive"
+                                    });
+                                  }
+                                }
+                              }}
+                            >
+                              <LinkIcon className="mr-2 h-4 w-4" />
+                              Change URL
                             </Button>
                             <Button
                               variant="outline"
                               size="sm"
                               className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
-                              onClick={() =>
-                                handleInputChange("previewVideo", "")
-                              }
+                              onClick={() => handleInputChange("previewVideo", "")}
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
                               Remove
@@ -892,16 +1212,32 @@ const handleAddLesson = (moduleId) => {
                         <div className="py-8">
                           <Video className="h-12 w-12 text-blue-500 mx-auto mb-4" />
                           <h3 className="text-lg font-medium text-slate-800 dark:text-slate-200 mb-2">
-                            Upload Preview Video
+                            Add Preview Video
                           </h3>
                           <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                            A short preview video to showcase your course (2-5
-                            minutes)
+                            A short preview video to showcase your course (2-5 minutes)
                           </p>
-                          <Button>
-                            <Upload className="mr-2 h-4 w-4" />
-                            Upload Video
-                          </Button>
+                          <div className="flex flex-col sm:flex-row justify-center gap-3">
+                            <Button
+                              onClick={() => {
+                                const url = window.prompt('Enter video URL:');
+                                if (url) {
+                                  if (isValidVideoUrl(url)) {
+                                    handleInputChange("previewVideo", url);
+                                  } else {
+                                    toast({
+                                      title: "Invalid Video URL",
+                                      description: "Please enter a valid URL from YouTube, Vimeo, or other supported platforms.",
+                                      variant: "destructive"
+                                    });
+                                  }
+                                }
+                              }}
+                            >
+                              <LinkIcon className="mr-2 h-4 w-4" />
+                              Add Video URL
+                            </Button>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1078,111 +1414,6 @@ const handleAddLesson = (moduleId) => {
                 </div>
               </CardContent>
             </Card>
-
-            {/* <Card className="border-blue-100 dark:border-blue-900">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50 rounded-t-lg">
-                <CardTitle className="text-slate-800 dark:text-slate-200">
-                  Course Media
-                </CardTitle>
-                <CardDescription>
-                  Upload thumbnail and preview video
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6 pt-6">
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div className="space-y-4">
-                    <Label>Course Thumbnail</Label>
-                    <div className="border-2 border-dashed border-blue-200 dark:border-blue-800 rounded-lg p-4 text-center">
-                      {courseData.thumbnail ? (
-                        <div className="space-y-4">
-                          <div className="aspect-video w-full overflow-hidden rounded-lg">
-                            <img
-                              src={courseData.thumbnail}
-                              alt="Course thumbnail"
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <div className="flex justify-center gap-2">
-                            <Button variant="outline" size="sm">
-                              <Upload className="mr-2 h-4 w-4" />
-                              Change
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
-                              onClick={() => handleInputChange("thumbnail", "")}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Remove
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="py-8">
-                          <Image className="h-12 w-12 text-blue-500 mx-auto mb-4" />
-                          <h3 className="text-lg font-medium text-slate-800 dark:text-slate-200 mb-2">
-                            Upload Thumbnail
-                          </h3>
-                          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                            Recommended size: 1280x720px (16:9 ratio)
-                          </p>
-                          <Button>
-                            <Upload className="mr-2 h-4 w-4" />
-                            Upload Image
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* <div className="space-y-4">
-                    <Label>Preview Video</Label>
-                    <div className="border-2 border-dashed border-blue-200 dark:border-blue-800 rounded-lg p-4 text-center">
-                      {course.previewVideo ? (
-                        <div className="space-y-4">
-                          <div className="aspect-video w-full overflow-hidden rounded-lg bg-slate-900 flex items-center justify-center">
-                            <Video className="h-12 w-12 text-blue-500" />
-                          </div>
-                          <p className="text-sm text-slate-600 dark:text-slate-400">
-                            {course.previewVideo.split("/").pop()}
-                          </p>
-                          <div className="flex justify-center gap-2">
-                            <Button variant="outline" size="sm">
-                              <Upload className="mr-2 h-4 w-4" />
-                              Change
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Remove
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="py-8">
-                          <Video className="h-12 w-12 text-blue-500 mx-auto mb-4" />
-                          <h3 className="text-lg font-medium text-slate-800 dark:text-slate-200 mb-2">
-                            Upload Preview Video
-                          </h3>
-                          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                            A short preview video to showcase your course (2-5
-                            minutes)
-                          </p>
-                          <Button>
-                            <Upload className="mr-2 h-4 w-4" />
-                            Upload Video
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </div> 
-                </div>
-              </CardContent>
-            </Card> */}
           </TabsContent>
 
           <TabsContent value="curriculum" className="space-y-6">
@@ -1196,476 +1427,486 @@ const handleAddLesson = (moduleId) => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
-                <Alert className="mb-6 border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-300">
+                <Card className="mb-6 border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-300">
                   <Info className="h-4 w-4" />
-                  <AlertTitle>Curriculum Tips</AlertTitle>
-                  <AlertDescription>
+                  <CardTitle>Curriculum Tips</CardTitle>
+                  <CardDescription>
                     Organize your course into logical modules. Each module
                     should contain related lessons that build upon each other.
                     Keep videos between 5-15 minutes for optimal engagement.
-                  </AlertDescription>
-                </Alert>
+                  </CardDescription>
+                </Card>
 
-                <div className="space-y-6">
-                  {courseData.modules.map((module, moduleIndex) => (
-                    <div
-                      key={module.id}
-                      className="border border-blue-100 dark:border-blue-900 rounded-lg"
-                    >
-                      <div className="bg-blue-50 dark:bg-blue-950/30 p-4 rounded-t-lg">
-                        <div className="flex items-center gap-4">
-                          <GripVertical className="h-5 w-5 text-slate-400 cursor-move" />
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <Input
-                                placeholder="Module title"
-                                defaultValue={module.title}
-                                className="text-lg font-medium border-blue-200 dark:border-blue-800 bg-white dark:bg-slate-900"
-                              />
-                              <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
-                                Module {moduleIndex + 1}
-                              </Badge>
-                            </div>
-                            <div className="mt-2">
-                              <Input
-                                placeholder="Module description"
-                                defaultValue={module.description}
-                                className="text-sm border-blue-200 dark:border-blue-800 bg-white dark:bg-slate-900"
-                              />
-                            </div>
-                          </div>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400 border-red-200 dark:border-red-800"
-                            onClick={() => handleDeleteModule(module.id)}
+                <DragDropContext onDragEnd={onDragEnd}>
+                  <Droppable droppableId="modules" type="MODULE">
+                    {(provided) => (
+                      <div
+                        {...provided.droppableProps}
+                        ref={provided.innerRef}
+                        className="space-y-6"
+                      >
+                        {modules.map((module, moduleIndex) => (
+                          <Draggable
+                            key={module.id}
+                            draggableId={module.id}
+                            index={moduleIndex}
                           >
-                            <Trash2 className="h-4 w-4" />
-                            <span className="sr-only">Delete module</span>
-                          </Button>
-                        </div>
-                      </div>
+                            {(provided) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                className="border border-blue-100 dark:border-blue-900 rounded-lg"
+                              >
+                                <div className="bg-blue-50 dark:bg-blue-950/30 p-4 rounded-t-lg">
+                                  <div className="flex items-center gap-4">
+                                    <div
+                                      {...provided.dragHandleProps}
+                                      className="cursor-move"
+                                    >
+                                      <GripVertical className="h-5 w-5 text-slate-400" />
+                                    </div>
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-2">
+                                        <Input
+                                          placeholder="Module title"
+                                          value={module.title}
+                                          onChange={(e) =>
+                                            handleModuleTitleChange(
+                                              module.id,
+                                              e.target.value
+                                            )
+                                          }
+                                          className="text-lg font-medium border-blue-200 dark:border-blue-800 bg-white dark:bg-slate-900"
+                                        />
+                                        <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                                          Module {moduleIndex + 1}
+                                        </Badge>
+                                      </div>
+                                      <div className="mt-2">
+                                        <Input
+                                          placeholder="Module description"
+                                          value={module.description}
+                                          onChange={(e) =>
+                                            handleModuleDescriptionChange(
+                                              module.id,
+                                              e.target.value
+                                            )
+                                          }
+                                          className="text-sm border-blue-200 dark:border-blue-800 bg-white dark:bg-slate-900"
+                                        />
+                                      </div>
+                                    </div>
+                                    <Button
+                                      variant="outline"
+                                      size="icon"
+                                      className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400 border-red-200 dark:border-red-800"
+                                      onClick={() => handleDeleteModule(module.id)}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                      <span className="sr-only">Delete module</span>
+                                    </Button>
+                                  </div>
+                                </div>
 
-                      <div className="p-4 space-y-4">
-                        {module.lessons.map((lesson, lessonIndex) => (
-                          <div
-                            key={lesson.id}
-                            className="flex items-center gap-4 p-3 border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-950"
-                          >
-                            <GripVertical className="h-5 w-5 text-slate-400 cursor-move" />
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <Input
-                                  placeholder="Lesson title"
-                                  defaultValue={lesson.title}
-                                  className="border-blue-100 dark:border-blue-900"
-                                />
-                                <Select defaultValue={lesson.type}>
-                                  <SelectTrigger className="w-[140px] border-blue-100 dark:border-blue-900">
-                                    <SelectValue placeholder="Lesson type" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="video">
-                                      <div className="flex items-center">
-                                        <Video className="mr-2 h-4 w-4" />
-                                        <span>Video</span>
-                                      </div>
-                                    </SelectItem>
-                                    <SelectItem value="quiz">
-                                      <div className="flex items-center">
-                                        <FileText className="mr-2 h-4 w-4" />
-                                        <span>Quiz</span>
-                                      </div>
-                                    </SelectItem>
-                                    <SelectItem value="exercise">
-                                      <div className="flex items-center">
-                                        <Code2 className="mr-2 h-4 w-4" />
-                                        <span>Exercise</span>
-                                      </div>
-                                    </SelectItem>
-                                    <SelectItem value="project">
-                                      <div className="flex items-center">
-                                        <Award className="mr-2 h-4 w-4" />
-                                        <span>Project</span>
-                                      </div>
-                                    </SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div className="flex items-center gap-2 mt-2">
-                                <Input
-                                  placeholder="Duration (e.g., 15:30)"
-                                  defaultValue={lesson.duration}
-                                  className="w-[140px] border-blue-100 dark:border-blue-900"
-                                />
-                                <Accordion
-                                  type="single"
-                                  collapsible
-                                  className="w-full"
-                                >
-                                  <AccordionItem
-                                    value="content"
-                                    className="border-none"
+                                <div className="p-4 space-y-4">
+                                  <Droppable
+                                    droppableId={module.id}
+                                    type="LESSON"
                                   >
-                                    <AccordionTrigger className="py-0 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:no-underline">
-                                      Edit Content
-                                    </AccordionTrigger>
-                                    <AccordionContent className="pt-4">
-                                      {lesson.type === "video" && (
-                                        <div className="space-y-4">
-                                          <div className="space-y-2">
-                                            <Label>Video Upload</Label>
-                                            <div className="border-2 border-dashed border-blue-200 dark:border-blue-800 rounded-lg p-4 text-center">
-                                              {lesson.content?.videoUrl ? (
-                                                <div className="space-y-2">
-                                                  <p className="text-sm text-slate-600 dark:text-slate-400">
-                                                    {lesson.content.videoUrl
-                                                      .split("/")
-                                                      .pop()}
-                                                  </p>
-                                                  <div className="flex justify-center gap-2">
-                                                    <Button
-                                                      variant="outline"
-                                                      size="sm"
-                                                    >
-                                                      <Upload className="mr-2 h-4 w-4" />
-                                                      Change
-                                                    </Button>
-                                                    <Button
-                                                      variant="outline"
-                                                      size="sm"
-                                                      className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
-                                                    >
-                                                      <Trash2 className="mr-2 h-4 w-4" />
-                                                      Remove
-                                                    </Button>
-                                                  </div>
-                                                </div>
-                                              ) : (
-                                                <div className="py-4">
-                                                  <Video className="h-8 w-8 text-blue-500 mx-auto mb-2" />
-                                                  <Button size="sm">
-                                                    <Upload className="mr-2 h-4 w-4" />
-                                                    Upload Video
-                                                  </Button>
-                                                </div>
-                                              )}
-                                            </div>
-                                          </div>
-                                          <div className="space-y-2">
-                                            <Label
-                                              htmlFor={`transcript-${lesson.id}`}
-                                            >
-                                              Video Transcript
-                                            </Label>
-                                            <Textarea
-                                              id={`transcript-${lesson.id}`}
-                                              placeholder="Enter video transcript"
-                                              defaultValue={
-                                                lesson.content?.transcript
-                                              }
-                                              className="min-h-24 border-blue-100 dark:border-blue-900"
-                                            />
-                                          </div>
-                                          <div className="space-y-2">
-                                            <div className="flex items-center justify-between">
-                                              <Label>
-                                                Additional Resources
-                                              </Label>
-                                              <Button
-                                                variant="outline"
-                                                size="sm"
+                                    {(provided) => (
+                                      <div
+                                        ref={provided.innerRef}
+                                        {...provided.droppableProps}
+                                        className="space-y-4"
+                                      >
+                                        {module.lessons.map((lesson, lessonIndex) => (
+                                          <Draggable
+                                            key={lesson.id}
+                                            draggableId={lesson.id}
+                                            index={lessonIndex}
+                                          >
+                                            {(provided) => (
+                                              <div
+                                                ref={provided.innerRef}
+                                                {...provided.draggableProps}
+                                                className="flex items-center gap-4 p-3 border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-950"
                                               >
-                                                <Plus className="mr-2 h-4 w-4" />
-                                                Add Resource
-                                              </Button>
-                                            </div>
-                                            {lesson.content?.resources &&
-                                            lesson.content.resources.length >
-                                              0 ? (
-                                              <div className="space-y-2">
-                                                {lesson.content.resources.map(
-                                                  (resource, index) => (
-                                                    <div
-                                                      key={index}
-                                                      className="flex items-center gap-2"
-                                                    >
-                                                      <Input
-                                                        placeholder="Resource name"
-                                                        defaultValue={
-                                                          resource.name
-                                                        }
-                                                        className="flex-1 border-blue-100 dark:border-blue-900"
-                                                      />
-                                                      <Input
-                                                        placeholder="Resource URL"
-                                                        defaultValue={
-                                                          resource.url
-                                                        }
-                                                        className="flex-1 border-blue-100 dark:border-blue-900"
-                                                      />
-                                                      <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
-                                                      >
-                                                        <Trash2 className="h-4 w-4" />
-                                                        <span className="sr-only">
-                                                          Delete resource
-                                                        </span>
-                                                      </Button>
-                                                    </div>
-                                                  )
-                                                )}
-                                              </div>
-                                            ) : (
-                                              <p className="text-sm text-slate-500 dark:text-slate-400">
-                                                No resources added yet
-                                              </p>
-                                            )}
-                                          </div>
-                                        </div>
-                                      )}
-                                      {lesson.type === "quiz" && (
-                                        <div className="space-y-4">
-                                          <div className="flex items-center justify-between">
-                                            <Label>Quiz Questions</Label>
-                                            <Button variant="outline" size="sm">
-                                              <Plus className="mr-2 h-4 w-4" />
-                                              Add Question
-                                            </Button>
-                                          </div>
-                                          {lesson.content?.questions &&
-                                          lesson.content.questions.length >
-                                            0 ? (
-                                            <div className="space-y-4">
-                                              {lesson.content.questions.map(
-                                                (question, qIndex) => (
-                                                  <div
-                                                    key={qIndex}
-                                                    className="border border-slate-200 dark:border-slate-800 rounded-lg p-4 space-y-3"
-                                                  >
-                                                    <div className="flex items-start justify-between">
-                                                      <div className="flex-1">
-                                                        <Label className="mb-2 block">
-                                                          Question {qIndex + 1}
-                                                        </Label>
-                                                        <Input
-                                                          placeholder="Enter question"
-                                                          defaultValue={
-                                                            question.question
-                                                          }
-                                                          className="border-blue-100 dark:border-blue-900"
-                                                        />
-                                                      </div>
-                                                      <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
-                                                      >
-                                                        <Trash2 className="h-4 w-4" />
-                                                        <span className="sr-only">
-                                                          Delete question
-                                                        </span>
-                                                      </Button>
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                      <Label className="mb-1 block">
-                                                        Answer Options
-                                                      </Label>
-                                                      {question.options.map(
-                                                        (option, oIndex) => (
-                                                          <div
-                                                            key={oIndex}
-                                                            className="flex items-center gap-2"
-                                                          >
-                                                            <div className="flex items-center h-5">
-                                                              <input
-                                                                type="radio"
-                                                                checked={
-                                                                  question.correctAnswer ===
-                                                                  oIndex
-                                                                }
-                                                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded"
-                                                              />
-                                                            </div>
-                                                            <Input
-                                                              placeholder={`Option ${
-                                                                oIndex + 1
-                                                              }`}
-                                                              defaultValue={
-                                                                option
-                                                              }
-                                                              className="flex-1 border-blue-100 dark:border-blue-900"
-                                                            />
-                                                            <Button
-                                                              variant="ghost"
-                                                              size="icon"
-                                                              className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
-                                                            >
-                                                              <Trash2 className="h-4 w-4" />
-                                                              <span className="sr-only">
-                                                                Delete option
-                                                              </span>
-                                                            </Button>
-                                                          </div>
+                                                <div
+                                                  {...provided.dragHandleProps}
+                                                  className="cursor-move"
+                                                >
+                                                  <GripVertical className="h-5 w-5 text-slate-400" />
+                                                </div>
+                                                <div className="flex-1">
+                                                  <div className="flex items-center gap-2">
+                                                    <Input
+                                                      placeholder="Lesson title"
+                                                      value={lesson.title}
+                                                      onChange={(e) =>
+                                                        handleLessonTitleChange(
+                                                          module.id,
+                                                          lesson.id,
+                                                          e.target.value
                                                         )
-                                                      )}
-                                                      <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        className="mt-2"
-                                                      >
-                                                        <Plus className="mr-2 h-4 w-4" />
-                                                        Add Option
-                                                      </Button>
-                                                    </div>
+                                                      }
+                                                      className="border-blue-100 dark:border-blue-900"
+                                                    />
+                                                    <Select
+                                                      value={lesson.type}
+                                                      onValueChange={(value) =>
+                                                        handleLessonTypeChange(
+                                                          module.id,
+                                                          lesson.id,
+                                                          value
+                                                        )
+                                                      }
+                                                    >
+                                                      <SelectTrigger className="w-[140px] border-blue-100 dark:border-blue-900">
+                                                        <SelectValue placeholder="Lesson type" />
+                                                      </SelectTrigger>
+                                                      <SelectContent>
+                                                        <SelectItem value="video">
+                                                          <div className="flex items-center">
+                                                            <Video className="mr-2 h-4 w-4" />
+                                                            <span>Video</span>
+                                                          </div>
+                                                        </SelectItem>
+                                                        <SelectItem value="quiz">
+                                                          <div className="flex items-center">
+                                                            <FileQuestion className="mr-2 h-4 w-4" />
+                                                            <span>Quiz</span>
+                                                          </div>
+                                                        </SelectItem>
+                                                        <SelectItem value="text">
+                                                          <div className="flex items-center">
+                                                            <FileText className="mr-2 h-4 w-4" />
+                                                            <span>Text</span>
+                                                          </div>
+                                                        </SelectItem>
+                                                        <SelectItem value="exercise">
+                                                          <div className="flex items-center">
+                                                            <Code2 className="mr-2 h-4 w-4" />
+                                                            <span>Exercise</span>
+                                                          </div>
+                                                        </SelectItem>
+                                                        <SelectItem value="project">
+                                                          <div className="flex items-center">
+                                                            <Award className="mr-2 h-4 w-4" />
+                                                            <span>Project</span>
+                                                          </div>
+                                                        </SelectItem>
+                                                      </SelectContent>
+                                                    </Select>
                                                   </div>
-                                                )
-                                              )}
-                                            </div>
-                                          ) : (
-                                            <p className="text-sm text-slate-500 dark:text-slate-400">
-                                              No questions added yet
-                                            </p>
-                                          )}
-                                        </div>
-                                      )}
-                                      {lesson.type === "exercise" && (
-                                        <div className="space-y-4">
-                                          <div className="space-y-2">
-                                            <Label
-                                              htmlFor={`exercise-instructions-${lesson.id}`}
-                                            >
-                                              Exercise Instructions
-                                            </Label>
-                                            <Textarea
-                                              id={`exercise-instructions-${lesson.id}`}
-                                              placeholder="Enter detailed instructions for the exercise"
-                                              className="min-h-32 border-blue-100 dark:border-blue-900"
-                                            />
-                                          </div>
-                                          <div className="space-y-2">
-                                            <Label
-                                              htmlFor={`exercise-solution-${lesson.id}`}
-                                            >
-                                              Solution Guide
-                                            </Label>
-                                            <Textarea
-                                              id={`exercise-solution-${lesson.id}`}
-                                              placeholder="Enter solution guide or hints"
-                                              className="min-h-24 border-blue-100 dark:border-blue-900"
-                                            />
-                                          </div>
-                                          <div className="space-y-2">
-                                            <div className="flex items-center justify-between">
-                                              <Label>Attachments</Label>
-                                              <Button
-                                                variant="outline"
-                                                size="sm"
-                                              >
-                                                <Plus className="mr-2 h-4 w-4" />
-                                                Add Attachment
-                                              </Button>
-                                            </div>
-                                            <div className="border-2 border-dashed border-blue-200 dark:border-blue-800 rounded-lg p-4 text-center">
-                                              <div className="py-4">
-                                                <Upload className="h-8 w-8 text-blue-500 mx-auto mb-2" />
-                                                <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
-                                                  Upload exercise files or
-                                                  starter code
-                                                </p>
-                                                <Button size="sm">
-                                                  <Upload className="mr-2 h-4 w-4" />
-                                                  Upload Files
+                                                  <div className="flex items-center gap-2 mt-2">
+                                                    <Input
+                                                      placeholder="Duration (e.g., 15:30)"
+                                                      value={lesson.duration}
+                                                      onChange={(e) =>
+                                                        handleLessonDurationChange(
+                                                          module.id,
+                                                          lesson.id,
+                                                          e.target.value
+                                                        )
+                                                      }
+                                                      className="w-[140px] border-blue-100 dark:border-blue-900"
+                                                    />
+                                                    <Accordion
+                                                      type="single"
+                                                      collapsible
+                                                      className="w-full"
+                                                    >
+                                                      <AccordionItem
+                                                        value="content"
+                                                        className="border-none"
+                                                      >
+                                                        <AccordionTrigger className="py-0 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:no-underline">
+                                                          Edit Content
+                                                        </AccordionTrigger>
+                                                        <AccordionContent className="pt-4">
+                                                          {lesson.type === "video" && (
+                                                            <div className="space-y-4">
+                                                              <div className="space-y-2">
+                                                                <Label htmlFor={`video-url-${lesson.id}`}>Video URL</Label>
+                                                                <div className="flex gap-2">
+                                                                  <Input
+                                                                    id={`video-url-${lesson.id}`}
+                                                                    placeholder="Enter video URL (YouTube, Vimeo, etc.)"
+                                                                    value={lesson.content?.videoUrl || ""}
+                                                                    onChange={(e) =>
+                                                                      handleVideoUrlChange(
+                                                                        module.id,
+                                                                        lesson.id,
+                                                                        e.target.value
+                                                                      )
+                                                                    }
+                                                                    className="flex-1 border-blue-100 dark:border-blue-900"
+                                                                  />
+                                                                </div>
+                                                                {lesson.content?.videoUrl && !isValidVideoUrl(lesson.content.videoUrl) && (
+                                                                  <p className="text-xs text-red-500">
+                                                                    Please enter a valid video URL from YouTube, Vimeo, or other supported platforms.
+                                                                  </p>
+                                                                )}
+                                                              </div>
+
+                                                              <div className="space-y-2">
+                                                                <Label htmlFor={`description-${lesson.id}`}>
+                                                                  Description
+                                                                </Label>
+                                                                <Textarea
+                                                                  id={`description-${lesson.id}`}
+                                                                  placeholder="Enter video description"
+                                                                  value={lesson.content?.description || ""}
+                                                                  onChange={(e) =>
+                                                                    handleDescriptionChange(
+                                                                      module.id,
+                                                                      lesson.id,
+                                                                      e.target.value
+                                                                    )
+                                                                  }
+                                                                  className="min-h-24 border-blue-100 dark:border-blue-900"
+                                                                />
+                                                              </div>
+
+                                                              <div className="space-y-2">
+                                                                <Label htmlFor={`transcript-${lesson.id}`}>
+                                                                  Video Transcript
+                                                                </Label>
+                                                                <Textarea
+                                                                  id={`transcript-${lesson.id}`}
+                                                                  placeholder="Enter video transcript"
+                                                                  value={lesson.content?.transcript || ""}
+                                                                  onChange={(e) =>
+                                                                    handleTranscriptChange(
+                                                                      module.id,
+                                                                      lesson.id,
+                                                                      e.target.value
+                                                                    )
+                                                                  }
+                                                                  className="min-h-24 border-blue-100 dark:border-blue-900"
+                                                                />
+                                                              </div>
+                                                            </div>
+                                                          )}
+
+                                                          {lesson.type === "text" && (
+                                                            <div className="space-y-4">
+                                                              <div className="space-y-2">
+                                                                <Label htmlFor={`text-content-${lesson.id}`}>
+                                                                  Lesson Content
+                                                                </Label>
+                                                                <div className="min-h-[300px] border border-blue-100 dark:border-blue-900 rounded-md overflow-hidden">
+                                                                  <TipTapEditor
+                                                                    value={lesson.content?.textContent || ""}
+                                                                    onChange={(value) => 
+                                                                      handleTextContentChange(
+                                                                        module.id,
+                                                                        lesson.id,
+                                                                        value
+                                                                      )
+                                                                    }
+                                                                    placeholder="Enter rich text content for the lesson..."
+                                                                  />
+                                                                </div>
+                                                              </div>
+                                                            </div>
+                                                          )}
+
+                                                          {lesson.type === "quiz" && (
+                                                            <div className="space-y-4">
+                                                              <div className="flex items-center justify-between">
+                                                                <Label>Quiz Questions</Label>
+                                                                <Button variant="outline" size="sm">
+                                                                  <Plus className="mr-2 h-4 w-4" />
+                                                                  Add Question
+                                                                </Button>
+                                                              </div>
+                                                              {lesson.content?.quiz?.length > 0 ? (
+                                                                <div className="space-y-4">
+                                                                  {lesson.content.quiz.map((question, qIndex) => (
+                                                                    <div
+                                                                      key={qIndex}
+                                                                      className="border border-slate-200 dark:border-slate-800 rounded-lg p-4 space-y-3"
+                                                                    >
+                                                                      <div className="flex items-start justify-between">
+                                                                        <div className="flex-1">
+                                                                          <Label className="mb-2 block">
+                                                                            Question {qIndex + 1}
+                                                                          </Label>
+                                                                          <Input
+                                                                            placeholder="Enter question"
+                                                                            defaultValue={question.question}
+                                                                            className="border-blue-100 dark:border-blue-900"
+                                                                          />
+                                                                        </div>
+                                                                        <Button
+                                                                          variant="ghost"
+                                                                          size="icon"
+                                                                          className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
+                                                                        >
+                                                                          <Trash2 className="h-4 w-4" />
+                                                                          <span className="sr-only">
+                                                                            Delete question
+                                                                          </span>
+                                                                        </Button>
+                                                                      </div>
+                                                                      <div className="space-y-2">
+                                                                        <Label className="mb-1 block">
+                                                                          Answer Options
+                                                                        </Label>
+                                                                        {question.options.map(
+                                                                          (option, oIndex) => (
+                                                                            <div
+                                                                              key={oIndex}
+                                                                              className="flex items-center gap-2"
+                                                                            >
+                                                                              <div className="flex items-center h-5">
+                                                                                <input
+                                                                                  type="radio"
+                                                                                  checked={
+                                                                                    question.correctAnswer ===
+                                                                                    oIndex
+                                                                                  }
+                                                                                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded"
+                                                                                />
+                                                                              </div>
+                                                                              <Input
+                                                                                placeholder={`Option ${
+                                                                                  oIndex + 1
+                                                                                }`}
+                                                                                defaultValue={
+                                                                                  option
+                                                                                }
+                                                                                className="flex-1 border-blue-100 dark:border-blue-900"
+                                                                              />
+                                                                              <Button
+                                                                                variant="ghost"
+                                                                                size="icon"
+                                                                                className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
+                                                                              >
+                                                                                <Trash2 className="h-4 w-4" />
+                                                                                <span className="sr-only">
+                                                                                  Delete option
+                                                                                </span>
+                                                                              </Button>
+                                                                            </div>
+                                                                          )
+                                                                        )}
+                                                                        <Button
+                                                                          variant="outline"
+                                                                          size="sm"
+                                                                          className="mt-2"
+                                                                        >
+                                                                          <Plus className="mr-2 h-4 w-4" />
+                                                                          Add Option
+                                                                        </Button>
+                                                                      </div>
+                                                                    </div>
+                                                                  ))}
+                                                                </div>
+                                                              ) : (
+                                                                <p className="text-sm text-slate-500 dark:text-slate-400">
+                                                                  No questions added yet
+                                                                </p>
+                                                              )}
+                                                            </div>
+                                                          )}
+
+                                                          {lesson.type === "exercise" && (
+                                                            <div className="space-y-4">
+                                                              <div className="space-y-2">
+                                                                <Label htmlFor={`exercise-instructions-${lesson.id}`}>
+                                                                  Exercise Instructions
+                                                                </Label>
+                                                                <Textarea
+                                                                  id={`exercise-instructions-${lesson.id}`}
+                                                                  placeholder="Enter detailed instructions for the exercise"
+                                                                  className="min-h-32 border-blue-100 dark:border-blue-900"
+                                                                  value={lesson.content?.instructions || ""}
+                                                                />
+                                                              </div>
+                                                              <div className="space-y-2">
+                                                                <Label htmlFor={`exercise-solution-${lesson.id}`}>
+                                                                  Solution Guide
+                                                                </Label>
+                                                                <Textarea
+                                                                  id={`exercise-solution-${lesson.id}`}
+                                                                  placeholder="Enter solution guide or hints"
+                                                                  className="min-h-24 border-blue-100 dark:border-blue-900"
+                                                                  value={lesson.content?.solution || ""}
+                                                                />
+                                                              </div>
+                                                            </div>
+                                                          )}
+
+                                                          {lesson.type === "project" && (
+                                                            <div className="space-y-4">
+                                                              <div className="space-y-2">
+                                                                <Label htmlFor={`project-description-${lesson.id}`}>
+                                                                  Project Description
+                                                                </Label>
+                                                                <Textarea
+                                                                  id={`project-description-${lesson.id}`}
+                                                                  placeholder="Enter detailed project description and requirements"
+                                                                  className="min-h-32 border-blue-100 dark:border-blue-900"
+                                                                  value={lesson.content?.description || ""}
+                                                                />
+                                                              </div>
+                                                              <div className="space-y-2">
+                                                                <Label htmlFor={`project-rubric-${lesson.id}`}>
+                                                                  Grading Rubric
+                                                                </Label>
+                                                                <Textarea
+                                                                  id={`project-rubric-${lesson.id}`}
+                                                                  placeholder="Enter grading criteria and expectations"
+                                                                  className="min-h-24 border-blue-100 dark:border-blue-900"
+                                                                  value={lesson.content?.rubric || ""}
+                                                                />
+                                                              </div>
+                                                            </div>
+                                                          )}
+                                                        </AccordionContent>
+                                                      </AccordionItem>
+                                                    </Accordion>
+                                                  </div>
+                                                </div>
+                                                <Button
+                                                  variant="outline"
+                                                  size="icon"
+                                                  className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400 border-red-200 dark:border-red-800"
+                                                  onClick={() =>
+                                                    handleDeleteLesson(module.id, lesson.id)
+                                                  }
+                                                >
+                                                  <Trash2 className="h-4 w-4" />
+                                                  <span className="sr-only">Delete lesson</span>
                                                 </Button>
                                               </div>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      )}
-                                      {lesson.type === "project" && (
-                                        <div className="space-y-4">
-                                          <div className="space-y-2">
-                                            <Label
-                                              htmlFor={`project-description-${lesson.id}`}
-                                            >
-                                              Project Description
-                                            </Label>
-                                            <Textarea
-                                              id={`project-description-${lesson.id}`}
-                                              placeholder="Enter detailed project description and requirements"
-                                              className="min-h-32 border-blue-100 dark:border-blue-900"
-                                            />
-                                          </div>
-                                          <div className="space-y-2">
-                                            <Label
-                                              htmlFor={`project-rubric-${lesson.id}`}
-                                            >
-                                              Grading Rubric
-                                            </Label>
-                                            <Textarea
-                                              id={`project-rubric-${lesson.id}`}
-                                              placeholder="Enter grading criteria and expectations"
-                                              className="min-h-24 border-blue-100 dark:border-blue-900"
-                                            />
-                                          </div>
-                                          <div className="space-y-2">
-                                            <div className="flex items-center justify-between">
-                                              <Label>Project Resources</Label>
-                                              <Button
-                                                variant="outline"
-                                                size="sm"
-                                              >
-                                                <Plus className="mr-2 h-4 w-4" />
-                                                Add Resource
-                                              </Button>
-                                            </div>
-                                            <div className="border-2 border-dashed border-blue-200 dark:border-blue-800 rounded-lg p-4 text-center">
-                                              <div className="py-4">
-                                                <Upload className="h-8 w-8 text-blue-500 mx-auto mb-2" />
-                                                <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
-                                                  Upload project resources or
-                                                  templates
-                                                </p>
-                                                <Button size="sm">
-                                                  <Upload className="mr-2 h-4 w-4" />
-                                                  Upload Files
-                                                </Button>
-                                              </div>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      )}
-                                    </AccordionContent>
-                                  </AccordionItem>
-                                </Accordion>
+                                            )}
+                                          </Draggable>
+                                        ))}
+                                        {provided.placeholder}
+                                      </div>
+                                    )}
+                                  </Droppable>
+                                  <Button
+                                    variant="outline"
+                                    className="w-full border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                                    onClick={() => handleAddLesson(module.id)}
+                                  >
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Add Lesson
+                                  </Button>
+                                </div>
                               </div>
-                            </div>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400 border-red-200 dark:border-red-800"
-                              onClick={() =>
-                                handleDeleteLesson(module.id, lesson.id)
-                              }
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              <span className="sr-only">Delete lesson</span>
-                            </Button>
-                          </div>
+                            )}
+                          </Draggable>
                         ))}
-                        <Button
-                          variant="outline"
-                          className="w-full border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
-                          onClick={() => handleAddLesson(module.id)}
-                        >
-                          <Plus className="mr-2 h-4 w-4" />
-                          Add Lesson
-                        </Button>
+                        {provided.placeholder}
                       </div>
-                    </div>
-                  ))}
+                    )}
+                  </Droppable>
                   <Button
                     variant="outline"
                     className="w-full border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
@@ -1674,7 +1915,7 @@ const handleAddLesson = (moduleId) => {
                     <Plus className="mr-2 h-4 w-4" />
                     Add Module
                   </Button>
-                </div>
+                </DragDropContext>
               </CardContent>
             </Card>
           </TabsContent>
@@ -1698,13 +1939,17 @@ const handleAddLesson = (moduleId) => {
                         <div key={index} className="flex items-center gap-2">
                           <Input
                             placeholder={`Requirement ${index + 1}`}
-                            defaultValue={requirement}
+                            value={requirement}
+                            onChange={(e) =>
+                              handleUpdateRequirement(index, e.target.value)
+                            }
                             className="flex-1 border-blue-100 dark:border-blue-900"
                           />
                           <Button
                             variant="ghost"
                             size="icon"
                             className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
+                            onClick={() => handleRemoveRequirement(index)}
                           >
                             <Trash2 className="h-4 w-4" />
                             <span className="sr-only">Delete requirement</span>
@@ -1714,6 +1959,7 @@ const handleAddLesson = (moduleId) => {
                       <Button
                         variant="outline"
                         className="w-full border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                        onClick={handleAddRequirement}
                       >
                         <Plus className="mr-2 h-4 w-4" />
                         Add Requirement
@@ -1742,13 +1988,17 @@ const handleAddLesson = (moduleId) => {
                         <div key={index} className="flex items-center gap-2">
                           <Input
                             placeholder={`Learning objective ${index + 1}`}
-                            defaultValue={item}
+                            value={item}
+                            onChange={(e) =>
+                              handleUpdateLearningOutcome(index, e.target.value)
+                            }
                             className="flex-1 border-blue-100 dark:border-blue-900"
                           />
                           <Button
                             variant="ghost"
                             size="icon"
                             className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
+                            onClick={() => handleRemoveLearningOutcome(index)}
                           >
                             <Trash2 className="h-4 w-4" />
                             <span className="sr-only">
@@ -1760,6 +2010,7 @@ const handleAddLesson = (moduleId) => {
                       <Button
                         variant="outline"
                         className="w-full border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                        onClick={handleAddLearningOutcome}
                       >
                         <Plus className="mr-2 h-4 w-4" />
                         Add Learning Objective
@@ -1784,30 +2035,51 @@ const handleAddLesson = (moduleId) => {
                   <div className="space-y-2">
                     <Label>Tags</Label>
                     <div className="flex flex-wrap gap-2 mb-2">
-                      {Array.isArray(courseData.tags) &&
-                        courseData.tags.map((tag, index) => (
-                          <Badge
-                            key={index}
-                            className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 flex items-center gap-1"
+                      {courseData.tags.map((tag, index) => (
+                        <Badge
+                          key={index}
+                          className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 flex items-center gap-1"
+                        >
+                          {tag}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-4 w-4 p-0 text-blue-700 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-200"
+                            onClick={() => handleRemoveTag(tag)}
                           >
-                            {tag}
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-4 w-4 p-0 text-blue-700 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-200"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                              <span className="sr-only">Remove tag</span>
-                            </Button>
-                          </Badge>
-                        ))}
+                            <Trash2 className="h-3 w-3" />
+                            <span className="sr-only">Remove tag</span>
+                          </Button>
+                        </Badge>
+                      ))}
                     </div>
                     <div className="flex gap-2">
                       <Input
+                        id="tags-input"
                         placeholder="Add a tag (press Enter to add)"
                         className="flex-1 border-blue-100 dark:border-blue-900"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            const input = e.target;
+                            if (input.value) {
+                              handleAddTag(input.value);
+                              input.value = "";
+                            }
+                          }
+                        }}
                       />
-                      <Button>Add</Button>
+                      <Button
+                        onClick={() => {
+                          const input = document.getElementById("tags-input");
+                          if (input && input.value) {
+                            handleAddTag(input.value);
+                            input.value = "";
+                          }
+                        }}
+                      >
+                        Add
+                      </Button>
                     </div>
                     <p className="text-xs text-muted-foreground">
                       Add up to 10 tags to help students find your course
@@ -1830,27 +2102,33 @@ const handleAddLesson = (moduleId) => {
                 <div className="space-y-4">
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="price">Regular Price ($)</Label>
+                      <Label htmlFor="price">Regular Price (&#8358;)</Label>
                       <div className="relative">
                         <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
                           id="price"
-                          type="number"
+                          type="text"
                           placeholder="49.99"
-                          defaultValue={courseData.price}
+                          value={courseData.price}
+                          onChange={(e) =>
+                            handleInputChange("price", e.target.value)
+                          }
                           className="pl-9 border-blue-100 dark:border-blue-900"
                         />
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="discount-price">Discount Price ($)</Label>
+                      <Label htmlFor="discount-price">Discount Price (&#8358;)</Label>
                       <div className="relative">
                         <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
                           id="discount-price"
-                          type="number"
+                          type="text"
                           placeholder="39.99"
-                          defaultValue={courseData.discountPrice || ""}
+                          value={courseData.discountPrice}
+                          onChange={(e) =>
+                            handleInputChange("discountPrice", e.target.value)
+                          }
                           className="pl-9 border-blue-100 dark:border-blue-900"
                         />
                       </div>
@@ -1865,12 +2143,18 @@ const handleAddLesson = (moduleId) => {
                       <Label htmlFor="featured" className="text-base">
                         Featured Course
                       </Label>
-                      <Switch id="featured" defaultChecked={courseData.featured} />
+                      <Switch 
+                        id="featured" 
+                        checked={courseData.featured}
+                        onCheckedChange={(checked) => 
+                          handleInputChange("featured", checked)
+                        }
+                      />
                     </div>
                     <p className="text-sm text-muted-foreground">
                       Featured courses appear prominently on the marketplace
                       homepage and in search results. Note: Featured status is
-                      subject to approval by the BlockLearn team.
+                      subject to approval by the platform team.
                     </p>
                   </div>
                 </div>
@@ -1895,7 +2179,10 @@ const handleAddLesson = (moduleId) => {
                     <Input
                       id="seo-title"
                       placeholder="SEO-friendly title (60 characters max)"
-                      defaultValue={courseData.seoTitle}
+                      value={courseData.seoTitle}
+                      onChange={(e) =>
+                        handleInputChange("seoTitle", e.target.value)
+                      }
                       className="border-blue-100 dark:border-blue-900"
                     />
                     <p className="text-xs text-muted-foreground">
@@ -1908,7 +2195,10 @@ const handleAddLesson = (moduleId) => {
                     <Textarea
                       id="seo-description"
                       placeholder="SEO-friendly description (160 characters max)"
-                      defaultValue={courseData.seoDescription}
+                      value={courseData.seoDescription}
+                      onChange={(e) =>
+                        handleInputChange("seoDescription", e.target.value)
+                      }
                       className="min-h-24 border-blue-100 dark:border-blue-900"
                     />
                     <p className="text-xs text-muted-foreground">
@@ -1921,7 +2211,10 @@ const handleAddLesson = (moduleId) => {
                     <Input
                       id="seo-keywords"
                       placeholder="Comma-separated keywords"
-                      defaultValue={courseData.seoKeywords}
+                      value={courseData.seoKeywords}
+                      onChange={(e) =>
+                        handleInputChange("seoKeywords", e.target.value)
+                      }
                       className="border-blue-100 dark:border-blue-900"
                     />
                     <p className="text-xs text-muted-foreground">

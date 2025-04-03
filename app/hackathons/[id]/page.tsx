@@ -302,7 +302,7 @@ export default function HackathonDetailPage({ params }: { params: { id: string }
                     </CardContent>
                   </Card>
 
-                  <Card>
+                  {/* <Card>
                     <CardHeader>
                       <CardTitle>Recommended Courses</CardTitle>
                       <CardDescription>Prepare for the hackathon with these relevant courses</CardDescription>
@@ -327,7 +327,7 @@ export default function HackathonDetailPage({ params }: { params: { id: string }
                         ))}
                       </div>
                     </CardContent>
-                  </Card>
+                  </Card> */}
                 </TabsContent>
 
                 <TabsContent value="prizes" className="mt-0">

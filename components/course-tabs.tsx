@@ -61,7 +61,7 @@ const CourseTabs = ({
       >
         <div className="aspect-video w-full overflow-hidden relative">
           <img
-            src={course.image || "/placeholder.svg"}
+            src={course.thumbnail!}
             alt={course.title}
             className="object-cover w-full h-full transition-transform group-hover:scale-105"
           />

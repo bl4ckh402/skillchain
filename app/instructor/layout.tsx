@@ -1,12 +1,15 @@
 "use client";
 
 import { RoleGuard } from '@/components/role-guard';
-import InstructorDashboardContent from '@/components/DashboardContent';
 
-export default function InstructorDashboardPage() {
+export default function InstructorLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <RoleGuard allowedRoles={['instructor', 'admin']} fallbackPath="/">
-      <InstructorDashboardContent />
+      {children}
     </RoleGuard>
   );
 }
