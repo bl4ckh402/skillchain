@@ -824,7 +824,7 @@ export default function MarketplacePage() {
                           </CardContent>
                           <CardFooter className="flex items-center justify-between">
                             <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                              {course.price === 0 ? "Free" : `$${course.price}`}
+                              {course.price === "0" ? "Free" : `$${course.price}`}
                             </div>
                               <Button
                                 variant="outline"

@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator"
 import { CheckCircle2, Clock, FileText, HelpCircle, Home, MessageSquare, RefreshCw, X } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useAuth } from "@/context/AuthProvider"
-import { useInstructorApplication } from "@/context/InstructorApplicationContext"
+import { useInstructorApplication } from "@/context/InstructorApllicationContext"
 import { toast } from "@/components/ui/use-toast"
 
 export default function ApplicationStatusPage() {
@@ -63,7 +63,7 @@ export default function ApplicationStatusPage() {
     fetchApplicationStatus()
   }, [user, getApplicationStatus, router])
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status:any) => {
     switch (status) {
       case "pending":
         return (
@@ -92,7 +92,7 @@ export default function ApplicationStatusPage() {
   }
 
   // Format dates correctly
-  const formatDate = (timestamp) => {
+  const formatDate = (timestamp:any) => {
     if (!timestamp) return "N/A"
     
     // Handle Firebase timestamp

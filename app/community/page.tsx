@@ -405,7 +405,7 @@ export default function CommunityPage() {
                                   <div className="flex flex-col items-end gap-2 text-sm">
                                     <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
                                       <MessageCircle className="h-4 w-4 text-purple-500" />
-                                      <span>{discussion.replies} replies</span>
+                                      <span>{discussion.replies.length} replies</span>
                                     </div>
                                     <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
                                       <Eye className="h-4 w-4 text-blue-500" />

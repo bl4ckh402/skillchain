@@ -31,7 +31,7 @@ export default function Home() {
                   Explore Courses
                 </Button>
               </Link>
-              <Link href="/create">
+              <Link href="/become-instructor">
                 <Button size="lg" variant="outline">
                   Become an Instructor
                 </Button>

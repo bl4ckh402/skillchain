@@ -98,7 +98,7 @@ export function InstructorEarnings() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₦{stats.totalRevenue?.toLocaleString() || '0.00'}</div>
+            <div className="text-2xl font-bold">${stats.totalRevenue?.toLocaleString() || '0.00'}</div>
             <p className="text-xs text-muted-foreground">Lifetime earnings after platform fees</p>
           </CardContent>
         </Card>
@@ -156,10 +156,10 @@ export function InstructorEarnings() {
                     <TableCell>
                       <span className="font-mono text-xs">{payment.reference}</span>
                     </TableCell>
-                    <TableCell>₦{payment.amount?.toLocaleString() || '0.00'}</TableCell>
-                    <TableCell>₦{payment.platformFee?.toLocaleString() || '0.00'}</TableCell>
+                    <TableCell>${payment.amount?.toLocaleString() || '0.00'}</TableCell>
+                    <TableCell>${payment.platformFee?.toLocaleString() || '0.00'}</TableCell>
                     <TableCell className="font-medium">
-                      ₦{payment.creatorAmount?.toLocaleString() || '0.00'}
+                      ${payment.creatorAmount?.toLocaleString() || '0.00'}
                     </TableCell>
                   </TableRow>
                 ))}

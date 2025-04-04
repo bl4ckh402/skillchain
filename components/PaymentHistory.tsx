@@ -93,7 +93,7 @@ export function PaymentHistory() {
                   <TableCell>
                     <span className="font-mono text-xs">{payment.reference}</span>
                   </TableCell>
-                  <TableCell>₦{payment.amount?.toLocaleString()}</TableCell>
+                  <TableCell>${payment.amount?.toLocaleString()}</TableCell>
                   <TableCell>{getStatusBadge(payment.status)}</TableCell>
                 </TableRow>
               ))}

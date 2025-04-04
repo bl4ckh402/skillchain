@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import axios from 'axios';
 
-export async function POST(request) {
+export async function POST(request:any) {
   try {
     const {
       courseId,
@@ -23,7 +23,7 @@ export async function POST(request) {
     }
 
     // Amount needs to be in kobo (smallest currency unit)
-    const amountInKobo = Math.round(coursePrice * 100);
+    const amountInCents = Math.round(coursePrice * 100 *130); // Assuming coursePrice is in USD
 
     // Prepare metadata for tracking purpose
     const metadata = {
@@ -59,7 +59,7 @@ export async function POST(request) {
         },
         data: {
           email: userEmail,
-          amount: amountInKobo,
+          amount: amountInCents,
           callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment/success`,
           metadata: JSON.stringify(metadata),
           ...splitConfig
@@ -73,14 +73,14 @@ export async function POST(request) {
         reference,
         authorizationUrl: authorization_url
       });
-    } catch (error) {
+    } catch (error:any) {
       console.error('Paystack API error:', error.response?.data || error.message);
       return NextResponse.json(
         { message: error.response?.data?.message || 'Payment initialization failed' },
         { status: error.response?.status || 500 }
       );
     }
-  } catch (error) {
+  } catch (error:any) {
     console.error('Server error:', error);
     return NextResponse.json(
       { message: error.message || 'Internal server error' },

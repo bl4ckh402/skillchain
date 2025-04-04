@@ -179,7 +179,7 @@ export function PurchaseButton({
           Processing...
         </>
       ) : (
-        <>Purchase for ₦{price.toLocaleString()}</>
+        <>Purchase for ${price.toLocaleString()}</>
       )}
     </Button>
   )

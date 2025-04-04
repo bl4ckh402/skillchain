@@ -857,7 +857,7 @@ export default function JobsPage() {
                     Post your job listing and reach thousands of qualified blockchain professionals
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                {/* <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
                     className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
@@ -867,15 +867,15 @@ export default function JobsPage() {
                   </Button>
 
                   <PostButton type="job" />
-                  {/* <Button className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white">
+                  <Button className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white">
                     <Briefcase className="mr-2 h-4 w-4" />
                     Post a Job
-                  </Button> */}
-                </div>
+                  </Button> 
+                </div>*/}
               </div>
             </div>
 
-            <div className="mt-12">
+            {/* <div className="mt-12">
               <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-6">Career Resources</h2>
               <div className="grid gap-6 md:grid-cols-3">
                 <Card className="border-blue-100 dark:border-blue-900">
@@ -934,7 +934,7 @@ export default function JobsPage() {
                   </CardContent>
                 </Card>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </main>

@@ -148,7 +148,7 @@ const CourseTabs = ({
           <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
             {typeof course.price === 'number' 
               ? (course.price === 0 ? "Free" : `$${course.price}`) 
-              : course.price}
+              : `$${course.price}`}
           </div>
           <Button
             variant="outline"

@@ -454,7 +454,7 @@ export default function CoursePage() {
               </CardHeader>
               <CardContent className="space-y-4 pt-6">
                 <div className="text-3xl font-bold text-slate-800 dark:text-slate-200">
-                  ₦{(course.price || 0).toLocaleString()}
+                  ${(course.price || 0).toLocaleString()}
                 </div>
                 <PurchaseButton
                   size="lg"

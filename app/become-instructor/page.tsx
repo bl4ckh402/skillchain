@@ -91,7 +91,7 @@ export default function BecomeInstructorPage() {
             modules: courseData.modules?.length || 0,
             lessons: courseData.totalLessons || 0,
             duration: courseData.duration || "",
-            image: courseData.thumbnail || ""
+            image: courseData.thumbnail || "/placeholder.svg"
           })
         }
       } catch (error) {
