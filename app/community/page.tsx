@@ -547,7 +547,7 @@ export default function CommunityPage() {
                                     <div className="flex flex-col items-end gap-2 text-sm">
                                       <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
                                         <MessageCircle className="h-4 w-4 text-purple-500" />
-                                        <span>{discussion.replies} replies</span>
+                                        <span>{discussion.replies.length} replies</span>
                                       </div>
                                       <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
                                         <Eye className="h-4 w-4 text-blue-500" />
@@ -625,10 +625,10 @@ export default function CommunityPage() {
                 </TabsContent>
 
                 <TabsContent value="unanswered" className="mt-0">
-                  {mappedDiscussions.filter(d => d.replies === 0).length > 0 ? (
+                  {mappedDiscussions.filter(d => d.replies.length === 0).length > 0 ? (
                     <div className="space-y-4">
                       {mappedDiscussions
-                        .filter(d => d.replies === 0)
+                        .filter(d => d.replies.length === 0)
                         .map((discussion) => (
                           <Link
                             href={`/community/discussion/${discussion.id}`}
@@ -757,10 +757,10 @@ export default function CommunityPage() {
                 </TabsContent>
 
                 <TabsContent value="my-discussions" className="mt-0">
-                  {user && mappedDiscussions.filter(d => d.author.id === user.uid).length > 0 ? (
+                  {user && mappedDiscussions.filter(d => d.author === user.uid).length > 0 ? (
                     <div className="space-y-4">
                       {mappedDiscussions
-                        .filter(d => d.author.id === user.uid)
+                        .filter(d => d.author === user.uid)
                         .map((discussion) => (
                           <Link
                             href={`/community/discussion/${discussion.id}`}
@@ -801,7 +801,7 @@ export default function CommunityPage() {
                                     <div className="flex flex-col items-end gap-2 text-sm">
                                       <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
                                         <MessageCircle className="h-4 w-4 text-purple-500" />
-                                        <span>{discussion.replies} replies</span>
+                                        <span>{discussion.replies.length} replies</span>
                                       </div>
                                       <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
                                         <Eye className="h-4 w-4 text-blue-500" />

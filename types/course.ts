@@ -164,6 +164,34 @@ export interface Course {
   targetAudience?: string[];
 }
 
+// export interface BootcampSchedule {
+//   startDate: string;
+//   endDate: string;
+//   timezone: string;
+//   days: string[];
+//   time: string;
+// }
+
+// export interface Bootcamp extends Course {
+//   startDate: Date;
+//   endDate: Date;
+//   maxParticipants: number;
+//   currentParticipants: number;
+//   schedule: BootcampSchedule;
+//   liveSessions: {
+//     id: string;
+//     title: string;
+//     date: Date;
+//     duration: string;
+//     description: string;
+//   }[];
+//   mentors: Instructor[];
+//   projectDeadlines: {
+//     moduleId: string;
+//     deadline: Date;
+//   }[];
+// }
+
 export interface CourseFilters {
   category?: string[];
   level?: CourseLevel[];

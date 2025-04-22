@@ -62,6 +62,7 @@ import {
 import { db } from "@/lib/firebase";
 import { formatDistanceToNow, startOfMonth, endOfMonth } from "date-fns";
 import { toast } from "./ui/use-toast";
+import { EnrolledBootcamps } from "./enrolled-bootcamps";
 
 interface InstructorStats {
   totalStudents: number;
@@ -125,6 +126,7 @@ export default function InstructorDashboardPage() {
             id: doc.id,
             title: data.title || "Untitled Course",
             description: data.description || "No description available",
+            shortDescription: data.shortDescription || "", // <-- Add this line
             category: data.category || "Uncategorized",
             level: data.level || "Beginner",
             price: data.price || "0",
@@ -294,25 +296,6 @@ export default function InstructorDashboardPage() {
     }
   };
 
-  // const handleSubmitForReview = async (courseId: string) => {
-  //   try {
-  //     await updateCourseStatus(courseId, "review");
-  //     setCourses((prev) =>
-  //       prev?.map((c) => (c.id === courseId ? { ...c, status: "review" } : c))
-  //     );
-  //     toast({
-  //       title: "Success",
-  //       description: "Course submitted for review",
-  //     });
-  //   } catch (error) {
-  //     toast({
-  //       title: "Error",
-  //       description: "Failed to submit course for review",
-  //       variant: "destructive",
-  //     });
-  //   }
-  // };
-
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -395,13 +378,6 @@ export default function InstructorDashboardPage() {
             Draft
           </Badge>
         );
-      // case "review":
-      //   return (
-      //     <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300">
-      //       <PauseCircle className="mr-1 h-3 w-3" />
-      //       In Review
-      //     </Badge>
-      //   );
       default:
         return null;
     }
@@ -484,6 +460,12 @@ export default function InstructorDashboardPage() {
                 My Courses
               </TabsTrigger>
               <TabsTrigger
+                value="bootcamps"
+                className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-950 data-[state=active]:text-blue-600 rounded-md"
+              >
+                Bootcamps
+              </TabsTrigger>
+              {/* <TabsTrigger
                 value="analytics"
                 className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-950 data-[state=active]:text-blue-600 rounded-md"
               >
@@ -500,7 +482,7 @@ export default function InstructorDashboardPage() {
                 className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-950 data-[state=active]:text-blue-600 rounded-md"
               >
                 Reviews
-              </TabsTrigger>
+              </TabsTrigger> */}
             </TabsList>
 
             <TabsContent value="courses" className="space-y-6">
@@ -540,7 +522,6 @@ export default function InstructorDashboardPage() {
                     Sort
                   </Button>
                 </div>
-              </div>
 
               <div className="space-y-4">
                 {courses?.map((course) => (
@@ -557,7 +538,7 @@ export default function InstructorDashboardPage() {
                         <div className="aspect-video md:h-full w-full overflow-hidden">
                           <img
                             src={
-                              course.image ||
+                              course.thumbnail ||
                               "/placeholder.svg?height=200&width=300"
                             }
                             alt={course.title}
@@ -604,7 +585,7 @@ export default function InstructorDashboardPage() {
                           <div className="flex flex-col items-end gap-2">
                             {getStatusBadge(course.status)}
                             <div className="text-sm text-slate-500 dark:text-slate-400">
-                              Last updated: {course.updatedAt.toLocaleDateString()}
+                              Last updated: {course.updatedAt?.toLocaleDateString()}
                             </div>
                           </div>
                         </div>
@@ -621,71 +602,13 @@ export default function InstructorDashboardPage() {
                               {course.students}
                             </span>
                           </div>
-                          {/* {course.status === "published" && (
-                            <>
-                              <div className="flex flex-col">
-                                <span className="text-sm text-slate-500 dark:text-slate-400">
-                                  Rating
-                                </span>
-                                <span className="font-medium text-slate-800 dark:text-slate-200 flex items-center">
-                                  <Star className="mr-1 h-4 w-4 text-amber-500 fill-amber-500" />
-                                  {course.rating} ({course.reviews} reviews)
-                                </span>
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-sm text-slate-500 dark:text-slate-400">
-                                  Completion Rate
-                                </span>
-                                <div className="flex items-center gap-2">
-                                  <Progress
-                                    value={course.completionRate}
-                                    className="h-2 w-24 bg-slate-100 dark:bg-slate-800"
-                                    indicatorClassName="bg-gradient-to-r from-blue-500 to-teal-500"
-                                  />
-                                  <span className="font-medium text-slate-800 dark:text-slate-200">
-                                    {course.completionRate}%
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-sm text-slate-500 dark:text-slate-400">
-                                  Revenue
-                                </span>
-                                <span className="font-medium text-slate-800 dark:text-slate-200 flex items-center">
-                                  <DollarSign className="mr-1 h-4 w-4 text-green-500" />
-                                  {course.revenue}
-                                </span>
-                              </div>
-                            </>
-                          )} */}
                           {course.status === "draft" && (
                             <div className="flex flex-col col-span-3">
                               <span className="text-sm text-slate-500 dark:text-slate-400">
                                 Completion Progress
                               </span>
-                              {/* <div className="flex items-center gap-2">
-                                <Progress
-                                  value={course.progress}
-                                  className="h-2 flex-1 bg-slate-100 dark:bg-slate-800"
-                                  indicatorClassName="bg-gradient-to-r from-blue-500 to-teal-500"
-                                />
-                                <span className="font-medium text-slate-800 dark:text-slate-200">
-                                  {course.progress}%
-                                </span>
-                              </div> */}
                             </div>
                           )}
-                          {/* {course.status === "review" && (
-                            <div className="flex flex-col col-span-3">
-                              <span className="text-sm text-slate-500 dark:text-slate-400">
-                                Review Status
-                              </span>
-                              <span className="font-medium text-amber-600 dark:text-amber-400 flex items-center">
-                                <AlertCircle className="mr-1 h-4 w-4" />
-                                Pending review by BlockLearn team
-                              </span>
-                            </div>
-                          )} */}
                         </div>
 
                         <Separator className="my-4" />
@@ -717,23 +640,6 @@ export default function InstructorDashboardPage() {
                               Delete
                             </Button>
                           </div>
-                          {course.status === "draft" && (
-                            <Button
-                              className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white"
-                              onClick={() => handleSubmitForReview(course.id!)}
-                            >
-                              Submit for Review
-                            </Button>
-                          )}
-                          {/* {course.status === "review" && (
-                            <Button
-                              variant="outline"
-                              className="border-amber-200 text-amber-600 hover:bg-amber-50 hover:text-amber-700 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-950 dark:hover:text-amber-300"
-                              onClick={() => handleEditCourse(course.id!)}
-                            >
-                              Cancel Review
-                            </Button>
-                          )} */}
                           {course.status === "published" && (
                             <Button className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white">
                               View Analytics
@@ -745,9 +651,24 @@ export default function InstructorDashboardPage() {
                   </Card>
                 ))}
               </div>
+            </div>
             </TabsContent>
 
-            <TabsContent value="analytics" className="space-y-6">
+            <TabsContent value="bootcamps" className="space-y-6">
+              <Card className="border-blue-100 dark:border-blue-900">
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50 rounded-t-lg">
+                  <CardTitle className="text-slate-800 dark:text-slate-200">
+                    My Bootcamps
+                  </CardTitle>
+                  <CardDescription>View and manage your enrolled bootcamps</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <EnrolledBootcamps bootcamps={courses ?? []} />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* <TabsContent value="analytics" className="space-y-6">
               <Card className="border-blue-100 dark:border-blue-900">
                 <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50 rounded-t-lg">
                   <CardTitle className="text-slate-800 dark:text-slate-200">
@@ -798,16 +719,6 @@ export default function InstructorDashboardPage() {
                                 {course.students} students
                               </span>
                             </div>
-                            {/* <div className="flex items-center gap-2">
-                              <Progress
-                                value={course.completionRate}
-                                className="h-2 flex-1 bg-slate-100 dark:bg-slate-800"
-                                indicatorClassName="bg-gradient-to-r from-blue-500 to-teal-500"
-                              />
-                              <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
-                                {course.completionRate}%
-                              </span>
-                            </div> */}
                             <p className="text-xs text-slate-500 dark:text-slate-400">
                               Average completion rate across all students
                             </p>
@@ -1023,7 +934,7 @@ export default function InstructorDashboardPage() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium text-slate-800 dark:text-slate-200">
+                        <p className="font-medium text-slate-800 dark:text-slate-200"></p>
                           $540
                         </p>
                         <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
@@ -1031,7 +942,6 @@ export default function InstructorDashboardPage() {
                         </Badge>
                       </div>
                     </div>
-                  </div>
                 </CardContent>
                 <CardFooter>
                   <Button
@@ -1237,12 +1147,10 @@ export default function InstructorDashboardPage() {
                   <Button
                     variant="outline"
                     className="w-full border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
-                  >
-                    Load More Reviews
-                  </Button>
+                  ></Button>
                 </CardFooter>
               </Card>
-            </TabsContent>
+            </TabsContent> */}
           </Tabs>
         </div>
       </main>

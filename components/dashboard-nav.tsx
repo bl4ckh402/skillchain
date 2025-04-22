@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, BookOpen, Wallet, Settings, Users, MessageSquare, Award } from "lucide-react"
+import { LayoutDashboard, BookOpen, Wallet, Settings, Users, MessageSquare, Award, GraduationCap, Laptop } from "lucide-react"
 
 export function DashboardNav() {
   const pathname = usePathname()
@@ -17,10 +17,16 @@ export function DashboardNav() {
       active: pathname === "/dashboard",
     },
     {
-      href: "/dashboard",
+      href: "/dashboard/courses",
       label: "My Courses",
       icon: <BookOpen className="mr-2 h-4 w-4" />,
-      active: pathname === "/dashboard",
+      active: pathname === "/dashboard/courses",
+    },
+    {
+      href: "/dashboard/bootcamps",
+      label: "My Bootcamps",
+      icon: <Laptop className="mr-2 h-4 w-4" />,
+      active: pathname === "/dashboard/bootcamps",
     },
     {
       href: "/dashboard",

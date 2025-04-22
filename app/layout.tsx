@@ -1,3 +1,14 @@
+import "./globals.css";
+import { AuthProvider } from "@/context/AuthProvider";
+import { JobsProvider } from "@/context/JobsProvider";
+import { HackathonProvider } from "@/context/HackathonContext";
+import { ProjectProvider } from "@/context/ProjectContext";
+import { CourseProvider } from "@/context/CourseContext";
+import { DashboardProvider } from "@/context/DashboardProvider";
+import { CommunityProvider } from "@/context/CommunityProvider";
+import { InstructorApplicationProvider } from "@/context/InstructorApllicationContext";
+import { CourseProgressProvider } from "@/context/CourseProgressContext";
+import { BootcampProvider } from "@/context/BootcampContext";
 import type React from "react";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -7,6 +18,7 @@ import { UserNav } from "@/components/user-nav";
 import { ModeToggle } from "@/components/mode-toggle";
 import { PaymentProvider } from "@/context/PaymentProvider";
 import "./globals.css";
+// import  StreamClientProvider  from "@/context/StreamClientProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -31,52 +43,44 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <JobsProvider>
-              <InstructorApplicationProvider>
-                <HackathonProvider>
-                  <ProjectProvider>
-                    <CourseProvider>
-                      <PaymentProvider>
-                        <CourseProgressProvider>
-                        <CommunityProvider>
-                          <DashboardProvider>
-                            <div className="flex min-h-screen flex-col">
-                              <header className="sticky top-0 z-40 border-b bg-background">
-                                <div className="container flex h-16 items-center justify-between py-4">
-                                  <MainNav />
-                                  <div className="flex items-center gap-4">
-                                    <UserNav />
-                                    <ModeToggle />
+            {/* <StreamClientProvider> */}
+              <JobsProvider>
+                <InstructorApplicationProvider>
+                  <HackathonProvider>
+                    <ProjectProvider>
+                      <CourseProvider>
+                        <PaymentProvider>
+                          <CourseProgressProvider>
+                            <BootcampProvider>
+                              <CommunityProvider>
+                                <DashboardProvider>
+                                  <div className="flex min-h-screen flex-col">
+                                    <header className="sticky top-0 z-40 border-b bg-background">
+                                      <div className="container flex h-16 items-center justify-between py-4">
+                                        <MainNav />
+                                        <div className="flex items-center gap-4">
+                                          <UserNav />
+                                          <ModeToggle />
+                                        </div>
+                                      </div>
+                                    </header>
+                                    <main className="flex-1">{children}</main>
                                   </div>
-                                </div>
-                              </header>
-                              <main className="flex-1">{children}</main>
-                            </div>
-
-                            <Toaster />
-                          </DashboardProvider>
-                        </CommunityProvider>
-                        </CourseProgressProvider>
-                      </PaymentProvider>
-                    </CourseProvider>
-                  </ProjectProvider>
-                </HackathonProvider>
-              </InstructorApplicationProvider>
-            </JobsProvider>
+                                  <Toaster />
+                                </DashboardProvider>
+                              </CommunityProvider>
+                            </BootcampProvider>
+                          </CourseProgressProvider>
+                        </PaymentProvider>
+                      </CourseProvider>
+                    </ProjectProvider>
+                  </HackathonProvider>
+                </InstructorApplicationProvider>
+              </JobsProvider>
+            {/* </StreamClientProvider> */}
           </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
   );
 }
-
-import "./globals.css";
-import { AuthProvider } from "@/context/AuthProvider";
-import { JobsProvider } from "@/context/JobsProvider";
-import { HackathonProvider } from "@/context/HackathonContext";
-import { ProjectProvider } from "@/context/ProjectContext";
-import { CourseProvider } from "@/context/CourseContext";
-import { DashboardProvider } from "@/context/DashboardProvider";
-import { CommunityProvider } from "@/context/CommunityProvider";
-import { InstructorApplicationProvider } from "@/context/InstructorApllicationContext";
-import { CourseProgressProvider } from "@/context/CourseProgressContext";

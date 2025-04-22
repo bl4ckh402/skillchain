@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Menu, Code2 } from "lucide-react"
+import { Menu, Code2, Settings, LogOut } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 import { useAuthRoles } from "@/lib/auth"
 
@@ -152,6 +152,11 @@ export function UserNav() {
                 <Link href="/instructor/dashboard">Creator Dashboard</Link>
               </DropdownMenuItem>
             )}
+
+            <DropdownMenuItem onClick={() => router.push("/settings")}>
+              <Settings className="mr-2 h-4 w-4" />
+              Settings
+            </DropdownMenuItem>
 
           </DropdownMenuGroup>
           <DropdownMenuSeparator />

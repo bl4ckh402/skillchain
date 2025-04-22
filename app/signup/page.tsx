@@ -211,7 +211,7 @@ export default function SignupPage() {
                   <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              {/* <div className="grid grid-cols-2 gap-4">
                 <Button type="button" variant="outline" onClick={handleGoogleSignIn}>
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="mr-2 h-4 w-4">
                     <path
@@ -230,7 +230,7 @@ export default function SignupPage() {
                   </svg>
                   GitHub
                 </Button>
-              </div>
+              </div> */}
             </CardContent>
             <CardFooter className="flex flex-col">
               <div className="text-sm text-center text-muted-foreground mt-2">
