@@ -168,17 +168,30 @@ export function BootcampProvider({ children }: { children: React.ReactNode }) {
     if (!user) throw new Error("Must be logged in")
 
     try {
+      console.log("Current user ID:", user.uid) // Debug log
+      
       const myBootcampsQuery = query(
         collection(db, "bootcamps"),
         where("instructor.id", "==", user.uid),
         orderBy("createdAt", "desc")
       )
+
+      console.log("Query constructed") // Debug log
+      
       const snapshot = await getDocs(myBootcampsQuery)
+      console.log("Query executed, found documents:", snapshot.size) // Debug log
+      
+      // Debug log each document
+      snapshot.forEach(doc => {
+        console.log("Document data:", doc.id, doc.data())
+      })
+
       return snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       })) as Bootcamp[]
     } catch (error: any) {
+      console.error("Full error details:", error) // More detailed error logging
       throw new Error(`Error fetching my bootcamps: ${error.message}`)
     }
   }

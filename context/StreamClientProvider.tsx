@@ -307,10 +307,17 @@ export const VideoProvider = ({ children }: { children: ReactNode }) => {
         // Get call object
         const callObject = client.call("default", callId);
 
-        // Get or create call with no join
-        if (create) {
-          await callObject.getOrCreate();
-          await updateSessionStatus(callId, "active");
+        // Always try to get the call first to check if it exists
+        try {
+          await callObject.get();
+        } catch (error) {
+          // If call doesn't exist and create is true, create it
+          if (create) {
+            await callObject.getOrCreate();
+            await updateSessionStatus(callId, "active");
+          } else {
+            throw new Error("Call does not exist and create flag is false");
+          }
         }
 
         // Add participant to Firestore

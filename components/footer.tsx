@@ -92,7 +92,9 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-8 border-t pt-8 text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} SkillChain. All rights reserved.
+          © {new Date().getFullYear()}. SkillChain and its associated trademarks, branding, and digital assets are the intellectual property of MUUIA Ltd. Unauthorized reproduction, distribution, or modification of any content, including but not limited to text, graphics, logos, platform code, and user-generated content, is strictly prohibited. SkillChain is a community-driven skill-sharing platform designed to connect learners and educators. It does not constitute professional, educational, or financial advice. Users are responsible for ensuring compliance with applicable regulations, including data protection laws and any relevant guidelines issued by regulatory authorities in their jurisdiction. For inquiries, collaborations, or regulatory concerns, please contact: +254-718-540-760
+
+.
         </div>
       </div>
     </footer>

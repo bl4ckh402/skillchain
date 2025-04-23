@@ -277,7 +277,7 @@ export function CreateBootcampModal({ open, onCloseAction }: CreateBootcampModal
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full" disabled={loading} onClick={()=>createBootcamp()}>
             {loading ? "Creating..." : "Create Bootcamp"}
           </Button>
         </form>

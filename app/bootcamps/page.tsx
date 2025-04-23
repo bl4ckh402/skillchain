@@ -67,9 +67,9 @@ export default function BootcampsPage() {
     }
   }
 
-  const filteredBootcamps = bootcamps.filter(
-    (bootcamp) => filter === "all" || bootcamp.status === filter
-  )
+  // const filteredBootcamps = bootcamps.filter(
+  //   (bootcamp) => filter === "all" || bootcamp.status === filter
+  // )
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -129,9 +129,9 @@ export default function BootcampsPage() {
                 <Loader2 className="h-8 w-8 animate-spin text-blue-500 mr-2" />
                 <span>Loading bootcamps...</span>
               </div>
-            ) : filteredBootcamps.length > 0 ? (
+            ) : bootcamps.length > 0 ? (
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {filteredBootcamps.map((bootcamp) => (
+                {bootcamps.map((bootcamp) => (
                   <Card key={bootcamp.id} className="flex flex-col overflow-hidden">
                     <div className="aspect-video relative">
                       <img

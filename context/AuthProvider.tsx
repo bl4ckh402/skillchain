@@ -162,7 +162,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const resetPassword = async (email: string) => {
-    await sendPasswordResetEmail(auth, email)
+    try {
+      await sendPasswordResetEmail(auth, email);
+    } catch (error) {
+      throw error;
+    }
   }
 
   const updateUserProfile = async (data: Partial<UserProfile>) => {
