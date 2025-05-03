@@ -59,9 +59,11 @@ import {
   Link as LinkIcon,
   AlertTriangle,
   Loader2,
+  Paperclip,
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { TipTapEditor } from "@/components/tiptap-editor";
+import { LessonAttachmentsUploader } from "@/components/lessonuploader";
 
 export default function CreateCoursePage() {
   const [activeTab, setActiveTab] = useState("basic");
@@ -69,14 +71,20 @@ export default function CreateCoursePage() {
   const [selectedLesson, setSelectedLesson] = useState(null);
   const [saveStatus, setSaveStatus] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
-  const { createCourse, updateCourse, publishCourse, uploadCourseImage } = useCourses();
+  const { createCourse, updateCourse, publishCourse, uploadCourseImage } =
+    useCourses();
   const { toast } = useToast();
   const router = useRouter();
   const { user, userProfile } = useAuth();
 
   // Redirect if not instructor or admin
   useEffect(() => {
-    if (user && userProfile && userProfile.role !== 'instructor' && userProfile.role !== 'admin') {
+    if (
+      user &&
+      userProfile &&
+      userProfile.role !== "instructor" &&
+      userProfile.role !== "admin"
+    ) {
       toast({
         title: "Access Denied",
         description: "You must be an instructor to create courses",
@@ -108,7 +116,33 @@ export default function CreateCoursePage() {
     },
   ]);
 
-  const [courseData, setCourseData] = useState({
+  const [courseData, setCourseData] = useState<{
+    title: string;
+    description: string;
+    shortDescription: string;
+    level: CourseLevel;
+    category: string;
+    subcategory: string;
+    price: string;
+    discountPrice: string;
+    language: string;
+    duration: string;
+    visibility: string;
+    modules: typeof modules;
+    requirements: string[];
+    whatYouWillLearn: string[];
+    tags: string[];
+    featured: boolean;
+    status: CourseStatus;
+    certificate: boolean;
+    welcomeMessage: string;
+    congratulationsMessage: string;
+    seoTitle: string;
+    seoDescription: string;
+    seoKeywords: string;
+    thumbnail: string;
+    previewVideo: string;
+  }>({
     title: "",
     description: "",
     shortDescription: "",
@@ -273,13 +307,14 @@ export default function CreateCoursePage() {
   const calculateTotalDuration = () => {
     // Calculate total duration from all lessons
     let totalMinutes = 0;
-    
-    modules.forEach(module => {
-      module.lessons.forEach(lesson => {
-        const durationParts = lesson.duration.split(':');
+
+    modules.forEach((module) => {
+      module.lessons.forEach((lesson) => {
+        const durationParts = lesson.duration.split(":");
         if (durationParts.length === 2) {
           // Format: MM:SS
-          totalMinutes += parseInt(durationParts[0]) + (parseInt(durationParts[1]) / 60);
+          totalMinutes +=
+            parseInt(durationParts[0]) + parseInt(durationParts[1]) / 60;
         } else {
           // Try to parse as minutes
           const mins = parseFloat(lesson.duration);
@@ -287,13 +322,13 @@ export default function CreateCoursePage() {
         }
       });
     });
-    
+
     // Format total duration
     const hours = Math.floor(totalMinutes / 60);
     const minutes = Math.round(totalMinutes % 60);
-    
+
     if (hours > 0) {
-      return `${hours}h ${minutes > 0 ? minutes + 'm' : ''}`;
+      return `${hours}h ${minutes > 0 ? minutes + "m" : ""}`;
     } else {
       return `${minutes}m`;
     }
@@ -334,14 +369,15 @@ export default function CreateCoursePage() {
 
   const handleAddModule = () => {
     // Find the highest module number
-    const moduleNumbers = modules.map(m => {
+    const moduleNumbers = modules.map((m) => {
       const match = m.id.match(/module-(\d+)/);
       return match ? parseInt(match[1]) : 0;
     });
-    
-    const nextModuleNumber = moduleNumbers.length > 0 ? Math.max(...moduleNumbers) + 1 : 1;
+
+    const nextModuleNumber =
+      moduleNumbers.length > 0 ? Math.max(...moduleNumbers) + 1 : 1;
     const newModuleId = `module-${nextModuleNumber}`;
-    
+
     setModules([
       ...modules,
       {
@@ -356,21 +392,22 @@ export default function CreateCoursePage() {
   const handleAddLesson = (moduleId) => {
     const moduleIndex = modules.findIndex((m) => m.id === moduleId);
     if (moduleIndex === -1) return;
-    
+
     // Extract module number from moduleId
     const moduleMatch = moduleId.match(/module-(\d+)/);
     if (!moduleMatch) return;
     const moduleNumber = moduleMatch[1];
-    
+
     // Find the highest lesson number for this module
-    const lessonNumbers = modules[moduleIndex].lessons.map(lesson => {
+    const lessonNumbers = modules[moduleIndex].lessons.map((lesson) => {
       const match = lesson.id.match(/lesson-\d+-(\d+)/);
       return match ? parseInt(match[1]) : 0;
     });
-    
-    const nextLessonNumber = lessonNumbers.length > 0 ? Math.max(...lessonNumbers) + 1 : 1;
+
+    const nextLessonNumber =
+      lessonNumbers.length > 0 ? Math.max(...lessonNumbers) + 1 : 1;
     const newLessonId = `lesson-${moduleNumber}-${nextLessonNumber}`;
-    
+
     const updatedModules = [...modules];
     updatedModules[moduleIndex].lessons.push({
       id: newLessonId,
@@ -384,7 +421,7 @@ export default function CreateCoursePage() {
         attachments: [],
       },
     });
-    
+
     setModules(updatedModules);
   };
 
@@ -446,10 +483,11 @@ export default function CreateCoursePage() {
 
     const updatedModules = [...modules];
     updatedModules[moduleIndex].lessons[lessonIndex].type = newType;
-    
+
     // Initialize default content based on lesson type
-    const currentContent = updatedModules[moduleIndex].lessons[lessonIndex].content || {};
-    
+    const currentContent =
+      updatedModules[moduleIndex].lessons[lessonIndex].content || {};
+
     switch (newType) {
       case "video":
         updatedModules[moduleIndex].lessons[lessonIndex].content = {
@@ -473,8 +511,8 @@ export default function CreateCoursePage() {
               question: "Sample question",
               options: ["Option 1", "Option 2", "Option 3", "Option 4"],
               correctAnswer: 0,
-            }
-          ]
+            },
+          ],
         };
         break;
       case "exercise":
@@ -493,7 +531,7 @@ export default function CreateCoursePage() {
         };
         break;
     }
-    
+
     setModules(updatedModules);
   };
 
@@ -524,7 +562,8 @@ export default function CreateCoursePage() {
     if (!updatedModules[moduleIndex].lessons[lessonIndex].content) {
       updatedModules[moduleIndex].lessons[lessonIndex].content = {};
     }
-    updatedModules[moduleIndex].lessons[lessonIndex].content.videoUrl = videoUrl;
+    updatedModules[moduleIndex].lessons[lessonIndex].content.videoUrl =
+      videoUrl;
     setModules(updatedModules);
   };
 
@@ -541,7 +580,8 @@ export default function CreateCoursePage() {
     if (!updatedModules[moduleIndex].lessons[lessonIndex].content) {
       updatedModules[moduleIndex].lessons[lessonIndex].content = {};
     }
-    updatedModules[moduleIndex].lessons[lessonIndex].content.textContent = textContent;
+    updatedModules[moduleIndex].lessons[lessonIndex].content.textContent =
+      textContent;
     setModules(updatedModules);
   };
 
@@ -558,7 +598,8 @@ export default function CreateCoursePage() {
     if (!updatedModules[moduleIndex].lessons[lessonIndex].content) {
       updatedModules[moduleIndex].lessons[lessonIndex].content = {};
     }
-    updatedModules[moduleIndex].lessons[lessonIndex].content.description = description;
+    updatedModules[moduleIndex].lessons[lessonIndex].content.description =
+      description;
     setModules(updatedModules);
   };
 
@@ -575,7 +616,8 @@ export default function CreateCoursePage() {
     if (!updatedModules[moduleIndex].lessons[lessonIndex].content) {
       updatedModules[moduleIndex].lessons[lessonIndex].content = {};
     }
-    updatedModules[moduleIndex].lessons[lessonIndex].content.transcript = transcript;
+    updatedModules[moduleIndex].lessons[lessonIndex].content.transcript =
+      transcript;
     setModules(updatedModules);
   };
 
@@ -700,6 +742,32 @@ export default function CreateCoursePage() {
     setSelectedLesson(null);
   };
 
+  const handleAttachmentsChange = (
+    moduleId: string,
+    lessonId: string,
+    attachments: Attachment[]
+  ) => {
+    const moduleIndex = modules.findIndex((m) => m.id === moduleId);
+    if (moduleIndex === -1) return;
+
+    const lessonIndex = modules[moduleIndex].lessons.findIndex(
+      (l) => l.id === lessonId
+    );
+    if (lessonIndex === -1) return;
+
+    const updatedModules = [...modules];
+
+    // Initialize content object if it doesn't exist
+    if (!updatedModules[moduleIndex].lessons[lessonIndex].content) {
+      updatedModules[moduleIndex].lessons[lessonIndex].content = {};
+    }
+
+    // Update attachments
+    updatedModules[moduleIndex].lessons[lessonIndex].content.attachments =
+      attachments;
+    setModules(updatedModules);
+  };
+
   const handleAddRequirement = () => {
     setCourseData((prev) => ({
       ...prev,
@@ -766,22 +834,28 @@ export default function CreateCoursePage() {
   const isValidVideoUrl = (url) => {
     // Check if URL is empty
     if (!url) return true;
-    
+
     // Basic URL validation
     try {
       new URL(url);
     } catch (e) {
       return false;
     }
-    
+
     // Check for common video hosting domains
     const supportedDomains = [
-      'youtube.com', 'youtu.be', 'vimeo.com', 
-      'wistia.com', 'dailymotion.com', 'twitch.tv',
-      'facebook.com', 'drive.google.com', 'dropbox.com'
+      "youtube.com",
+      "youtu.be",
+      "vimeo.com",
+      "wistia.com",
+      "dailymotion.com",
+      "twitch.tv",
+      "facebook.com",
+      "drive.google.com",
+      "dropbox.com",
     ];
-    
-    return supportedDomains.some(domain => url.includes(domain));
+
+    return supportedDomains.some((domain) => url.includes(domain));
   };
 
   useEffect(() => {
@@ -798,22 +872,28 @@ export default function CreateCoursePage() {
         <div className="text-center">
           <Loader2 className="h-8 w-8 mx-auto mb-4 animate-spin text-blue-600" />
           <h3 className="text-lg font-medium">Loading...</h3>
-          <p className="text-muted-foreground mt-2">Please wait while we check your credentials</p>
+          <p className="text-muted-foreground mt-2">
+            Please wait while we check your credentials
+          </p>
         </div>
       </div>
     );
   }
 
-  if (userProfile.role !== 'instructor' && userProfile.role !== 'admin') {
+  if (userProfile.role !== "instructor" && userProfile.role !== "admin") {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md">
           <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-amber-500" />
           <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
           <p className="mb-4 text-muted-foreground">
-            You need to be an instructor to create courses. Please apply to become an instructor first.
+            You need to be an instructor to create courses. Please apply to
+            become an instructor first.
           </p>
-          <Button asChild className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700">
+          <Button
+            asChild
+            className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
+          >
             <Link href="/instructor/apply">Apply to Become an Instructor</Link>
           </Button>
         </div>
@@ -1081,7 +1161,8 @@ export default function CreateCoursePage() {
                         className="border-blue-100 dark:border-blue-900"
                       />
                       <p className="text-xs text-muted-foreground">
-                        Total length of all video content (auto-calculated from lessons)
+                        Total length of all video content (auto-calculated from
+                        lessons)
                       </p>
                     </div>
                   </div>
@@ -1099,11 +1180,15 @@ export default function CreateCoursePage() {
                             />
                           </div>
                           <div className="flex justify-center gap-2">
-                            <Button 
-                              variant="outline" 
+                            <Button
+                              variant="outline"
                               size="sm"
                               disabled={isUploading}
-                              onClick={() => document.getElementById('thumbnail-upload').click()}
+                              onClick={() =>
+                                document
+                                  .getElementById("thumbnail-upload")
+                                  .click()
+                              }
                             >
                               {isUploading ? (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1134,7 +1219,11 @@ export default function CreateCoursePage() {
                           </p>
                           <Button
                             disabled={isUploading}
-                            onClick={() => document.getElementById('thumbnail-upload').click()}
+                            onClick={() =>
+                              document
+                                .getElementById("thumbnail-upload")
+                                .click()
+                            }
                           >
                             {isUploading ? (
                               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1161,9 +1250,13 @@ export default function CreateCoursePage() {
                       {courseData.previewVideo ? (
                         <div className="space-y-4">
                           <div className="aspect-video w-full overflow-hidden rounded-lg bg-slate-900 flex items-center justify-center">
-                            {courseData.previewVideo.includes('youtube.com') || courseData.previewVideo.includes('youtu.be') ? (
+                            {courseData.previewVideo.includes("youtube.com") ||
+                            courseData.previewVideo.includes("youtu.be") ? (
                               <iframe
-                                src={courseData.previewVideo.replace('watch?v=', 'embed/')}
+                                src={courseData.previewVideo.replace(
+                                  "watch?v=",
+                                  "embed/"
+                                )}
                                 title="Preview video"
                                 className="w-full h-full"
                                 allowFullScreen
@@ -1176,19 +1269,23 @@ export default function CreateCoursePage() {
                             {courseData.previewVideo}
                           </p>
                           <div className="flex justify-center gap-2">
-                            <Button 
-                              variant="outline" 
+                            <Button
+                              variant="outline"
                               size="sm"
                               onClick={() => {
-                                const url = window.prompt('Enter video URL:', courseData.previewVideo);
+                                const url = window.prompt(
+                                  "Enter video URL:",
+                                  courseData.previewVideo
+                                );
                                 if (url) {
                                   if (isValidVideoUrl(url)) {
                                     handleInputChange("previewVideo", url);
                                   } else {
                                     toast({
                                       title: "Invalid Video URL",
-                                      description: "Please enter a valid URL from YouTube, Vimeo, or other supported platforms.",
-                                      variant: "destructive"
+                                      description:
+                                        "Please enter a valid URL from YouTube, Vimeo, or other supported platforms.",
+                                      variant: "destructive",
                                     });
                                   }
                                 }
@@ -1201,7 +1298,9 @@ export default function CreateCoursePage() {
                               variant="outline"
                               size="sm"
                               className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
-                              onClick={() => handleInputChange("previewVideo", "")}
+                              onClick={() =>
+                                handleInputChange("previewVideo", "")
+                              }
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
                               Remove
@@ -1215,20 +1314,22 @@ export default function CreateCoursePage() {
                             Add Preview Video
                           </h3>
                           <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                            A short preview video to showcase your course (2-5 minutes)
+                            A short preview video to showcase your course (2-5
+                            minutes)
                           </p>
                           <div className="flex flex-col sm:flex-row justify-center gap-3">
                             <Button
                               onClick={() => {
-                                const url = window.prompt('Enter video URL:');
+                                const url = window.prompt("Enter video URL:");
                                 if (url) {
                                   if (isValidVideoUrl(url)) {
                                     handleInputChange("previewVideo", url);
                                   } else {
                                     toast({
                                       title: "Invalid Video URL",
-                                      description: "Please enter a valid URL from YouTube, Vimeo, or other supported platforms.",
-                                      variant: "destructive"
+                                      description:
+                                        "Please enter a valid URL from YouTube, Vimeo, or other supported platforms.",
+                                      variant: "destructive",
                                     });
                                   }
                                 }
@@ -1500,10 +1601,14 @@ export default function CreateCoursePage() {
                                       variant="outline"
                                       size="icon"
                                       className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400 border-red-200 dark:border-red-800"
-                                      onClick={() => handleDeleteModule(module.id)}
+                                      onClick={() =>
+                                        handleDeleteModule(module.id)
+                                      }
                                     >
                                       <Trash2 className="h-4 w-4" />
-                                      <span className="sr-only">Delete module</span>
+                                      <span className="sr-only">
+                                        Delete module
+                                      </span>
                                     </Button>
                                   </div>
                                 </div>
@@ -1519,373 +1624,647 @@ export default function CreateCoursePage() {
                                         {...provided.droppableProps}
                                         className="space-y-4"
                                       >
-                                        {module.lessons.map((lesson, lessonIndex) => (
-                                          <Draggable
-                                            key={lesson.id}
-                                            draggableId={lesson.id}
-                                            index={lessonIndex}
-                                          >
-                                            {(provided) => (
-                                              <div
-                                                ref={provided.innerRef}
-                                                {...provided.draggableProps}
-                                                className="flex items-center gap-4 p-3 border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-950"
-                                              >
+                                        {module.lessons.map(
+                                          (lesson, lessonIndex) => (
+                                            <Draggable
+                                              key={lesson.id}
+                                              draggableId={lesson.id}
+                                              index={lessonIndex}
+                                            >
+                                              {(provided) => (
                                                 <div
-                                                  {...provided.dragHandleProps}
-                                                  className="cursor-move"
+                                                  ref={provided.innerRef}
+                                                  {...provided.draggableProps}
+                                                  className="flex items-center gap-4 p-3 border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-950"
                                                 >
-                                                  <GripVertical className="h-5 w-5 text-slate-400" />
-                                                </div>
-                                                <div className="flex-1">
-                                                  <div className="flex items-center gap-2">
-                                                    <Input
-                                                      placeholder="Lesson title"
-                                                      value={lesson.title}
-                                                      onChange={(e) =>
-                                                        handleLessonTitleChange(
-                                                          module.id,
-                                                          lesson.id,
-                                                          e.target.value
-                                                        )
-                                                      }
-                                                      className="border-blue-100 dark:border-blue-900"
-                                                    />
-                                                    <Select
-                                                      value={lesson.type}
-                                                      onValueChange={(value) =>
-                                                        handleLessonTypeChange(
-                                                          module.id,
-                                                          lesson.id,
-                                                          value
-                                                        )
-                                                      }
-                                                    >
-                                                      <SelectTrigger className="w-[140px] border-blue-100 dark:border-blue-900">
-                                                        <SelectValue placeholder="Lesson type" />
-                                                      </SelectTrigger>
-                                                      <SelectContent>
-                                                        <SelectItem value="video">
-                                                          <div className="flex items-center">
-                                                            <Video className="mr-2 h-4 w-4" />
-                                                            <span>Video</span>
-                                                          </div>
-                                                        </SelectItem>
-                                                        <SelectItem value="quiz">
-                                                          <div className="flex items-center">
-                                                            <FileQuestion className="mr-2 h-4 w-4" />
-                                                            <span>Quiz</span>
-                                                          </div>
-                                                        </SelectItem>
-                                                        <SelectItem value="text">
-                                                          <div className="flex items-center">
-                                                            <FileText className="mr-2 h-4 w-4" />
-                                                            <span>Text</span>
-                                                          </div>
-                                                        </SelectItem>
-                                                        <SelectItem value="exercise">
-                                                          <div className="flex items-center">
-                                                            <Code2 className="mr-2 h-4 w-4" />
-                                                            <span>Exercise</span>
-                                                          </div>
-                                                        </SelectItem>
-                                                        <SelectItem value="project">
-                                                          <div className="flex items-center">
-                                                            <Award className="mr-2 h-4 w-4" />
-                                                            <span>Project</span>
-                                                          </div>
-                                                        </SelectItem>
-                                                      </SelectContent>
-                                                    </Select>
+                                                  <div
+                                                    {...provided.dragHandleProps}
+                                                    className="cursor-move"
+                                                  >
+                                                    <GripVertical className="h-5 w-5 text-slate-400" />
                                                   </div>
-                                                  <div className="flex items-center gap-2 mt-2">
-                                                    <Input
-                                                      placeholder="Duration (e.g., 15:30)"
-                                                      value={lesson.duration}
-                                                      onChange={(e) =>
-                                                        handleLessonDurationChange(
-                                                          module.id,
-                                                          lesson.id,
-                                                          e.target.value
-                                                        )
-                                                      }
-                                                      className="w-[140px] border-blue-100 dark:border-blue-900"
-                                                    />
-                                                    <Accordion
-                                                      type="single"
-                                                      collapsible
-                                                      className="w-full"
-                                                    >
-                                                      <AccordionItem
-                                                        value="content"
-                                                        className="border-none"
+                                                  <div className="flex-1">
+                                                    <div className="flex items-center gap-2">
+                                                      <Input
+                                                        placeholder="Lesson title"
+                                                        value={lesson.title}
+                                                        onChange={(e) =>
+                                                          handleLessonTitleChange(
+                                                            module.id,
+                                                            lesson.id,
+                                                            e.target.value
+                                                          )
+                                                        }
+                                                        className="border-blue-100 dark:border-blue-900"
+                                                      />
+                                                      <Select
+                                                        value={lesson.type}
+                                                        onValueChange={(
+                                                          value
+                                                        ) =>
+                                                          handleLessonTypeChange(
+                                                            module.id,
+                                                            lesson.id,
+                                                            value
+                                                          )
+                                                        }
                                                       >
-                                                        <AccordionTrigger className="py-0 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:no-underline">
-                                                          Edit Content
-                                                        </AccordionTrigger>
-                                                        <AccordionContent className="pt-4">
-                                                          {lesson.type === "video" && (
-                                                            <div className="space-y-4">
-                                                              <div className="space-y-2">
-                                                                <Label htmlFor={`video-url-${lesson.id}`}>Video URL</Label>
-                                                                <div className="flex gap-2">
-                                                                  <Input
-                                                                    id={`video-url-${lesson.id}`}
-                                                                    placeholder="Enter video URL (YouTube, Vimeo, etc.)"
-                                                                    value={lesson.content?.videoUrl || ""}
-                                                                    onChange={(e) =>
-                                                                      handleVideoUrlChange(
+                                                        <SelectTrigger className="w-[140px] border-blue-100 dark:border-blue-900">
+                                                          <SelectValue placeholder="Lesson type" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                          <SelectItem value="video">
+                                                            <div className="flex items-center">
+                                                              <Video className="mr-2 h-4 w-4" />
+                                                              <span>Video</span>
+                                                            </div>
+                                                          </SelectItem>
+                                                          <SelectItem value="quiz">
+                                                            <div className="flex items-center">
+                                                              <FileQuestion className="mr-2 h-4 w-4" />
+                                                              <span>Quiz</span>
+                                                            </div>
+                                                          </SelectItem>
+                                                          <SelectItem value="text">
+                                                            <div className="flex items-center">
+                                                              <FileText className="mr-2 h-4 w-4" />
+                                                              <span>Text</span>
+                                                            </div>
+                                                          </SelectItem>
+                                                          <SelectItem value="exercise">
+                                                            <div className="flex items-center">
+                                                              <Code2 className="mr-2 h-4 w-4" />
+                                                              <span>
+                                                                Exercise
+                                                              </span>
+                                                            </div>
+                                                          </SelectItem>
+                                                          <SelectItem value="project">
+                                                            <div className="flex items-center">
+                                                              <Award className="mr-2 h-4 w-4" />
+                                                              <span>
+                                                                Project
+                                                              </span>
+                                                            </div>
+                                                          </SelectItem>
+                                                        </SelectContent>
+                                                      </Select>
+
+                                                      {lesson.content
+                                                        ?.attachments &&
+                                                        lesson.content
+                                                          .attachments.length >
+                                                          0 && (
+                                                          <Badge
+                                                            variant="outline"
+                                                            className="px-2"
+                                                          >
+                                                            <Paperclip className="h-3 w-3 mr-1" />
+                                                            {
+                                                              lesson.content
+                                                                .attachments
+                                                                .length
+                                                            }
+                                                          </Badge>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex items-center gap-2 mt-2">
+                                                      <Input
+                                                        placeholder="Duration (e.g., 15:30)"
+                                                        value={lesson.duration}
+                                                        onChange={(e) =>
+                                                          handleLessonDurationChange(
+                                                            module.id,
+                                                            lesson.id,
+                                                            e.target.value
+                                                          )
+                                                        }
+                                                        className="w-[140px] border-blue-100 dark:border-blue-900"
+                                                      />
+                                                      <Accordion
+                                                        type="single"
+                                                        collapsible
+                                                        className="w-full"
+                                                      >
+                                                        <AccordionItem
+                                                          value="content"
+                                                          className="border-none"
+                                                        >
+                                                          <AccordionTrigger className="py-0 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:no-underline">
+                                                            Edit Content
+                                                          </AccordionTrigger>
+                                                          <AccordionContent className="pt-4">
+                                                            {lesson.type ===
+                                                              "video" && (
+                                                              <div className="space-y-4">
+                                                                <div className="space-y-2">
+                                                                  <Label
+                                                                    htmlFor={`video-url-${lesson.id}`}
+                                                                  >
+                                                                    Video URL
+                                                                  </Label>
+                                                                  <div className="flex gap-2">
+                                                                    <Input
+                                                                      id={`video-url-${lesson.id}`}
+                                                                      placeholder="Enter video URL (YouTube, Vimeo, etc.)"
+                                                                      value={
+                                                                        lesson
+                                                                          .content
+                                                                          ?.videoUrl ||
+                                                                        ""
+                                                                      }
+                                                                      onChange={(
+                                                                        e
+                                                                      ) =>
+                                                                        handleVideoUrlChange(
+                                                                          module.id,
+                                                                          lesson.id,
+                                                                          e
+                                                                            .target
+                                                                            .value
+                                                                        )
+                                                                      }
+                                                                      className="flex-1 border-blue-100 dark:border-blue-900"
+                                                                    />
+                                                                  </div>
+                                                                  {lesson
+                                                                    .content
+                                                                    ?.videoUrl &&
+                                                                    !isValidVideoUrl(
+                                                                      lesson
+                                                                        .content
+                                                                        .videoUrl
+                                                                    ) && (
+                                                                      <p className="text-xs text-red-500">
+                                                                        Please
+                                                                        enter a
+                                                                        valid
+                                                                        video
+                                                                        URL from
+                                                                        YouTube,
+                                                                        Vimeo,
+                                                                        or other
+                                                                        supported
+                                                                        platforms.
+                                                                      </p>
+                                                                    )}
+                                                                </div>
+
+                                                                <div className="space-y-2">
+                                                                  <Label
+                                                                    htmlFor={`description-${lesson.id}`}
+                                                                  >
+                                                                    Description
+                                                                  </Label>
+                                                                  <Textarea
+                                                                    id={`description-${lesson.id}`}
+                                                                    placeholder="Enter video description"
+                                                                    value={
+                                                                      lesson
+                                                                        .content
+                                                                        ?.description ||
+                                                                      ""
+                                                                    }
+                                                                    onChange={(
+                                                                      e
+                                                                    ) =>
+                                                                      handleDescriptionChange(
                                                                         module.id,
                                                                         lesson.id,
-                                                                        e.target.value
+                                                                        e.target
+                                                                          .value
                                                                       )
                                                                     }
-                                                                    className="flex-1 border-blue-100 dark:border-blue-900"
+                                                                    className="min-h-24 border-blue-100 dark:border-blue-900"
                                                                   />
                                                                 </div>
-                                                                {lesson.content?.videoUrl && !isValidVideoUrl(lesson.content.videoUrl) && (
-                                                                  <p className="text-xs text-red-500">
-                                                                    Please enter a valid video URL from YouTube, Vimeo, or other supported platforms.
+
+                                                                <div className="space-y-2">
+                                                                  <Label
+                                                                    htmlFor={`transcript-${lesson.id}`}
+                                                                  >
+                                                                    Video
+                                                                    Transcript
+                                                                  </Label>
+                                                                  <Textarea
+                                                                    id={`transcript-${lesson.id}`}
+                                                                    placeholder="Enter video transcript"
+                                                                    value={
+                                                                      lesson
+                                                                        .content
+                                                                        ?.transcript ||
+                                                                      ""
+                                                                    }
+                                                                    onChange={(
+                                                                      e
+                                                                    ) =>
+                                                                      handleTranscriptChange(
+                                                                        module.id,
+                                                                        lesson.id,
+                                                                        e.target
+                                                                          .value
+                                                                      )
+                                                                    }
+                                                                    className="min-h-24 border-blue-100 dark:border-blue-900"
+                                                                  />
+                                                                </div>
+
+                                                                <div className="space-y-2">
+                                                                  <Label>
+                                                                    Attachments
+                                                                  </Label>
+                                                                  <LessonAttachmentsUploader
+                                                                    moduleId={
+                                                                      module.id
+                                                                    }
+                                                                    lessonId={
+                                                                      lesson.id
+                                                                    }
+                                                                    existingAttachments={
+                                                                      lesson
+                                                                        .content
+                                                                        ?.attachments ||
+                                                                      []
+                                                                    }
+                                                                    onAttachmentsChange={
+                                                                      handleAttachmentsChange
+                                                                    }
+                                                                  />
+                                                                </div>
+                                                              </div>
+                                                            )}
+
+                                                            {lesson.type ===
+                                                              "text" && (
+                                                              <div className="space-y-4">
+                                                                <div className="space-y-2">
+                                                                  <Label
+                                                                    htmlFor={`text-content-${lesson.id}`}
+                                                                  >
+                                                                    Lesson
+                                                                    Content
+                                                                  </Label>
+                                                                  <div className="min-h-[300px] border border-blue-100 dark:border-blue-900 rounded-md overflow-hidden">
+                                                                    <TipTapEditor
+                                                                      value={
+                                                                        lesson
+                                                                          .content
+                                                                          ?.textContent ||
+                                                                        ""
+                                                                      }
+                                                                      onChange={(
+                                                                        value
+                                                                      ) =>
+                                                                        handleTextContentChange(
+                                                                          module.id,
+                                                                          lesson.id,
+                                                                          value
+                                                                        )
+                                                                      }
+                                                                      placeholder="Enter rich text content for the lesson..."
+                                                                    />
+                                                                  </div>
+                                                                </div>
+
+                                                                <div className="space-y-2">
+                                                                  <Label>
+                                                                    Attachments
+                                                                  </Label>
+                                                                  <LessonAttachmentsUploader
+                                                                    moduleId={
+                                                                      module.id
+                                                                    }
+                                                                    lessonId={
+                                                                      lesson.id
+                                                                    }
+                                                                    existingAttachments={
+                                                                      lesson
+                                                                        .content
+                                                                        ?.attachments ||
+                                                                      []
+                                                                    }
+                                                                    onAttachmentsChange={
+                                                                      handleAttachmentsChange
+                                                                    }
+                                                                  />
+                                                                </div>
+                                                              </div>
+                                                            )}
+
+                                                            {lesson.type ===
+                                                              "quiz" && (
+                                                              <div className="space-y-4">
+                                                                <div className="flex items-center justify-between">
+                                                                  <Label>
+                                                                    Quiz
+                                                                    Questions
+                                                                  </Label>
+                                                                  <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                  >
+                                                                    <Plus className="mr-2 h-4 w-4" />
+                                                                    Add Question
+                                                                  </Button>
+                                                                </div>
+                                                                {lesson.content
+                                                                  ?.quiz
+                                                                  ?.length >
+                                                                0 ? (
+                                                                  <div className="space-y-4">
+                                                                    {lesson.content.quiz.map(
+                                                                      (
+                                                                        question,
+                                                                        qIndex
+                                                                      ) => (
+                                                                        <div
+                                                                          key={
+                                                                            qIndex
+                                                                          }
+                                                                          className="border border-slate-200 dark:border-slate-800 rounded-lg p-4 space-y-3"
+                                                                        >
+                                                                          <div className="flex items-start justify-between">
+                                                                            <div className="flex-1">
+                                                                              <Label className="mb-2 block">
+                                                                                Question{" "}
+                                                                                {qIndex +
+                                                                                  1}
+                                                                              </Label>
+                                                                              <Input
+                                                                                placeholder="Enter question"
+                                                                                defaultValue={
+                                                                                  question.question
+                                                                                }
+                                                                                className="border-blue-100 dark:border-blue-900"
+                                                                              />
+                                                                            </div>
+                                                                            <Button
+                                                                              variant="ghost"
+                                                                              size="icon"
+                                                                              className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
+                                                                            >
+                                                                              <Trash2 className="h-4 w-4" />
+                                                                              <span className="sr-only">
+                                                                                Delete
+                                                                                question
+                                                                              </span>
+                                                                            </Button>
+                                                                          </div>
+                                                                          <div className="space-y-2">
+                                                                            <Label className="mb-1 block">
+                                                                              Answer
+                                                                              Options
+                                                                            </Label>
+                                                                            {question.options.map(
+                                                                              (
+                                                                                option,
+                                                                                oIndex
+                                                                              ) => (
+                                                                                <div
+                                                                                  key={
+                                                                                    oIndex
+                                                                                  }
+                                                                                  className="flex items-center gap-2"
+                                                                                >
+                                                                                  <div className="flex items-center h-5">
+                                                                                    <input
+                                                                                      type="radio"
+                                                                                      checked={
+                                                                                        question.correctAnswer ===
+                                                                                        oIndex
+                                                                                      }
+                                                                                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded"
+                                                                                    />
+                                                                                  </div>
+                                                                                  <Input
+                                                                                    placeholder={`Option ${
+                                                                                      oIndex +
+                                                                                      1
+                                                                                    }`}
+                                                                                    defaultValue={
+                                                                                      option
+                                                                                    }
+                                                                                    className="flex-1 border-blue-100 dark:border-blue-900"
+                                                                                  />
+                                                                                  <Button
+                                                                                    variant="ghost"
+                                                                                    size="icon"
+                                                                                    className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
+                                                                                  >
+                                                                                    <Trash2 className="h-4 w-4" />
+                                                                                    <span className="sr-only">
+                                                                                      Delete
+                                                                                      option
+                                                                                    </span>
+                                                                                  </Button>
+                                                                                </div>
+                                                                              )
+                                                                            )}
+                                                                            <Button
+                                                                              variant="outline"
+                                                                              size="sm"
+                                                                              className="mt-2"
+                                                                            >
+                                                                              <Plus className="mr-2 h-4 w-4" />
+                                                                              Add
+                                                                              Option
+                                                                            </Button>
+                                                                          </div>
+                                                                        </div>
+                                                                      )
+                                                                    )}
+
+                                                                    <div className="space-y-2">
+                                                                      <Label>
+                                                                        Attachments
+                                                                      </Label>
+                                                                      <LessonAttachmentsUploader
+                                                                        moduleId={
+                                                                          module.id
+                                                                        }
+                                                                        lessonId={
+                                                                          lesson.id
+                                                                        }
+                                                                        existingAttachments={
+                                                                          lesson
+                                                                            .content
+                                                                            ?.attachments ||
+                                                                          []
+                                                                        }
+                                                                        onAttachmentsChange={
+                                                                          handleAttachmentsChange
+                                                                        }
+                                                                      />
+                                                                    </div>
+                                                                  </div>
+                                                                ) : (
+                                                                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                                                                    No questions
+                                                                    added yet
                                                                   </p>
                                                                 )}
                                                               </div>
+                                                            )}
 
-                                                              <div className="space-y-2">
-                                                                <Label htmlFor={`description-${lesson.id}`}>
-                                                                  Description
-                                                                </Label>
-                                                                <Textarea
-                                                                  id={`description-${lesson.id}`}
-                                                                  placeholder="Enter video description"
-                                                                  value={lesson.content?.description || ""}
-                                                                  onChange={(e) =>
-                                                                    handleDescriptionChange(
-                                                                      module.id,
-                                                                      lesson.id,
-                                                                      e.target.value
-                                                                    )
-                                                                  }
-                                                                  className="min-h-24 border-blue-100 dark:border-blue-900"
-                                                                />
-                                                              </div>
-
-                                                              <div className="space-y-2">
-                                                                <Label htmlFor={`transcript-${lesson.id}`}>
-                                                                  Video Transcript
-                                                                </Label>
-                                                                <Textarea
-                                                                  id={`transcript-${lesson.id}`}
-                                                                  placeholder="Enter video transcript"
-                                                                  value={lesson.content?.transcript || ""}
-                                                                  onChange={(e) =>
-                                                                    handleTranscriptChange(
-                                                                      module.id,
-                                                                      lesson.id,
-                                                                      e.target.value
-                                                                    )
-                                                                  }
-                                                                  className="min-h-24 border-blue-100 dark:border-blue-900"
-                                                                />
-                                                              </div>
-                                                            </div>
-                                                          )}
-
-                                                          {lesson.type === "text" && (
-                                                            <div className="space-y-4">
-                                                              <div className="space-y-2">
-                                                                <Label htmlFor={`text-content-${lesson.id}`}>
-                                                                  Lesson Content
-                                                                </Label>
-                                                                <div className="min-h-[300px] border border-blue-100 dark:border-blue-900 rounded-md overflow-hidden">
-                                                                  <TipTapEditor
-                                                                    value={lesson.content?.textContent || ""}
-                                                                    onChange={(value) => 
-                                                                      handleTextContentChange(
-                                                                        module.id,
-                                                                        lesson.id,
-                                                                        value
-                                                                      )
+                                                            {lesson.type ===
+                                                              "exercise" && (
+                                                              <div className="space-y-4">
+                                                                <div className="space-y-2">
+                                                                  <Label
+                                                                    htmlFor={`exercise-instructions-${lesson.id}`}
+                                                                  >
+                                                                    Exercise
+                                                                    Instructions
+                                                                  </Label>
+                                                                  <Textarea
+                                                                    id={`exercise-instructions-${lesson.id}`}
+                                                                    placeholder="Enter detailed instructions for the exercise"
+                                                                    className="min-h-32 border-blue-100 dark:border-blue-900"
+                                                                    value={
+                                                                      lesson
+                                                                        .content
+                                                                        ?.instructions ||
+                                                                      ""
                                                                     }
-                                                                    placeholder="Enter rich text content for the lesson..."
+                                                                  />
+                                                                </div>
+                                                                <div className="space-y-2">
+                                                                  <Label
+                                                                    htmlFor={`exercise-solution-${lesson.id}`}
+                                                                  >
+                                                                    Solution
+                                                                    Guide
+                                                                  </Label>
+                                                                  <Textarea
+                                                                    id={`exercise-solution-${lesson.id}`}
+                                                                    placeholder="Enter solution guide or hints"
+                                                                    className="min-h-24 border-blue-100 dark:border-blue-900"
+                                                                    value={
+                                                                      lesson
+                                                                        .content
+                                                                        ?.solution ||
+                                                                      ""
+                                                                    }
+                                                                  />
+                                                                </div>
+
+                                                                <div className="space-y-2">
+                                                                  <Label>
+                                                                    Attachments
+                                                                  </Label>
+                                                                  <LessonAttachmentsUploader
+                                                                    moduleId={
+                                                                      module.id
+                                                                    }
+                                                                    lessonId={
+                                                                      lesson.id
+                                                                    }
+                                                                    existingAttachments={
+                                                                      lesson
+                                                                        .content
+                                                                        ?.attachments ||
+                                                                      []
+                                                                    }
+                                                                    onAttachmentsChange={
+                                                                      handleAttachmentsChange
+                                                                    }
                                                                   />
                                                                 </div>
                                                               </div>
-                                                            </div>
-                                                          )}
+                                                            )}
 
-                                                          {lesson.type === "quiz" && (
-                                                            <div className="space-y-4">
-                                                              <div className="flex items-center justify-between">
-                                                                <Label>Quiz Questions</Label>
-                                                                <Button variant="outline" size="sm">
-                                                                  <Plus className="mr-2 h-4 w-4" />
-                                                                  Add Question
-                                                                </Button>
-                                                              </div>
-                                                              {lesson.content?.quiz?.length > 0 ? (
-                                                                <div className="space-y-4">
-                                                                  {lesson.content.quiz.map((question, qIndex) => (
-                                                                    <div
-                                                                      key={qIndex}
-                                                                      className="border border-slate-200 dark:border-slate-800 rounded-lg p-4 space-y-3"
-                                                                    >
-                                                                      <div className="flex items-start justify-between">
-                                                                        <div className="flex-1">
-                                                                          <Label className="mb-2 block">
-                                                                            Question {qIndex + 1}
-                                                                          </Label>
-                                                                          <Input
-                                                                            placeholder="Enter question"
-                                                                            defaultValue={question.question}
-                                                                            className="border-blue-100 dark:border-blue-900"
-                                                                          />
-                                                                        </div>
-                                                                        <Button
-                                                                          variant="ghost"
-                                                                          size="icon"
-                                                                          className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
-                                                                        >
-                                                                          <Trash2 className="h-4 w-4" />
-                                                                          <span className="sr-only">
-                                                                            Delete question
-                                                                          </span>
-                                                                        </Button>
-                                                                      </div>
-                                                                      <div className="space-y-2">
-                                                                        <Label className="mb-1 block">
-                                                                          Answer Options
-                                                                        </Label>
-                                                                        {question.options.map(
-                                                                          (option, oIndex) => (
-                                                                            <div
-                                                                              key={oIndex}
-                                                                              className="flex items-center gap-2"
-                                                                            >
-                                                                              <div className="flex items-center h-5">
-                                                                                <input
-                                                                                  type="radio"
-                                                                                  checked={
-                                                                                    question.correctAnswer ===
-                                                                                    oIndex
-                                                                                  }
-                                                                                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded"
-                                                                                />
-                                                                              </div>
-                                                                              <Input
-                                                                                placeholder={`Option ${
-                                                                                  oIndex + 1
-                                                                                }`}
-                                                                                defaultValue={
-                                                                                  option
-                                                                                }
-                                                                                className="flex-1 border-blue-100 dark:border-blue-900"
-                                                                              />
-                                                                              <Button
-                                                                                variant="ghost"
-                                                                                size="icon"
-                                                                                className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
-                                                                              >
-                                                                                <Trash2 className="h-4 w-4" />
-                                                                                <span className="sr-only">
-                                                                                  Delete option
-                                                                                </span>
-                                                                              </Button>
-                                                                            </div>
-                                                                          )
-                                                                        )}
-                                                                        <Button
-                                                                          variant="outline"
-                                                                          size="sm"
-                                                                          className="mt-2"
-                                                                        >
-                                                                          <Plus className="mr-2 h-4 w-4" />
-                                                                          Add Option
-                                                                        </Button>
-                                                                      </div>
-                                                                    </div>
-                                                                  ))}
+                                                            {lesson.type ===
+                                                              "project" && (
+                                                              <div className="space-y-4">
+                                                                <div className="space-y-2">
+                                                                  <Label
+                                                                    htmlFor={`project-description-${lesson.id}`}
+                                                                  >
+                                                                    Project
+                                                                    Description
+                                                                  </Label>
+                                                                  <Textarea
+                                                                    id={`project-description-${lesson.id}`}
+                                                                    placeholder="Enter detailed project description and requirements"
+                                                                    className="min-h-32 border-blue-100 dark:border-blue-900"
+                                                                    value={
+                                                                      lesson
+                                                                        .content
+                                                                        ?.description ||
+                                                                      ""
+                                                                    }
+                                                                  />
                                                                 </div>
-                                                              ) : (
-                                                                <p className="text-sm text-slate-500 dark:text-slate-400">
-                                                                  No questions added yet
-                                                                </p>
-                                                              )}
-                                                            </div>
-                                                          )}
+                                                                <div className="space-y-2">
+                                                                  <Label
+                                                                    htmlFor={`project-rubric-${lesson.id}`}
+                                                                  >
+                                                                    Grading
+                                                                    Rubric
+                                                                  </Label>
+                                                                  <Textarea
+                                                                    id={`project-rubric-${lesson.id}`}
+                                                                    placeholder="Enter grading criteria and expectations"
+                                                                    className="min-h-24 border-blue-100 dark:border-blue-900"
+                                                                    value={
+                                                                      lesson
+                                                                        .content
+                                                                        ?.rubric ||
+                                                                      ""
+                                                                    }
+                                                                  />
+                                                                </div>
 
-                                                          {lesson.type === "exercise" && (
-                                                            <div className="space-y-4">
-                                                              <div className="space-y-2">
-                                                                <Label htmlFor={`exercise-instructions-${lesson.id}`}>
-                                                                  Exercise Instructions
-                                                                </Label>
-                                                                <Textarea
-                                                                  id={`exercise-instructions-${lesson.id}`}
-                                                                  placeholder="Enter detailed instructions for the exercise"
-                                                                  className="min-h-32 border-blue-100 dark:border-blue-900"
-                                                                  value={lesson.content?.instructions || ""}
-                                                                />
+                                                                <div className="space-y-2">
+                                                                  <Label>
+                                                                    Attachments
+                                                                  </Label>
+                                                                  <LessonAttachmentsUploader
+                                                                    moduleId={
+                                                                      module.id
+                                                                    }
+                                                                    lessonId={
+                                                                      lesson.id
+                                                                    }
+                                                                    existingAttachments={
+                                                                      lesson
+                                                                        .content
+                                                                        ?.attachments ||
+                                                                      []
+                                                                    }
+                                                                    onAttachmentsChange={
+                                                                      handleAttachmentsChange
+                                                                    }
+                                                                  />
+                                                                </div>
                                                               </div>
-                                                              <div className="space-y-2">
-                                                                <Label htmlFor={`exercise-solution-${lesson.id}`}>
-                                                                  Solution Guide
-                                                                </Label>
-                                                                <Textarea
-                                                                  id={`exercise-solution-${lesson.id}`}
-                                                                  placeholder="Enter solution guide or hints"
-                                                                  className="min-h-24 border-blue-100 dark:border-blue-900"
-                                                                  value={lesson.content?.solution || ""}
-                                                                />
-                                                              </div>
-                                                            </div>
-                                                          )}
-
-                                                          {lesson.type === "project" && (
-                                                            <div className="space-y-4">
-                                                              <div className="space-y-2">
-                                                                <Label htmlFor={`project-description-${lesson.id}`}>
-                                                                  Project Description
-                                                                </Label>
-                                                                <Textarea
-                                                                  id={`project-description-${lesson.id}`}
-                                                                  placeholder="Enter detailed project description and requirements"
-                                                                  className="min-h-32 border-blue-100 dark:border-blue-900"
-                                                                  value={lesson.content?.description || ""}
-                                                                />
-                                                              </div>
-                                                              <div className="space-y-2">
-                                                                <Label htmlFor={`project-rubric-${lesson.id}`}>
-                                                                  Grading Rubric
-                                                                </Label>
-                                                                <Textarea
-                                                                  id={`project-rubric-${lesson.id}`}
-                                                                  placeholder="Enter grading criteria and expectations"
-                                                                  className="min-h-24 border-blue-100 dark:border-blue-900"
-                                                                  value={lesson.content?.rubric || ""}
-                                                                />
-                                                              </div>
-                                                            </div>
-                                                          )}
-                                                        </AccordionContent>
-                                                      </AccordionItem>
-                                                    </Accordion>
+                                                            )}
+                                                          </AccordionContent>
+                                                        </AccordionItem>
+                                                      </Accordion>
+                                                    </div>
                                                   </div>
+                                                  <Button
+                                                    variant="outline"
+                                                    size="icon"
+                                                    className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400 border-red-200 dark:border-red-800"
+                                                    onClick={() =>
+                                                      handleDeleteLesson(
+                                                        module.id,
+                                                        lesson.id
+                                                      )
+                                                    }
+                                                  >
+                                                    <Trash2 className="h-4 w-4" />
+                                                    <span className="sr-only">
+                                                      Delete lesson
+                                                    </span>
+                                                  </Button>
                                                 </div>
-                                                <Button
-                                                  variant="outline"
-                                                  size="icon"
-                                                  className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400 border-red-200 dark:border-red-800"
-                                                  onClick={() =>
-                                                    handleDeleteLesson(module.id, lesson.id)
-                                                  }
-                                                >
-                                                  <Trash2 className="h-4 w-4" />
-                                                  <span className="sr-only">Delete lesson</span>
-                                                </Button>
-                                              </div>
-                                            )}
-                                          </Draggable>
-                                        ))}
+                                              )}
+                                            </Draggable>
+                                          )
+                                        )}
                                         {provided.placeholder}
                                       </div>
                                     )}
@@ -2118,7 +2497,9 @@ export default function CreateCoursePage() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="discount-price">Discount Price (&#8358;)</Label>
+                      <Label htmlFor="discount-price">
+                        Discount Price (&#8358;)
+                      </Label>
                       <div className="relative">
                         <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -2143,10 +2524,10 @@ export default function CreateCoursePage() {
                       <Label htmlFor="featured" className="text-base">
                         Featured Course
                       </Label>
-                      <Switch 
-                        id="featured" 
+                      <Switch
+                        id="featured"
                         checked={courseData.featured}
-                        onCheckedChange={(checked) => 
+                        onCheckedChange={(checked) =>
                           handleInputChange("featured", checked)
                         }
                       />

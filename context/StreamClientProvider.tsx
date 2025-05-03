@@ -175,11 +175,55 @@ export const VideoProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [user, tokenProvider]);
 
+
+
+const createCall = useCallback(
+    async (
+      title: string,
+      callType: CallType = "default" as unknown as CallType
+    ): Promise<CallSession> => {
+      if (!client || !isClientReady) {
+        throw new Error("Video client is not ready");
+      }
+
+      try {
+        // Generate a unique call ID
+        const callId = `edu-${Date.now()}-${Math.random()
+          .toString(36)
+          .substring(2, 9)}`;
+
+        // Create the call
+        const callObject = client.call(callType as unknown as string, callId);
+
+        // Join the call with create option
+        await callObject.join({ create: true });
+
+        // Create session object
+        const session: CallSession = {
+          id: callId,
+          title,
+          callObject,
+          type: callType as unknown as string,
+          createdAt: new Date(),
+        };
+
+        // Update state
+        setActiveCalls((prev) => [...prev, session]);
+        setActiveCallId(callId);
+
+        return session;
+      } catch (error) {
+        console.error("Failed to create call:", error);
+        throw new Error("Failed to create video session");
+      }
+    },
+    [client, isClientReady]
+  );
   // Create call
   const createCall = useCallback(
     async (
       title: string,
-      callType: string = "default",
+      callType: CallType = "default" as unknown as CallType,
       scheduledFor?: Date
     ): Promise<CallSession> => {
       if (!client || !isClientReady || !user) {
@@ -188,7 +232,7 @@ export const VideoProvider = ({ children }: { children: ReactNode }) => {
 
       try {
         const callId = uuidv4();
-        const callObject = client.call("default", callId);
+        const callObject = client.call(callType as unknown as string, callId);
 
         const status: "active" | "scheduled" = scheduledFor ? "scheduled" : "active";
 
