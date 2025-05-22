@@ -458,7 +458,11 @@ export default function CreateCoursePage() {
     setModules(updatedModules);
   };
 
-  const handleLessonTitleChange = (moduleId, lessonId, newTitle) => {
+  const handleLessonTitleChange = (
+    moduleId: string,
+    lessonId: string,
+    newTitle: string
+  ) => {
     const moduleIndex = modules.findIndex((m) => m.id === moduleId);
     if (moduleIndex === -1) return;
 
@@ -535,7 +539,11 @@ export default function CreateCoursePage() {
     setModules(updatedModules);
   };
 
-  const handleLessonDurationChange = (moduleId, lessonId, newDuration) => {
+  const handleLessonDurationChange = (
+    moduleId: string,
+    lessonId: string,
+    newDuration: string
+  ) => {
     const moduleIndex = modules.findIndex((m) => m.id === moduleId);
     if (moduleIndex === -1) return;
 
@@ -549,7 +557,7 @@ export default function CreateCoursePage() {
     setModules(updatedModules);
   };
 
-  const handleVideoUrlChange = (moduleId, lessonId, videoUrl) => {
+  const handleVideoUrlChange = (moduleId: string, lessonId: string, videoUrl: string) => {
     const moduleIndex = modules.findIndex((m) => m.id === moduleId);
     if (moduleIndex === -1) return;
 
@@ -687,21 +695,21 @@ export default function CreateCoursePage() {
   const getLessonIcon = (type) => {
     switch (type) {
       case "video":
-        return <Video className="h-4 w-4 text-blue-600 dark:text-blue-400" />;
+        return <Video className="w-4 h-4 text-blue-600 dark:text-blue-400" />;
       case "quiz":
         return (
-          <FileQuestion className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+          <FileQuestion className="w-4 h-4 text-purple-600 dark:text-purple-400" />
         );
       case "text":
         return (
-          <FileText className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+          <FileText className="w-4 h-4 text-teal-600 dark:text-teal-400" />
         );
       case "exercise":
-        return <Code className="h-4 w-4 text-amber-600 dark:text-amber-400" />;
+        return <Code className="w-4 h-4 text-amber-600 dark:text-amber-400" />;
       case "project":
-        return <Award className="h-4 w-4 text-red-600 dark:text-red-400" />;
+        return <Award className="w-4 h-4 text-red-600 dark:text-red-400" />;
       default:
-        return <Video className="h-4 w-4 text-blue-600 dark:text-blue-400" />;
+        return <Video className="w-4 h-4 text-blue-600 dark:text-blue-400" />;
     }
   };
 
@@ -868,11 +876,11 @@ export default function CreateCoursePage() {
 
   if (!user || !userProfile) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 mx-auto mb-4 animate-spin text-blue-600" />
+          <Loader2 className="w-8 h-8 mx-auto mb-4 text-blue-600 animate-spin" />
           <h3 className="text-lg font-medium">Loading...</h3>
-          <p className="text-muted-foreground mt-2">
+          <p className="mt-2 text-muted-foreground">
             Please wait while we check your credentials
           </p>
         </div>
@@ -882,10 +890,10 @@ export default function CreateCoursePage() {
 
   if (userProfile.role !== "instructor" && userProfile.role !== "admin") {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center max-w-md">
-          <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-amber-500" />
-          <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="max-w-md text-center">
+          <AlertTriangle className="w-12 h-12 mx-auto mb-4 text-amber-500" />
+          <h2 className="mb-2 text-2xl font-bold">Access Denied</h2>
           <p className="mb-4 text-muted-foreground">
             You need to be an instructor to create courses. Please apply to
             become an instructor first.
@@ -903,13 +911,13 @@ export default function CreateCoursePage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <div className="sticky top-0 z-10 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800">
+      <div className="sticky top-0 z-10 bg-white border-b dark:bg-slate-950 border-slate-200 dark:border-slate-800">
         <div className="container px-4 py-3 md:px-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link href="/instructor/dashboard">
                 <Button variant="ghost" size="icon">
-                  <ArrowLeft className="h-5 w-5" />
+                  <ArrowLeft className="w-5 h-5" />
                   <span className="sr-only">Back to dashboard</span>
                 </Button>
               </Link>
@@ -927,30 +935,30 @@ export default function CreateCoursePage() {
                 </span>
               )}
               {saveStatus === "saved" && (
-                <span className="text-sm text-green-600 dark:text-green-400 flex items-center">
-                  <CheckCircle2 className="h-4 w-4 mr-1" /> Saved
+                <span className="flex items-center text-sm text-green-600 dark:text-green-400">
+                  <CheckCircle2 className="w-4 h-4 mr-1" /> Saved
                 </span>
               )}
               {saveStatus === "error" && (
-                <span className="text-sm text-red-600 dark:text-red-400 flex items-center">
-                  <Trash2 className="h-4 w-4 mr-1" /> Error saving
+                <span className="flex items-center text-sm text-red-600 dark:text-red-400">
+                  <Trash2 className="w-4 h-4 mr-1" /> Error saving
                 </span>
               )}
               <Button variant="outline">
-                <Eye className="mr-2 h-4 w-4" />
+                <Eye className="w-4 h-4 mr-2" />
                 Preview
               </Button>
               <Button
                 onClick={handleSaveDraft}
                 variant="outline"
-                className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
               >
-                <Save className="mr-2 h-4 w-4" />
+                <Save className="w-4 h-4 mr-2" />
                 Save Draft
               </Button>
               <Button
                 onClick={handlePublish}
-                className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white"
+                className="text-white bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
               >
                 Publish
               </Button>
@@ -959,9 +967,9 @@ export default function CreateCoursePage() {
         </div>
       </div>
 
-      <div className="container px-4 py-6 md:px-6 flex-1">
+      <div className="container flex-1 px-4 py-6 md:px-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="mb-6 w-full justify-start bg-slate-100 dark:bg-slate-800/50 p-1 rounded-lg">
+          <TabsList className="justify-start w-full p-1 mb-6 rounded-lg bg-slate-100 dark:bg-slate-800/50">
             <TabsTrigger
               value="basic"
               className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-950 data-[state=active]:text-blue-600 rounded-md"
@@ -1002,7 +1010,7 @@ export default function CreateCoursePage() {
 
           <TabsContent value="basic" className="space-y-6">
             <Card className="border-blue-100 dark:border-blue-900">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50 rounded-t-lg">
+              <CardHeader className="rounded-t-lg bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50">
                 <CardTitle className="text-slate-800 dark:text-slate-200">
                   Course Information
                 </CardTitle>
@@ -1010,7 +1018,7 @@ export default function CreateCoursePage() {
                   Basic information about your course
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6 pt-6">
+              <CardContent className="pt-6 space-y-6">
                 <div className="space-y-4">
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
@@ -1053,7 +1061,7 @@ export default function CreateCoursePage() {
                       onChange={(e) =>
                         handleInputChange("description", e.target.value)
                       }
-                      className="min-h-32 border-blue-100 dark:border-blue-900"
+                      className="border-blue-100 min-h-32 dark:border-blue-900"
                     />
                   </div>
 
@@ -1169,14 +1177,14 @@ export default function CreateCoursePage() {
 
                   <div className="space-y-4">
                     <Label>Course Thumbnail</Label>
-                    <div className="border-2 border-dashed border-blue-200 dark:border-blue-800 rounded-lg p-4 text-center">
+                    <div className="p-4 text-center border-2 border-blue-200 border-dashed rounded-lg dark:border-blue-800">
                       {courseData.thumbnail ? (
                         <div className="space-y-4">
-                          <div className="aspect-video w-full overflow-hidden rounded-lg">
+                          <div className="w-full overflow-hidden rounded-lg aspect-video">
                             <img
                               src={courseData.thumbnail}
                               alt="Course thumbnail"
-                              className="w-full h-full object-cover"
+                              className="object-cover w-full h-full"
                             />
                           </div>
                           <div className="flex justify-center gap-2">
@@ -1191,9 +1199,9 @@ export default function CreateCoursePage() {
                               }
                             >
                               {isUploading ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                               ) : (
-                                <Upload className="mr-2 h-4 w-4" />
+                                <Upload className="w-4 h-4 mr-2" />
                               )}
                               Change
                             </Button>
@@ -1203,18 +1211,18 @@ export default function CreateCoursePage() {
                               className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
                               onClick={() => handleInputChange("thumbnail", "")}
                             >
-                              <Trash2 className="mr-2 h-4 w-4" />
+                              <Trash2 className="w-4 h-4 mr-2" />
                               Remove
                             </Button>
                           </div>
                         </div>
                       ) : (
                         <div className="py-8">
-                          <ImageIcon className="h-12 w-12 text-blue-500 mx-auto mb-4" />
-                          <h3 className="text-lg font-medium text-slate-800 dark:text-slate-200 mb-2">
+                          <ImageIcon className="w-12 h-12 mx-auto mb-4 text-blue-500" />
+                          <h3 className="mb-2 text-lg font-medium text-slate-800 dark:text-slate-200">
                             Upload Thumbnail
                           </h3>
-                          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                          <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
                             Recommended size: 1280x720px (16:9 ratio)
                           </p>
                           <Button
@@ -1226,9 +1234,9 @@ export default function CreateCoursePage() {
                             }
                           >
                             {isUploading ? (
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                             ) : (
-                              <Upload className="mr-2 h-4 w-4" />
+                              <Upload className="w-4 h-4 mr-2" />
                             )}
                             Upload Image
                           </Button>
@@ -1246,10 +1254,10 @@ export default function CreateCoursePage() {
 
                   <div className="space-y-4">
                     <Label>Preview Video</Label>
-                    <div className="border-2 border-dashed border-blue-200 dark:border-blue-800 rounded-lg p-4 text-center">
+                    <div className="p-4 text-center border-2 border-blue-200 border-dashed rounded-lg dark:border-blue-800">
                       {courseData.previewVideo ? (
                         <div className="space-y-4">
-                          <div className="aspect-video w-full overflow-hidden rounded-lg bg-slate-900 flex items-center justify-center">
+                          <div className="flex items-center justify-center w-full overflow-hidden rounded-lg aspect-video bg-slate-900">
                             {courseData.previewVideo.includes("youtube.com") ||
                             courseData.previewVideo.includes("youtu.be") ? (
                               <iframe
@@ -1262,7 +1270,7 @@ export default function CreateCoursePage() {
                                 allowFullScreen
                               ></iframe>
                             ) : (
-                              <Video className="h-12 w-12 text-blue-500" />
+                              <Video className="w-12 h-12 text-blue-500" />
                             )}
                           </div>
                           <p className="text-sm text-slate-600 dark:text-slate-400">
@@ -1291,7 +1299,7 @@ export default function CreateCoursePage() {
                                 }
                               }}
                             >
-                              <LinkIcon className="mr-2 h-4 w-4" />
+                              <LinkIcon className="w-4 h-4 mr-2" />
                               Change URL
                             </Button>
                             <Button
@@ -1302,22 +1310,22 @@ export default function CreateCoursePage() {
                                 handleInputChange("previewVideo", "")
                               }
                             >
-                              <Trash2 className="mr-2 h-4 w-4" />
+                              <Trash2 className="w-4 h-4 mr-2" />
                               Remove
                             </Button>
                           </div>
                         </div>
                       ) : (
                         <div className="py-8">
-                          <Video className="h-12 w-12 text-blue-500 mx-auto mb-4" />
-                          <h3 className="text-lg font-medium text-slate-800 dark:text-slate-200 mb-2">
+                          <Video className="w-12 h-12 mx-auto mb-4 text-blue-500" />
+                          <h3 className="mb-2 text-lg font-medium text-slate-800 dark:text-slate-200">
                             Add Preview Video
                           </h3>
-                          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                          <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
                             A short preview video to showcase your course (2-5
                             minutes)
                           </p>
-                          <div className="flex flex-col sm:flex-row justify-center gap-3">
+                          <div className="flex flex-col justify-center gap-3 sm:flex-row">
                             <Button
                               onClick={() => {
                                 const url = window.prompt("Enter video URL:");
@@ -1335,7 +1343,7 @@ export default function CreateCoursePage() {
                                 }
                               }}
                             >
-                              <LinkIcon className="mr-2 h-4 w-4" />
+                              <LinkIcon className="w-4 h-4 mr-2" />
                               Add Video URL
                             </Button>
                           </div>
@@ -1348,7 +1356,7 @@ export default function CreateCoursePage() {
             </Card>
 
             <Card className="border-blue-100 dark:border-blue-900">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50 rounded-t-lg">
+              <CardHeader className="rounded-t-lg bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50">
                 <CardTitle className="text-slate-800 dark:text-slate-200">
                   Learning Objectives
                 </CardTitle>
@@ -1356,7 +1364,7 @@ export default function CreateCoursePage() {
                   What students will learn from your course
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6 pt-6">
+              <CardContent className="pt-6 space-y-6">
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label>What You Will Learn</Label>
@@ -1377,7 +1385,7 @@ export default function CreateCoursePage() {
                             className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
                             onClick={() => handleRemoveLearningOutcome(index)}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="w-4 h-4" />
                             <span className="sr-only">
                               Delete learning objective
                             </span>
@@ -1386,10 +1394,10 @@ export default function CreateCoursePage() {
                       ))}
                       <Button
                         variant="outline"
-                        className="w-full border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                        className="w-full text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
                         onClick={handleAddLearningOutcome}
                       >
-                        <Plus className="mr-2 h-4 w-4" />
+                        <Plus className="w-4 h-4 mr-2" />
                         Add Learning Objective
                       </Button>
                     </div>
@@ -1399,7 +1407,7 @@ export default function CreateCoursePage() {
             </Card>
 
             <Card className="border-blue-100 dark:border-blue-900">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50 rounded-t-lg">
+              <CardHeader className="rounded-t-lg bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50">
                 <CardTitle className="text-slate-800 dark:text-slate-200">
                   Course Tags
                 </CardTitle>
@@ -1407,7 +1415,7 @@ export default function CreateCoursePage() {
                   Help students find your course
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6 pt-6">
+              <CardContent className="pt-6 space-y-6">
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label>Tags</Label>
@@ -1415,16 +1423,16 @@ export default function CreateCoursePage() {
                       {courseData.tags.map((tag, index) => (
                         <Badge
                           key={index}
-                          className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 flex items-center gap-1"
+                          className="flex items-center gap-1 text-blue-700 bg-blue-100 dark:bg-blue-900 dark:text-blue-300"
                         >
                           {tag}
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-4 w-4 p-0 text-blue-700 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-200"
+                            className="w-4 h-4 p-0 text-blue-700 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-200"
                             onClick={() => handleRemoveTag(tag)}
                           >
-                            <Trash2 className="h-3 w-3" />
+                            <Trash2 className="w-3 h-3" />
                             <span className="sr-only">Remove tag</span>
                           </Button>
                         </Badge>
@@ -1464,7 +1472,7 @@ export default function CreateCoursePage() {
             </Card>
 
             <Card className="border-blue-100 dark:border-blue-900">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50 rounded-t-lg">
+              <CardHeader className="rounded-t-lg bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50">
                 <CardTitle className="text-slate-800 dark:text-slate-200">
                   Course Messages
                 </CardTitle>
@@ -1472,7 +1480,7 @@ export default function CreateCoursePage() {
                   Customize welcome and congratulations messages
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6 pt-6">
+              <CardContent className="pt-6 space-y-6">
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="welcome-message">Welcome Message</Label>
@@ -1483,7 +1491,7 @@ export default function CreateCoursePage() {
                       onChange={(e) =>
                         handleInputChange("welcomeMessage", e.target.value)
                       }
-                      className="min-h-24 border-blue-100 dark:border-blue-900"
+                      className="border-blue-100 min-h-24 dark:border-blue-900"
                     />
                     <p className="text-xs text-muted-foreground">
                       This message will be shown to students when they first
@@ -1505,7 +1513,7 @@ export default function CreateCoursePage() {
                           e.target.value
                         )
                       }
-                      className="min-h-24 border-blue-100 dark:border-blue-900"
+                      className="border-blue-100 min-h-24 dark:border-blue-900"
                     />
                     <p className="text-xs text-muted-foreground">
                       This message will be shown to students when they complete
@@ -1519,7 +1527,7 @@ export default function CreateCoursePage() {
 
           <TabsContent value="curriculum" className="space-y-6">
             <Card className="border-blue-100 dark:border-blue-900">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50 rounded-t-lg">
+              <CardHeader className="rounded-t-lg bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50">
                 <CardTitle className="text-slate-800 dark:text-slate-200">
                   Course Curriculum
                 </CardTitle>
@@ -1529,7 +1537,7 @@ export default function CreateCoursePage() {
               </CardHeader>
               <CardContent className="pt-6">
                 <Card className="mb-6 border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-300">
-                  <Info className="h-4 w-4" />
+                  <Info className="w-4 h-4" />
                   <CardTitle>Curriculum Tips</CardTitle>
                   <CardDescription>
                     Organize your course into logical modules. Each module
@@ -1556,15 +1564,15 @@ export default function CreateCoursePage() {
                               <div
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
-                                className="border border-blue-100 dark:border-blue-900 rounded-lg"
+                                className="border border-blue-100 rounded-lg dark:border-blue-900"
                               >
-                                <div className="bg-blue-50 dark:bg-blue-950/30 p-4 rounded-t-lg">
+                                <div className="p-4 rounded-t-lg bg-blue-50 dark:bg-blue-950/30">
                                   <div className="flex items-center gap-4">
                                     <div
                                       {...provided.dragHandleProps}
                                       className="cursor-move"
                                     >
-                                      <GripVertical className="h-5 w-5 text-slate-400" />
+                                      <GripVertical className="w-5 h-5 text-slate-400" />
                                     </div>
                                     <div className="flex-1">
                                       <div className="flex items-center gap-2">
@@ -1577,9 +1585,9 @@ export default function CreateCoursePage() {
                                               e.target.value
                                             )
                                           }
-                                          className="text-lg font-medium border-blue-200 dark:border-blue-800 bg-white dark:bg-slate-900"
+                                          className="text-lg font-medium bg-white border-blue-200 dark:border-blue-800 dark:bg-slate-900"
                                         />
-                                        <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                                        <Badge className="text-blue-700 bg-blue-100 dark:bg-blue-900 dark:text-blue-300">
                                           Module {moduleIndex + 1}
                                         </Badge>
                                       </div>
@@ -1593,19 +1601,19 @@ export default function CreateCoursePage() {
                                               e.target.value
                                             )
                                           }
-                                          className="text-sm border-blue-200 dark:border-blue-800 bg-white dark:bg-slate-900"
+                                          className="text-sm bg-white border-blue-200 dark:border-blue-800 dark:bg-slate-900"
                                         />
                                       </div>
                                     </div>
                                     <Button
                                       variant="outline"
                                       size="icon"
-                                      className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400 border-red-200 dark:border-red-800"
+                                      className="text-red-600 border-red-200 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400 dark:border-red-800"
                                       onClick={() =>
                                         handleDeleteModule(module.id)
                                       }
                                     >
-                                      <Trash2 className="h-4 w-4" />
+                                      <Trash2 className="w-4 h-4" />
                                       <span className="sr-only">
                                         Delete module
                                       </span>
@@ -1635,13 +1643,13 @@ export default function CreateCoursePage() {
                                                 <div
                                                   ref={provided.innerRef}
                                                   {...provided.draggableProps}
-                                                  className="flex items-center gap-4 p-3 border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-950"
+                                                  className="flex items-center gap-4 p-3 bg-white border rounded-lg border-slate-200 dark:border-slate-800 dark:bg-slate-950"
                                                 >
                                                   <div
                                                     {...provided.dragHandleProps}
                                                     className="cursor-move"
                                                   >
-                                                    <GripVertical className="h-5 w-5 text-slate-400" />
+                                                    <GripVertical className="w-5 h-5 text-slate-400" />
                                                   </div>
                                                   <div className="flex-1">
                                                     <div className="flex items-center gap-2">
@@ -1675,25 +1683,25 @@ export default function CreateCoursePage() {
                                                         <SelectContent>
                                                           <SelectItem value="video">
                                                             <div className="flex items-center">
-                                                              <Video className="mr-2 h-4 w-4" />
+                                                              <Video className="w-4 h-4 mr-2" />
                                                               <span>Video</span>
                                                             </div>
                                                           </SelectItem>
                                                           <SelectItem value="quiz">
                                                             <div className="flex items-center">
-                                                              <FileQuestion className="mr-2 h-4 w-4" />
+                                                              <FileQuestion className="w-4 h-4 mr-2" />
                                                               <span>Quiz</span>
                                                             </div>
                                                           </SelectItem>
                                                           <SelectItem value="text">
                                                             <div className="flex items-center">
-                                                              <FileText className="mr-2 h-4 w-4" />
+                                                              <FileText className="w-4 h-4 mr-2" />
                                                               <span>Text</span>
                                                             </div>
                                                           </SelectItem>
                                                           <SelectItem value="exercise">
                                                             <div className="flex items-center">
-                                                              <Code2 className="mr-2 h-4 w-4" />
+                                                              <Code2 className="w-4 h-4 mr-2" />
                                                               <span>
                                                                 Exercise
                                                               </span>
@@ -1701,7 +1709,7 @@ export default function CreateCoursePage() {
                                                           </SelectItem>
                                                           <SelectItem value="project">
                                                             <div className="flex items-center">
-                                                              <Award className="mr-2 h-4 w-4" />
+                                                              <Award className="w-4 h-4 mr-2" />
                                                               <span>
                                                                 Project
                                                               </span>
@@ -1719,7 +1727,7 @@ export default function CreateCoursePage() {
                                                             variant="outline"
                                                             className="px-2"
                                                           >
-                                                            <Paperclip className="h-3 w-3 mr-1" />
+                                                            <Paperclip className="w-3 h-3 mr-1" />
                                                             {
                                                               lesson.content
                                                                 .attachments
@@ -1835,7 +1843,7 @@ export default function CreateCoursePage() {
                                                                           .value
                                                                       )
                                                                     }
-                                                                    className="min-h-24 border-blue-100 dark:border-blue-900"
+                                                                    className="border-blue-100 min-h-24 dark:border-blue-900"
                                                                   />
                                                                 </div>
 
@@ -1865,7 +1873,7 @@ export default function CreateCoursePage() {
                                                                           .value
                                                                       )
                                                                     }
-                                                                    className="min-h-24 border-blue-100 dark:border-blue-900"
+                                                                    className="border-blue-100 min-h-24 dark:border-blue-900"
                                                                   />
                                                                 </div>
 
@@ -1963,7 +1971,7 @@ export default function CreateCoursePage() {
                                                                     variant="outline"
                                                                     size="sm"
                                                                   >
-                                                                    <Plus className="mr-2 h-4 w-4" />
+                                                                    <Plus className="w-4 h-4 mr-2" />
                                                                     Add Question
                                                                   </Button>
                                                                 </div>
@@ -1981,11 +1989,11 @@ export default function CreateCoursePage() {
                                                                           key={
                                                                             qIndex
                                                                           }
-                                                                          className="border border-slate-200 dark:border-slate-800 rounded-lg p-4 space-y-3"
+                                                                          className="p-4 space-y-3 border rounded-lg border-slate-200 dark:border-slate-800"
                                                                         >
                                                                           <div className="flex items-start justify-between">
                                                                             <div className="flex-1">
-                                                                              <Label className="mb-2 block">
+                                                                              <Label className="block mb-2">
                                                                                 Question{" "}
                                                                                 {qIndex +
                                                                                   1}
@@ -2003,7 +2011,7 @@ export default function CreateCoursePage() {
                                                                               size="icon"
                                                                               className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
                                                                             >
-                                                                              <Trash2 className="h-4 w-4" />
+                                                                              <Trash2 className="w-4 h-4" />
                                                                               <span className="sr-only">
                                                                                 Delete
                                                                                 question
@@ -2011,7 +2019,7 @@ export default function CreateCoursePage() {
                                                                             </Button>
                                                                           </div>
                                                                           <div className="space-y-2">
-                                                                            <Label className="mb-1 block">
+                                                                            <Label className="block mb-1">
                                                                               Answer
                                                                               Options
                                                                             </Label>
@@ -2033,7 +2041,7 @@ export default function CreateCoursePage() {
                                                                                         question.correctAnswer ===
                                                                                         oIndex
                                                                                       }
-                                                                                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded"
+                                                                                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 border-slate-300"
                                                                                     />
                                                                                   </div>
                                                                                   <Input
@@ -2051,7 +2059,7 @@ export default function CreateCoursePage() {
                                                                                     size="icon"
                                                                                     className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
                                                                                   >
-                                                                                    <Trash2 className="h-4 w-4" />
+                                                                                    <Trash2 className="w-4 h-4" />
                                                                                     <span className="sr-only">
                                                                                       Delete
                                                                                       option
@@ -2065,7 +2073,7 @@ export default function CreateCoursePage() {
                                                                               size="sm"
                                                                               className="mt-2"
                                                                             >
-                                                                              <Plus className="mr-2 h-4 w-4" />
+                                                                              <Plus className="w-4 h-4 mr-2" />
                                                                               Add
                                                                               Option
                                                                             </Button>
@@ -2119,7 +2127,7 @@ export default function CreateCoursePage() {
                                                                   <Textarea
                                                                     id={`exercise-instructions-${lesson.id}`}
                                                                     placeholder="Enter detailed instructions for the exercise"
-                                                                    className="min-h-32 border-blue-100 dark:border-blue-900"
+                                                                    className="border-blue-100 min-h-32 dark:border-blue-900"
                                                                     value={
                                                                       lesson
                                                                         .content
@@ -2138,7 +2146,7 @@ export default function CreateCoursePage() {
                                                                   <Textarea
                                                                     id={`exercise-solution-${lesson.id}`}
                                                                     placeholder="Enter solution guide or hints"
-                                                                    className="min-h-24 border-blue-100 dark:border-blue-900"
+                                                                    className="border-blue-100 min-h-24 dark:border-blue-900"
                                                                     value={
                                                                       lesson
                                                                         .content
@@ -2186,7 +2194,7 @@ export default function CreateCoursePage() {
                                                                   <Textarea
                                                                     id={`project-description-${lesson.id}`}
                                                                     placeholder="Enter detailed project description and requirements"
-                                                                    className="min-h-32 border-blue-100 dark:border-blue-900"
+                                                                    className="border-blue-100 min-h-32 dark:border-blue-900"
                                                                     value={
                                                                       lesson
                                                                         .content
@@ -2205,7 +2213,7 @@ export default function CreateCoursePage() {
                                                                   <Textarea
                                                                     id={`project-rubric-${lesson.id}`}
                                                                     placeholder="Enter grading criteria and expectations"
-                                                                    className="min-h-24 border-blue-100 dark:border-blue-900"
+                                                                    className="border-blue-100 min-h-24 dark:border-blue-900"
                                                                     value={
                                                                       lesson
                                                                         .content
@@ -2247,7 +2255,7 @@ export default function CreateCoursePage() {
                                                   <Button
                                                     variant="outline"
                                                     size="icon"
-                                                    className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400 border-red-200 dark:border-red-800"
+                                                    className="text-red-600 border-red-200 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400 dark:border-red-800"
                                                     onClick={() =>
                                                       handleDeleteLesson(
                                                         module.id,
@@ -2255,7 +2263,7 @@ export default function CreateCoursePage() {
                                                       )
                                                     }
                                                   >
-                                                    <Trash2 className="h-4 w-4" />
+                                                    <Trash2 className="w-4 h-4" />
                                                     <span className="sr-only">
                                                       Delete lesson
                                                     </span>
@@ -2271,10 +2279,10 @@ export default function CreateCoursePage() {
                                   </Droppable>
                                   <Button
                                     variant="outline"
-                                    className="w-full border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                                    className="w-full text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
                                     onClick={() => handleAddLesson(module.id)}
                                   >
-                                    <Plus className="mr-2 h-4 w-4" />
+                                    <Plus className="w-4 h-4 mr-2" />
                                     Add Lesson
                                   </Button>
                                 </div>
@@ -2288,10 +2296,10 @@ export default function CreateCoursePage() {
                   </Droppable>
                   <Button
                     variant="outline"
-                    className="w-full border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                    className="w-full text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
                     onClick={handleAddModule}
                   >
-                    <Plus className="mr-2 h-4 w-4" />
+                    <Plus className="w-4 h-4 mr-2" />
                     Add Module
                   </Button>
                 </DragDropContext>
@@ -2301,7 +2309,7 @@ export default function CreateCoursePage() {
 
           <TabsContent value="requirements" className="space-y-6">
             <Card className="border-blue-100 dark:border-blue-900">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50 rounded-t-lg">
+              <CardHeader className="rounded-t-lg bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50">
                 <CardTitle className="text-slate-800 dark:text-slate-200">
                   Course Requirements
                 </CardTitle>
@@ -2309,7 +2317,7 @@ export default function CreateCoursePage() {
                   What students need to know before taking your course
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6 pt-6">
+              <CardContent className="pt-6 space-y-6">
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label>Prerequisites</Label>
@@ -2330,17 +2338,17 @@ export default function CreateCoursePage() {
                             className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
                             onClick={() => handleRemoveRequirement(index)}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="w-4 h-4" />
                             <span className="sr-only">Delete requirement</span>
                           </Button>
                         </div>
                       ))}
                       <Button
                         variant="outline"
-                        className="w-full border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                        className="w-full text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
                         onClick={handleAddRequirement}
                       >
-                        <Plus className="mr-2 h-4 w-4" />
+                        <Plus className="w-4 h-4 mr-2" />
                         Add Requirement
                       </Button>
                     </div>
@@ -2350,7 +2358,7 @@ export default function CreateCoursePage() {
             </Card>
 
             <Card className="border-blue-100 dark:border-blue-900">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50 rounded-t-lg">
+              <CardHeader className="rounded-t-lg bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50">
                 <CardTitle className="text-slate-800 dark:text-slate-200">
                   Learning Objectives
                 </CardTitle>
@@ -2358,7 +2366,7 @@ export default function CreateCoursePage() {
                   What students will learn from your course
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6 pt-6">
+              <CardContent className="pt-6 space-y-6">
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label>What You Will Learn</Label>
@@ -2379,7 +2387,7 @@ export default function CreateCoursePage() {
                             className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
                             onClick={() => handleRemoveLearningOutcome(index)}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="w-4 h-4" />
                             <span className="sr-only">
                               Delete learning objective
                             </span>
@@ -2388,10 +2396,10 @@ export default function CreateCoursePage() {
                       ))}
                       <Button
                         variant="outline"
-                        className="w-full border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                        className="w-full text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
                         onClick={handleAddLearningOutcome}
                       >
-                        <Plus className="mr-2 h-4 w-4" />
+                        <Plus className="w-4 h-4 mr-2" />
                         Add Learning Objective
                       </Button>
                     </div>
@@ -2401,7 +2409,7 @@ export default function CreateCoursePage() {
             </Card>
 
             <Card className="border-blue-100 dark:border-blue-900">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50 rounded-t-lg">
+              <CardHeader className="rounded-t-lg bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50">
                 <CardTitle className="text-slate-800 dark:text-slate-200">
                   Course Tags
                 </CardTitle>
@@ -2409,7 +2417,7 @@ export default function CreateCoursePage() {
                   Help students find your course
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6 pt-6">
+              <CardContent className="pt-6 space-y-6">
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label>Tags</Label>
@@ -2417,16 +2425,16 @@ export default function CreateCoursePage() {
                       {courseData.tags.map((tag, index) => (
                         <Badge
                           key={index}
-                          className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 flex items-center gap-1"
+                          className="flex items-center gap-1 text-blue-700 bg-blue-100 dark:bg-blue-900 dark:text-blue-300"
                         >
                           {tag}
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-4 w-4 p-0 text-blue-700 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-200"
+                            className="w-4 h-4 p-0 text-blue-700 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-200"
                             onClick={() => handleRemoveTag(tag)}
                           >
-                            <Trash2 className="h-3 w-3" />
+                            <Trash2 className="w-3 h-3" />
                             <span className="sr-only">Remove tag</span>
                           </Button>
                         </Badge>
@@ -2471,19 +2479,19 @@ export default function CreateCoursePage() {
 
           <TabsContent value="pricing" className="space-y-6">
             <Card className="border-blue-100 dark:border-blue-900">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50 rounded-t-lg">
+              <CardHeader className="rounded-t-lg bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50">
                 <CardTitle className="text-slate-800 dark:text-slate-200">
                   Course Pricing
                 </CardTitle>
                 <CardDescription>Set the price for your course</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6 pt-6">
+              <CardContent className="pt-6 space-y-6">
                 <div className="space-y-4">
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="price">Regular Price (&#8358;)</Label>
                       <div className="relative">
-                        <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <DollarSign className="absolute w-4 h-4 left-3 top-3 text-muted-foreground" />
                         <Input
                           id="price"
                           type="text"
@@ -2492,7 +2500,7 @@ export default function CreateCoursePage() {
                           onChange={(e) =>
                             handleInputChange("price", e.target.value)
                           }
-                          className="pl-9 border-blue-100 dark:border-blue-900"
+                          className="border-blue-100 pl-9 dark:border-blue-900"
                         />
                       </div>
                     </div>
@@ -2501,7 +2509,7 @@ export default function CreateCoursePage() {
                         Discount Price (&#8358;)
                       </Label>
                       <div className="relative">
-                        <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <DollarSign className="absolute w-4 h-4 left-3 top-3 text-muted-foreground" />
                         <Input
                           id="discount-price"
                           type="text"
@@ -2510,7 +2518,7 @@ export default function CreateCoursePage() {
                           onChange={(e) =>
                             handleInputChange("discountPrice", e.target.value)
                           }
-                          className="pl-9 border-blue-100 dark:border-blue-900"
+                          className="border-blue-100 pl-9 dark:border-blue-900"
                         />
                       </div>
                       <p className="text-xs text-muted-foreground">
@@ -2545,7 +2553,7 @@ export default function CreateCoursePage() {
 
           <TabsContent value="seo" className="space-y-6">
             <Card className="border-blue-100 dark:border-blue-900">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50 rounded-t-lg">
+              <CardHeader className="rounded-t-lg bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50">
                 <CardTitle className="text-slate-800 dark:text-slate-200">
                   SEO Settings
                 </CardTitle>
@@ -2553,7 +2561,7 @@ export default function CreateCoursePage() {
                   Optimize your course for search engines
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6 pt-6">
+              <CardContent className="pt-6 space-y-6">
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="seo-title">SEO Title</Label>
@@ -2580,7 +2588,7 @@ export default function CreateCoursePage() {
                       onChange={(e) =>
                         handleInputChange("seoDescription", e.target.value)
                       }
-                      className="min-h-24 border-blue-100 dark:border-blue-900"
+                      className="border-blue-100 min-h-24 dark:border-blue-900"
                     />
                     <p className="text-xs text-muted-foreground">
                       This will appear in search engine results
@@ -2609,7 +2617,7 @@ export default function CreateCoursePage() {
 
           <TabsContent value="settings" className="space-y-6">
             <Card className="border-blue-100 dark:border-blue-900">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50 rounded-t-lg">
+              <CardHeader className="rounded-t-lg bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50">
                 <CardTitle className="text-slate-800 dark:text-slate-200">
                   Course Settings
                 </CardTitle>
@@ -2617,7 +2625,7 @@ export default function CreateCoursePage() {
                   Configure additional course settings
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6 pt-6">
+              <CardContent className="pt-6 space-y-6">
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
@@ -2675,19 +2683,19 @@ export default function CreateCoursePage() {
                   </div>
                 </div>
               </CardContent>
-              <CardFooter className="flex justify-between border-t border-blue-100 dark:border-blue-900 px-6 py-4">
+              <CardFooter className="flex justify-between px-6 py-4 border-t border-blue-100 dark:border-blue-900">
                 <Button
                   variant="outline"
-                  className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400 border-red-200 dark:border-red-800"
+                  className="text-red-600 border-red-200 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400 dark:border-red-800"
                 >
-                  <Trash2 className="mr-2 h-4 w-4" />
+                  <Trash2 className="w-4 h-4 mr-2" />
                   Delete Course
                 </Button>
                 <Button
                   onClick={handlePublish}
-                  className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white"
+                  className="text-white bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
                 >
-                  <Save className="mr-2 h-4 w-4" />
+                  <Save className="w-4 h-4 mr-2" />
                   Save Changes
                 </Button>
               </CardFooter>
