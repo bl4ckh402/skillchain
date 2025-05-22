@@ -126,7 +126,7 @@ export default function BootcampApplicationPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
       </div>
     )
   }
@@ -144,11 +144,11 @@ export default function BootcampApplicationPage() {
             className="mb-4"
             onClick={() => router.back()}
           >
-            <ArrowLeft className="mr-2 h-4 w-4" />
+            <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>
           
-          <h1 className="text-3xl font-bold tracking-tighter mb-2">
+          <h1 className="mb-2 text-3xl font-bold tracking-tighter">
             Apply for {bootcamp.title}
           </h1>
           <p className="text-muted-foreground">
@@ -322,7 +322,7 @@ export default function BootcampApplicationPage() {
               >
                 {submitting ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Submitting...
                   </>
                 ) : (
