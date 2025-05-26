@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { useAuthRoles } from "@/lib/auth"
+import * as React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useAuthRoles } from "@/lib/auth";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -12,43 +12,54 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu"
-import { cn } from "@/lib/utils"
-import { BookOpen, Code2, Users, Briefcase, Trophy, MessageSquare } from "lucide-react"
+} from "@/components/ui/navigation-menu";
+import { cn } from "@/lib/utils";
+import {
+  BookOpen,
+  Code2,
+  Users,
+  Briefcase,
+  Trophy,
+  MessageSquare,
+} from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 export function MainNav() {
-  const pathname = usePathname()
-  const { isInstructor, isAdmin } = useAuthRoles()
-  
+  const pathname = usePathname();
+  const { isInstructor, isAdmin } = useAuthRoles();
+  const [isOpen, setIsOpen] = React.useState(false); // eslint-disable-line @typescript-eslint/no-unused-vars
+
   const isActive = (path: string) => {
-    if (path === "/") return pathname === path
-    return pathname.startsWith(path)
-  }
+    if (path === "/") return pathname === path;
+    return pathname.startsWith(path);
+  };
 
   return (
-    <NavigationMenu>
+    <NavigationMenu className="hidden md:flex">
       <NavigationMenuList>
         {/* Resources Dropdown */}
         <NavigationMenuItem>
-          <NavigationMenuTrigger 
+          <NavigationMenuTrigger
             className={cn(
-              isActive("/marketplace") || isActive("/bootcamps") || isActive("/live-session") 
-                ? "bg-accent text-accent-foreground" 
+              isActive("/marketplace") ||
+                isActive("/bootcamps") ||
+                isActive("/live-session")
+                ? "bg-accent text-accent-foreground"
                 : ""
             )}
           >
             Resources
           </NavigationMenuTrigger>
           <NavigationMenuContent>
-            <ul className="grid gap-3 p-6 w-[400px] md:w-[500px] lg:w-[600px] grid-cols-2">
-              <li className="row-span-3">
+            <ul className="grid gap-3 p-6 w-[400px] md:w-[500px] lg:w-[600px] md:grid-cols-2">
+              <li className="row-span-3 md:col-span-1">
                 <NavigationMenuLink asChild>
                   <Link
-                    className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
+                    className="flex flex-col justify-end w-full h-full p-6 no-underline rounded-md outline-none select-none bg-gradient-to-b from-muted/50 to-muted focus:shadow-md"
                     href="/marketplace"
                   >
-                    <BookOpen className="h-6 w-6 mb-2" />
-                    <div className="mb-2 mt-4 text-lg font-medium">
+                    <BookOpen className="w-6 h-6 mb-2" />
+                    <div className="mt-4 mb-2 text-lg font-medium">
                       Learning Resources
                     </div>
                     <p className="text-sm leading-tight text-muted-foreground">
@@ -57,13 +68,25 @@ export function MainNav() {
                   </Link>
                 </NavigationMenuLink>
               </li>
-              <ListItem href="/bootcamps" title="Bootcamps" active={isActive("/bootcamps")}>
+              <ListItem
+                href="/bootcamps"
+                title="Bootcamps"
+                active={isActive("/bootcamps")}
+              >
                 Intensive training programs for specific skills
               </ListItem>
-              <ListItem href="/live-session" title="Live Sessions" active={isActive("/live-session")}>
+              <ListItem
+                href="/live-session"
+                title="Live Sessions"
+                active={isActive("/live-session")}
+              >
                 Join interactive live learning sessions
               </ListItem>
-              <ListItem href="/marketplace" title="Course Marketplace" active={isActive("/marketplace")}>
+              <ListItem
+                href="/marketplace"
+                title="Course Marketplace"
+                active={isActive("/marketplace")}
+              >
                 Browse all available courses and resources
               </ListItem>
             </ul>
@@ -72,9 +95,11 @@ export function MainNav() {
 
         {/* Community Dropdown */}
         <NavigationMenuItem>
-          <NavigationMenuTrigger 
+          <NavigationMenuTrigger
             className={cn(
-              isActive("/community") || isActive("/hackathons") || isActive("/jobs")
+              isActive("/community") ||
+                isActive("/hackathons") ||
+                isActive("/jobs")
                 ? "bg-accent text-accent-foreground"
                 : ""
             )}
@@ -82,15 +107,15 @@ export function MainNav() {
             Community
           </NavigationMenuTrigger>
           <NavigationMenuContent>
-            <ul className="grid gap-3 p-6 w-[400px] md:w-[500px] lg:w-[600px] grid-cols-2">
-              <li className="row-span-3">
+            <ul className="grid gap-3 p- md:w-[400px] lg:w-[500px] md:grid-cols-2">
+              <li className="row-span-3 md:col-span-1">
                 <NavigationMenuLink asChild>
                   <Link
-                    className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
+                    className="flex flex-col justify-end w-full h-full p-6 no-underline rounded-md outline-none select-none bg-gradient-to-b from-muted/50 to-muted focus:shadow-md"
                     href="/community"
                   >
-                    <MessageSquare className="h-6 w-6 mb-2" />
-                    <div className="mb-2 mt-4 text-lg font-medium">
+                    <MessageSquare className="w-6 h-6 mb-2" />
+                    <div className="mt-4 mb-2 text-lg font-medium">
                       Community Hub
                     </div>
                     <p className="text-sm leading-tight text-muted-foreground">
@@ -99,13 +124,25 @@ export function MainNav() {
                   </Link>
                 </NavigationMenuLink>
               </li>
-              <ListItem href="/hackathons" title="Hackathons" active={isActive("/hackathons")}>
+              <ListItem
+                href="/hackathons"
+                title="Hackathons"
+                active={isActive("/hackathons")}
+              >
                 Participate in coding challenges and hackathons
               </ListItem>
-              <ListItem href="/community" title="Discussion Forums" active={isActive("/community")}>
+              <ListItem
+                href="/community"
+                title="Discussion Forums"
+                active={isActive("/community")}
+              >
                 Engage in technical discussions and get help
               </ListItem>
-              <ListItem href="/jobs" title="Job Board" active={isActive("/jobs")}>
+              <ListItem
+                href="/jobs"
+                title="Job Board"
+                active={isActive("/jobs")}
+              >
                 Find job opportunities and career resources
               </ListItem>
             </ul>
@@ -115,10 +152,12 @@ export function MainNav() {
         {/* Regular Menu Items */}
         <NavigationMenuItem>
           <Link href="/jobs" legacyBehavior passHref>
-            <NavigationMenuLink className={cn(
-              navigationMenuTriggerStyle(),
-              isActive("/jobs") && "bg-accent text-accent-foreground"
-            )}>
+            <NavigationMenuLink
+              className={cn(
+                navigationMenuTriggerStyle(),
+                isActive("/jobs") && "bg-accent text-accent-foreground"
+              )}
+            >
               Jobs
             </NavigationMenuLink>
           </Link>
@@ -126,10 +165,12 @@ export function MainNav() {
 
         <NavigationMenuItem>
           <Link href="/hackathons" legacyBehavior passHref>
-            <NavigationMenuLink className={cn(
-              navigationMenuTriggerStyle(),
-              isActive("/hackathons") && "bg-accent text-accent-foreground"
-            )}>
+            <NavigationMenuLink
+              className={cn(
+                navigationMenuTriggerStyle(),
+                isActive("/hackathons") && "bg-accent text-accent-foreground"
+              )}
+            >
               Hackathons
             </NavigationMenuLink>
           </Link>
@@ -140,30 +181,38 @@ export function MainNav() {
           <>
             <NavigationMenuItem>
               <Link href="/instructor/dashboard" legacyBehavior passHref>
-                <NavigationMenuLink className={cn(
-                  navigationMenuTriggerStyle(),
-                  isActive("/instructor") && "bg-accent text-accent-foreground"
-                )}>
+                <NavigationMenuLink
+                  className={cn(
+                    navigationMenuTriggerStyle(),
+                    isActive("/instructor") &&
+                      "bg-accent text-accent-foreground"
+                  )}
+                >
                   Instructor Dashboard
                 </NavigationMenuLink>
               </Link>
             </NavigationMenuItem>
             <NavigationMenuItem>
               <Link href="/create" legacyBehavior passHref>
-                <NavigationMenuLink className={cn(
-                  navigationMenuTriggerStyle(),
-                  isActive("/create") && "bg-accent text-accent-foreground"
-                )}>
+                <NavigationMenuLink
+                  className={cn(
+                    navigationMenuTriggerStyle(),
+                    isActive("/create") && "bg-accent text-accent-foreground"
+                  )}
+                >
                   Create Course
                 </NavigationMenuLink>
               </Link>
             </NavigationMenuItem>
             <NavigationMenuItem>
               <Link href="/bootcamps/create" legacyBehavior passHref>
-                <NavigationMenuLink className={cn(
-                  navigationMenuTriggerStyle(),
-                  isActive("/bootcamps/create") && "bg-accent text-accent-foreground"
-                )}>
+                <NavigationMenuLink
+                  className={cn(
+                    navigationMenuTriggerStyle(),
+                    isActive("/bootcamps/create") &&
+                      "bg-accent text-accent-foreground"
+                  )}
+                >
                   Create Bootcamp
                 </NavigationMenuLink>
               </Link>
@@ -174,7 +223,7 @@ export function MainNav() {
         {/* Admin-only items */}
         {isAdmin && (
           <NavigationMenuItem>
-            <NavigationMenuTrigger 
+            <NavigationMenuTrigger
               className={cn(
                 isActive("/admin") && "bg-accent text-accent-foreground"
               )}
@@ -183,16 +232,32 @@ export function MainNav() {
             </NavigationMenuTrigger>
             <NavigationMenuContent>
               <ul className="grid gap-3 p-6 w-[400px] md:w-[500px] lg:w-[600px] grid-cols-2">
-                <ListItem href="/admin" title="Admin Dashboard" active={isActive("/admin")}>
+                <ListItem
+                  href="/admin"
+                  title="Admin Dashboard"
+                  active={isActive("/admin")}
+                >
                   Access the main admin control panel
                 </ListItem>
-                <ListItem href="/admin/users" title="User Management" active={isActive("/admin/users")}>
+                <ListItem
+                  href="/admin/users"
+                  title="User Management"
+                  active={isActive("/admin/users")}
+                >
                   Manage users and permissions
                 </ListItem>
-                <ListItem href="/admin/courses" title="Course Management" active={isActive("/admin/courses")}>
+                <ListItem
+                  href="/admin/courses"
+                  title="Course Management"
+                  active={isActive("/admin/courses")}
+                >
                   Oversee courses and content
                 </ListItem>
-                <ListItem href="/admin/reports" title="Reports & Analytics" active={isActive("/admin/reports")}>
+                <ListItem
+                  href="/admin/reports"
+                  title="Reports & Analytics"
+                  active={isActive("/admin/reports")}
+                >
                   View system analytics and reports
                 </ListItem>
               </ul>
@@ -201,7 +266,7 @@ export function MainNav() {
         )}
       </NavigationMenuList>
     </NavigationMenu>
-  )
+  );
 }
 
 // Updated ListItem component with active state support
@@ -223,12 +288,11 @@ const ListItem = React.forwardRef<
           {...props}
         >
           <div className="text-sm font-medium leading-none">{title}</div>
-          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+          <p className="text-sm leading-snug line-clamp-2 text-muted-foreground">
             {children}
           </p>
         </Link>
       </NavigationMenuLink>
     </li>
-  )
-})
-
+  );
+});
