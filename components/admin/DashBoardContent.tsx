@@ -138,7 +138,7 @@ export default function AdminDashboardContent() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="w-16 h-16 border-4 border-t-blue-500 border-b-blue-500 border-r-transparent border-l-transparent rounded-full animate-spin"></div>
+        <div className="w-16 h-16 border-4 rounded-full border-t-blue-500 border-b-blue-500 border-r-transparent border-l-transparent animate-spin"></div>
       </div>
     );
   }
@@ -148,7 +148,7 @@ export default function AdminDashboardContent() {
       <div className="flex flex-col space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-200">Admin Dashboard</h1>
-          <p className="text-slate-600 dark:text-slate-400 mt-1">
+          <p className="mt-1 text-slate-600 dark:text-slate-400">
             Manage users, courses, and platform settings
           </p>
         </div>
@@ -165,34 +165,34 @@ export default function AdminDashboardContent() {
           <div className="mt-6">
             {/* Overview Tab */}
             <TabsContent value="overview" className="space-y-6">
-              <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatsCard 
                   title="Total Users" 
                   value={stats.totalUsers.toString()} 
                   description="Registered platform users" 
-                  icon={<Users className="h-8 w-8 text-blue-500" />} 
+                  icon={<Users className="w-8 h-8 text-blue-500" />} 
                 />
                 <StatsCard 
                   title="Total Courses" 
                   value={stats.totalCourses.toString()} 
                   description="Published and draft courses" 
-                  icon={<BookOpen className="h-8 w-8 text-green-500" />} 
+                  icon={<BookOpen className="w-8 h-8 text-green-500" />} 
                 />
                 <StatsCard 
                   title="Active Instructors" 
                   value={stats.totalInstructors.toString()} 
                   description="Course creators" 
-                  icon={<GraduationCap className="h-8 w-8 text-purple-500" />} 
+                  icon={<GraduationCap className="w-8 h-8 text-purple-500" />} 
                 />
                 <StatsCard 
                   title="Total Revenue" 
                   value={`$${stats.totalRevenue.toFixed(2)}`} 
                   description="Platform earnings" 
-                  icon={<Activity className="h-8 w-8 text-amber-500" />} 
+                  icon={<Activity className="w-8 h-8 text-amber-500" />} 
                 />
               </div>
               
-              <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <Card>
                   <CardHeader>
                     <CardTitle>Platform Activity</CardTitle>
@@ -200,30 +200,30 @@ export default function AdminDashboardContent() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      <div className="flex justify-between items-center">
+                      <div className="flex items-center justify-between">
                         <div className="flex items-center">
-                          <Award className="h-5 w-5 text-blue-500 mr-2" />
+                          <Award className="w-5 h-5 mr-2 text-blue-500" />
                           <span>Certificates Issued</span>
                         </div>
                         <span className="font-semibold">{stats.certificatesIssued}</span>
                       </div>
-                      <div className="flex justify-between items-center">
+                      <div className="flex items-center justify-between">
                         <div className="flex items-center">
-                          <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+                          <CheckCircle className="w-5 h-5 mr-2 text-green-500" />
                           <span>Courses Completed</span>
                         </div>
                         <span className="font-semibold">{stats.coursesCompleted}</span>
                       </div>
-                      <div className="flex justify-between items-center">
+                      <div className="flex items-center justify-between">
                         <div className="flex items-center">
-                          <Calendar className="h-5 w-5 text-purple-500 mr-2" />
+                          <Calendar className="w-5 h-5 mr-2 text-purple-500" />
                           <span>Active Enrollments</span>
                         </div>
                         <span className="font-semibold">{stats.activeEnrollments}</span>
                       </div>
-                      <div className="flex justify-between items-center">
+                      <div className="flex items-center justify-between">
                         <div className="flex items-center">
-                          <Building className="h-5 w-5 text-amber-500 mr-2" />
+                          <Building className="w-5 h-5 mr-2 text-amber-500" />
                           <span>Jobs Posted</span>
                         </div>
                         <span className="font-semibold">{stats.jobsPosted}</span>
@@ -239,13 +239,13 @@ export default function AdminDashboardContent() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      <div className="flex justify-between items-center">
+                      <div className="flex items-center justify-between">
                         <div className="flex items-center">
-                          <FileText className="h-5 w-5 text-blue-500 mr-2" />
+                          <FileText className="w-5 h-5 mr-2 text-blue-500" />
                           <span>Instructor Applications</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="bg-yellow-50 text-yellow-700">
+                          <Badge variant="outline" className="text-yellow-700 bg-yellow-50">
                             {stats.pendingApplications}
                           </Badge>
                           <Button 
@@ -329,12 +329,12 @@ export default function AdminDashboardContent() {
                           <td className="px-6 py-4 font-medium">Blockchain Fundamentals</td>
                           <td className="px-6 py-4">John Doe</td>
                           <td className="px-6 py-4">
-                            <Badge className="bg-green-100 text-green-700">Published</Badge>
+                            <Badge className="text-green-700 bg-green-100">Published</Badge>
                           </td>
                           <td className="px-6 py-4">245</td>
-                          <td className="px-6 py-4 flex space-x-2">
+                          <td className="flex px-6 py-4 space-x-2">
                             <Button variant="outline" size="sm">
-                              <ExternalLink className="h-4 w-4 mr-1" /> View
+                              <ExternalLink className="w-4 h-4 mr-1" /> View
                             </Button>
                             <Button variant="outline" size="sm">Edit</Button>
                           </td>
@@ -357,15 +357,15 @@ export default function AdminDashboardContent() {
                 <CardContent>
                   <div className="space-y-6">
                     <div>
-                      <h3 className="text-lg font-medium mb-2">General Settings</h3>
+                      <h3 className="mb-2 text-lg font-medium">General Settings</h3>
                       <div className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm font-medium mb-1">Platform Name</label>
+                            <label className="block mb-1 text-sm font-medium">Platform Name</label>
                             <Input defaultValue="BlockLearn" />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium mb-1">Support Email</label>
+                            <label className="block mb-1 text-sm font-medium">Support Email</label>
                             <Input defaultValue="support@blocklearn.example" type="email" />
                           </div>
                         </div>
@@ -373,15 +373,15 @@ export default function AdminDashboardContent() {
                     </div>
                     
                     <div>
-                      <h3 className="text-lg font-medium mb-2">Fee Settings</h3>
+                      <h3 className="mb-2 text-lg font-medium">Fee Settings</h3>
                       <div className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm font-medium mb-1">Platform Fee (%)</label>
+                            <label className="block mb-1 text-sm font-medium">Platform Fee (%)</label>
                             <Input defaultValue="5" type="number" min="0" max="100" />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium mb-1">Instructor Payout Schedule</label>
+                            <label className="block mb-1 text-sm font-medium">Instructor Payout Schedule</label>
                             <Select defaultValue="monthly">
                               <SelectTrigger>
                                 <SelectValue placeholder="Select schedule" />
@@ -412,17 +412,24 @@ export default function AdminDashboardContent() {
 }
 
 // Helper component for stats cards
-function StatsCard({ title, value, description, icon }) {
+type StatsCardProps = {
+  title: string;
+  value: string | number;
+  description: string;
+  icon: React.ReactNode;
+};
+
+function StatsCard({ title, value, description, icon }: StatsCardProps) {
   return (
     <Card>
       <CardContent className="p-6">
-        <div className="flex justify-between items-start">
+        <div className="flex items-start justify-between">
           <div>
             <p className="text-sm font-medium text-muted-foreground">{title}</p>
             <p className="text-3xl font-bold">{value}</p>
-            <p className="text-xs text-muted-foreground mt-1">{description}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{description}</p>
           </div>
-          <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded-full">
+          <div className="p-3 rounded-full bg-slate-100 dark:bg-slate-800">
             {icon}
           </div>
         </div>
