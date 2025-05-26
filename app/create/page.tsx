@@ -458,7 +458,11 @@ export default function CreateCoursePage() {
     setModules(updatedModules);
   };
 
-  const handleLessonTitleChange = (moduleId, lessonId, newTitle) => {
+  const handleLessonTitleChange = (
+    moduleId: string,
+    lessonId: string,
+    newTitle: string
+  ) => {
     const moduleIndex = modules.findIndex((m) => m.id === moduleId);
     if (moduleIndex === -1) return;
 
@@ -535,7 +539,11 @@ export default function CreateCoursePage() {
     setModules(updatedModules);
   };
 
-  const handleLessonDurationChange = (moduleId, lessonId, newDuration) => {
+  const handleLessonDurationChange = (
+    moduleId: string,
+    lessonId: string,
+    newDuration: string
+  ) => {
     const moduleIndex = modules.findIndex((m) => m.id === moduleId);
     if (moduleIndex === -1) return;
 
@@ -549,7 +557,7 @@ export default function CreateCoursePage() {
     setModules(updatedModules);
   };
 
-  const handleVideoUrlChange = (moduleId, lessonId, videoUrl) => {
+  const handleVideoUrlChange = (moduleId: string, lessonId: string, videoUrl: string) => {
     const moduleIndex = modules.findIndex((m) => m.id === moduleId);
     if (moduleIndex === -1) return;
 

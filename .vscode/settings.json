@@ -1,10 +1,16 @@
 {
     "typescript.tsdk": "node_modules\\typescript\\lib",
     "cSpell.words": [
+
+        "bootcamp",
+        "firestore",
+        "uuidv"
+
         "defi",
         "firestore",
         "pangea",
         "wistia",
         "youtu"
+
     ]
 }
