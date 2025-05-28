@@ -175,8 +175,6 @@ export const VideoProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [user, tokenProvider]);
 
-
-
   // Create call
   const createCall = useCallback(
     async (
@@ -192,7 +190,9 @@ export const VideoProvider = ({ children }: { children: ReactNode }) => {
         const callId = uuidv4();
         const callObject = client.call(callType, callId);
 
-        const status: "active" | "scheduled" = scheduledFor ? "scheduled" : "active";
+        const status: "active" | "scheduled" = scheduledFor
+          ? "scheduled"
+          : "active";
 
         const sessionData = {
           id: callId,
@@ -216,6 +216,7 @@ export const VideoProvider = ({ children }: { children: ReactNode }) => {
           instructorId: user.uid,
           status,
           participants: [user.uid],
+          isRecording: false,
         };
 
         setActiveCalls((prev) => [...prev, session]);
@@ -308,17 +309,29 @@ export const VideoProvider = ({ children }: { children: ReactNode }) => {
 
         // Get call object
         const callObject = client.call("default", callId);
+        // If create is true, use getOrCreate directly instead of trying get() first
 
-        // Always try to get the call first to check if it exists
+        if (create) {
+          console.log("Creating call with ID: & { callId }");
+        }
+
+        // Call getOrCreate only once with proper approach based on the create flag
         try {
-          await callObject.get();
-        } catch (error) {
-          // If call doesn't exist and create is true, create it
           if (create) {
             await callObject.getOrCreate();
-            await updateSessionStatus(callId, "active");
           } else {
-            throw new Error("Call does not exist and create flag is false");
+            await callObject.get();
+          }
+          await callObject.join();
+          await updateSessionStatus(callId, "active");
+        } catch (error) {
+          console.error("Failed to access call:", error);
+          if (!create) {
+            console.error("Call does not exist and create flag is false");
+            throw new Error("Call does not exist");
+          } else {
+            console.error("Failed to create call even with create flag");
+            throw error;
           }
         }
 
@@ -350,6 +363,7 @@ export const VideoProvider = ({ children }: { children: ReactNode }) => {
           instructorId: user.uid,
           status: "active",
           participants: [user.uid],
+          isRecording: false,
         };
 
         // Update state

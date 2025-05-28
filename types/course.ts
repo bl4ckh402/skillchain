@@ -91,6 +91,7 @@ export interface RelatedCourse {
 }
 
 export interface Course {
+  lessons: any;
   // Basic information
   id?: string; // Optional as it might not exist for new courses
   title: string;

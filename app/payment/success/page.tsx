@@ -16,8 +16,8 @@ import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
 
 export default function PaymentSuccessPage() {
   const [status, setStatus] = useState("processing");
-  const [courseId, setCourseId] = useState(null);
-  const [error, setError] = useState(null);
+  const [courseId, setCourseId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { verifyPayment } = usePayment();
@@ -41,16 +41,18 @@ export default function PaymentSuccessPage() {
         const result = await verifyPayment(paymentReference);
 
         if (result && result.success) {
-          setStatus("success");
-          // Set the courseId returned from verifyPayment
-          setCourseId(result.courseId);
+        setStatus("success");
+        // Set the courseId returned from verifyPayment, fallback to null if undefined
+        setCourseId(result.courseId ?? null);
         } else {
           setStatus("pending");
         }
       } catch (error) {
         console.error("Error verifying payment:", error);
         setStatus("error");
-        setError(error.message || "Failed to verify payment");
+        setError(
+          error instanceof Error ? error.message : "Failed to verify payment"
+        );
       }
     };
 
@@ -70,15 +72,15 @@ export default function PaymentSuccessPage() {
   };
 
   return (
-    <div className="container py-12 max-w-md mx-auto">
+    <div className="container max-w-md py-12 mx-auto">
       <Card>
         <CardHeader>
           {status === "success" ? (
             <>
               <div className="flex justify-center mb-4">
-                <CheckCircle className="h-16 w-16 text-green-500" />
+                <CheckCircle className="w-16 h-16 text-green-500" />
               </div>
-              <CardTitle className="text-center text-2xl">
+              <CardTitle className="text-2xl text-center">
                 Payment Successful!
               </CardTitle>
               <CardDescription className="text-center">
@@ -88,9 +90,9 @@ export default function PaymentSuccessPage() {
           ) : status === "processing" ? (
             <>
               <div className="flex justify-center mb-4">
-                <Loader2 className="h-16 w-16 text-blue-500 animate-spin" />
+                <Loader2 className="w-16 h-16 text-blue-500 animate-spin" />
               </div>
-              <CardTitle className="text-center text-2xl">
+              <CardTitle className="text-2xl text-center">
                 Processing Payment
               </CardTitle>
               <CardDescription className="text-center">
@@ -100,9 +102,9 @@ export default function PaymentSuccessPage() {
           ) : status === "pending" ? (
             <>
               <div className="flex justify-center mb-4">
-                <Loader2 className="h-16 w-16 text-yellow-500 animate-spin" />
+                <Loader2 className="w-16 h-16 text-yellow-500 animate-spin" />
               </div>
-              <CardTitle className="text-center text-2xl">
+              <CardTitle className="text-2xl text-center">
                 Payment Pending
               </CardTitle>
               <CardDescription className="text-center">
@@ -112,9 +114,9 @@ export default function PaymentSuccessPage() {
           ) : (
             <>
               <div className="flex justify-center mb-4">
-                <AlertCircle className="h-16 w-16 text-red-500" />
+                <AlertCircle className="w-16 h-16 text-red-500" />
               </div>
-              <CardTitle className="text-center text-2xl">
+              <CardTitle className="text-2xl text-center">
                 Payment Error
               </CardTitle>
               <CardDescription className="text-center">
