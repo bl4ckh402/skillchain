@@ -6,7 +6,14 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthProvider";
 import { db } from "@/lib/firebase";
 import { doc, updateDoc, getDoc, setDoc } from "firebase/firestore";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,7 +33,9 @@ export default function InitAdminPage() {
   useEffect(() => {
     const checkAdminKeyExists = async () => {
       try {
-        const adminKeyDoc = await getDoc(doc(db, "systemSettings", "adminInitKey"));
+        const adminKeyDoc = await getDoc(
+          doc(db, "systemSettings", "adminInitKey")
+        );
         // If the document doesn't exist, this is first run
         if (!adminKeyDoc.exists()) {
           // Generate a random admin key
@@ -34,7 +43,7 @@ export default function InitAdminPage() {
           await setDoc(doc(db, "systemSettings", "adminInitKey"), {
             key: randomKey,
             used: false,
-            createdAt: new Date()
+            createdAt: new Date(),
           });
           console.log("Admin key created:", randomKey);
         } else {
@@ -55,7 +64,7 @@ export default function InitAdminPage() {
     checkAdminKeyExists();
   }, []);
 
-  const handleSetupAdmin = async (e:any) => {
+  const handleSetupAdmin = async (e: any) => {
     e.preventDefault();
     if (!user) return;
 
@@ -64,49 +73,51 @@ export default function InitAdminPage() {
 
     try {
       // Verify the admin key
-      const adminKeyDoc = await getDoc(doc(db, "systemSettings", "adminInitKey"));
-      
+      const adminKeyDoc = await getDoc(
+        doc(db, "systemSettings", "adminInitKey")
+      );
+
       if (!adminKeyDoc.exists()) {
         throw new Error("Admin key not found");
       }
-      
+
       const adminKeyData = adminKeyDoc.data();
-      
+
       if (adminKeyData.used) {
         throw new Error("Admin already initialized");
       }
-      
+
       if (adminKeyData.key !== adminKey) {
         throw new Error("Invalid admin key");
       }
-      
+
       // Update user role to admin
       const userRef = doc(db, "users", user.uid);
       await updateDoc(userRef, {
-        role: UserRole.ADMIN
+        role: UserRole.ADMIN,
       });
-      
+
       // Mark the admin key as used
       await updateDoc(doc(db, "systemSettings", "adminInitKey"), {
         used: true,
         usedBy: user.uid,
-        usedAt: new Date()
+        usedAt: new Date(),
       });
-      
+
       toast({
         title: "Success",
         description: "You have been set as the system administrator",
       });
-      
+
       setAdminCreated(true);
-    } catch (error:any) {
+    } catch (error: any) {
       console.error("Error setting up admin:", error);
       setError(error.message || "Failed to initialize admin");
-      
+
       toast({
         title: "Error",
         description: error.message || "Failed to initialize admin",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -116,7 +127,7 @@ export default function InitAdminPage() {
   if (checkingKey) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
         <span className="ml-2">Checking admin status...</span>
       </div>
     );
@@ -125,12 +136,12 @@ export default function InitAdminPage() {
   // If admin is already created
   if (adminCreated) {
     return (
-      <div className="container max-w-md mx-auto py-12">
+      <div className="container max-w-md py-12 mx-auto">
         <Card>
           <CardHeader>
             <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
-                <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
+              <div className="flex items-center justify-center w-16 h-16 bg-green-100 rounded-full dark:bg-green-900">
+                <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
               </div>
             </div>
             <CardTitle className="text-center">Admin Already Setup</CardTitle>
@@ -140,7 +151,8 @@ export default function InitAdminPage() {
           </CardHeader>
           <CardContent className="text-center">
             <p className="mb-4">
-              If you need admin access, please contact the existing administrator.
+              If you need admin access, please contact the existing
+              administrator.
             </p>
           </CardContent>
           <CardFooter className="flex justify-center">
@@ -156,10 +168,12 @@ export default function InitAdminPage() {
   // If user is not logged in
   if (!user) {
     return (
-      <div className="container max-w-md mx-auto py-12">
+      <div className="container max-w-md py-12 mx-auto">
         <Card>
           <CardHeader>
-            <CardTitle className="text-center">Authentication Required</CardTitle>
+            <CardTitle className="text-center">
+              Authentication Required
+            </CardTitle>
             <CardDescription className="text-center">
               Please sign in to initialize the admin account.
             </CardDescription>
@@ -175,17 +189,20 @@ export default function InitAdminPage() {
   }
 
   return (
-    <div className="container max-w-md mx-auto py-12">
+    <div className="container max-w-md py-12 mx-auto">
       <Card>
         <CardHeader>
           <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-              <LockKeyhole className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+            <div className="flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full dark:bg-blue-900">
+              <LockKeyhole className="w-8 h-8 text-blue-600 dark:text-blue-400" />
             </div>
           </div>
-          <CardTitle className="text-center">Initialize Admin Account</CardTitle>
+          <CardTitle className="text-center">
+            Initialize Admin Account
+          </CardTitle>
           <CardDescription className="text-center">
-            Enter the admin initialization key to set your account as administrator
+            Enter the admin initialization key to set your account as
+            administrator
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSetupAdmin}>
@@ -202,27 +219,27 @@ export default function InitAdminPage() {
                   required
                 />
               </div>
-              
-              {error && (
-                <div className="text-sm text-red-500">
-                  {error}
-                </div>
-              )}
-              
+
+              {error && <div className="text-sm text-red-500">{error}</div>}
+
               <div className="text-sm text-muted-foreground">
-                <p>Note: This key is only available during the first system setup. Check your server logs or configuration to find the admin key.</p>
+                <p>
+                  Note: This key is only available during the first system
+                  setup. Check your server logs or configuration to find the
+                  admin key.
+                </p>
               </div>
             </div>
           </CardContent>
           <CardFooter>
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white"
+              className="w-full text-white bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
               disabled={loading || !adminKey}
             >
               {loading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Processing...
                 </>
               ) : (

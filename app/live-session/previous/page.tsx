@@ -1,22 +1,22 @@
-"use client"
-import { useEffect } from "react"
-import Layout from "@/components/layout"
-import { Calendar } from "lucide-react"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { useVideo } from "@/context/StreamClientProvider"
-import { useToast } from "@/components/ui/use-toast"
+"use client";
+import { useEffect } from "react";
+import Layout from "@/components/layout";
+import { Calendar } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useVideo } from "@/context/StreamClientProvider";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function PreviousSessionsPage() {
-  const { recentSessions, fetchSessions, isClientReady } = useVideo()
-  const { toast } = useToast()
+  const { recentSessions, fetchSessions, isClientReady } = useVideo();
+  const { toast } = useToast();
 
   // Fetch sessions when component mounts
   useEffect(() => {
     if (isClientReady) {
-      fetchSessions()
+      fetchSessions();
     }
-  }, [isClientReady, fetchSessions])
+  }, [isClientReady, fetchSessions]);
 
   // Format date string
   const formatDate = (date: Date) => {
@@ -24,8 +24,8 @@ export default function PreviousSessionsPage() {
       month: "long",
       day: "numeric",
       year: "numeric",
-    })
-  }
+    });
+  };
 
   // Format time string
   const formatTime = (date: Date) => {
@@ -33,14 +33,14 @@ export default function PreviousSessionsPage() {
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
-    })
-  }
+    });
+  };
 
   return (
     <Layout>
-      <h1 className="text-white text-3xl font-bold mb-8">Previous Sessions</h1>
+      <h1 className="mb-8 text-3xl font-bold text-white">Previous Sessions</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {recentSessions.length > 0 ? (
           recentSessions.map((session) => (
             <PreviousSessionCard
@@ -54,14 +54,12 @@ export default function PreviousSessionsPage() {
           ))
         ) : (
           <div className="col-span-2 bg-[#232538] rounded-lg p-8 text-center">
-            <p className="text-gray-400 mb-4">
-              No previous sessions found
-            </p>
+            <p className="mb-4 text-gray-400">No previous sessions found</p>
           </div>
         )}
       </div>
     </Layout>
-  )
+  );
 }
 
 function PreviousSessionCard({
@@ -71,47 +69,45 @@ function PreviousSessionCard({
   students,
   type,
 }: {
-  title: string
-  date: string
-  startTime: string
-  students: number
-  type: string
+  title: string;
+  date: string;
+  startTime: string;
+  students: number;
+  type: string;
 }) {
   const getBadgeColor = (type: string) => {
     switch (type) {
       case "workshop":
-        return "bg-blue-500/20 text-blue-400"
+        return "bg-blue-500/20 text-blue-400";
       case "review":
-        return "bg-amber-500/20 text-amber-400"
+        return "bg-amber-500/20 text-amber-400";
       default:
-        return "bg-emerald-500/20 text-emerald-400"
+        return "bg-emerald-500/20 text-emerald-400";
     }
-  }
+  };
 
   const getTypeLabel = (type: string) => {
     switch (type) {
       case "workshop":
-        return "Workshop"
+        return "Workshop";
       case "review":
-        return "Review Session"
+        return "Review Session";
       default:
-        return "Lecture"
+        return "Lecture";
     }
-  }
+  };
 
   return (
     <Card className="bg-[#232538] border-0 p-6">
-      <div className="flex justify-between items-start mb-3">
+      <div className="flex items-start justify-between mb-3">
         <div className="mb-1">
-          <Calendar className="h-5 w-5 text-gray-400" />
+          <Calendar className="w-5 h-5 text-gray-400" />
         </div>
         <Badge className={getBadgeColor(type)}>{getTypeLabel(type)}</Badge>
       </div>
-      <h3 className="text-white text-xl font-medium mb-1">{title}</h3>
-      <p className="text-gray-400 mb-2">{date}</p>
-      <p className="text-gray-400 mb-6">
-        {startTime}
-      </p>
+      <h3 className="mb-1 text-xl font-medium text-white">{title}</h3>
+      <p className="mb-2 text-gray-400">{date}</p>
+      <p className="mb-6 text-gray-400">{startTime}</p>
 
       <div className="flex items-center">
         <div className="flex -space-x-2">
@@ -131,5 +127,5 @@ function PreviousSessionCard({
         )}
       </div>
     </Card>
-  )
+  );
 }

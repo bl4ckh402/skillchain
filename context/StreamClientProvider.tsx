@@ -175,8 +175,6 @@ export const VideoProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [user, tokenProvider]);
 
-
-
   // Create call
   const createCall = useCallback(
     async (
@@ -192,7 +190,9 @@ export const VideoProvider = ({ children }: { children: ReactNode }) => {
         const callId = uuidv4();
         const callObject = client.call(callType, callId);
 
-        const status: "active" | "scheduled" = scheduledFor ? "scheduled" : "active";
+        const status: "active" | "scheduled" = scheduledFor
+          ? "scheduled"
+          : "active";
 
         const sessionData = {
           id: callId,
@@ -216,6 +216,7 @@ export const VideoProvider = ({ children }: { children: ReactNode }) => {
           instructorId: user.uid,
           status,
           participants: [user.uid],
+          isRecording: false,
         };
 
         setActiveCalls((prev) => [...prev, session]);
@@ -309,60 +310,72 @@ export const VideoProvider = ({ children }: { children: ReactNode }) => {
         // Get call object
         const callObject = client.call("default", callId);
 
-        // Always try to get the call first to check if it exists
         try {
-          await callObject.get();
-        } catch (error) {
-          // If call doesn't exist and create is true, create it
           if (create) {
             await callObject.getOrCreate();
-            await updateSessionStatus(callId, "active");
           } else {
-            throw new Error("Call does not exist and create flag is false");
+            try {
+              await callObject.get();
+            } catch (getError) {
+              // If get fails and create is false, try getOrCreate as fallback
+              console.log("Call not found, attempting to create...");
+              await callObject.getOrCreate();
+            }
           }
-        }
 
-        // Add participant to Firestore
-        const sessionsQuery = query(
-          collection(db, "sessions"),
-          where("id", "==", callId)
-        );
-        const snapshot = await getDocs(sessionsQuery);
+          await callObject.join();
+          await updateSessionStatus(callId, "active");
 
-        if (!snapshot.empty) {
-          const sessionDoc = snapshot.docs[0];
-          const sessionData = sessionDoc.data();
+          // Add participant to Firestore
+          const sessionsQuery = query(
+            collection(db, "sessions"),
+            where("id", "==", callId)
+          );
+          const snapshot = await getDocs(sessionsQuery);
 
-          if (!sessionData.participants.includes(user.uid)) {
-            await updateDoc(doc(db, "sessions", sessionDoc.id), {
-              participants: [...sessionData.participants, user.uid],
-            });
+          if (!snapshot.empty) {
+            const sessionDoc = snapshot.docs[0];
+            const sessionData = sessionDoc.data();
+
+            if (!sessionData.participants.includes(user.uid)) {
+              await updateDoc(doc(db, "sessions", sessionDoc.id), {
+                participants: [...sessionData.participants, user.uid],
+              });
+            }
           }
+
+          // Create session object
+          const session: CallSession = {
+            id: callId,
+            title: `Session ${callId}`,
+            callObject,
+            type: "default",
+            createdAt: new Date(),
+            instructorId: user.uid,
+            status: "active",
+            participants: [user.uid],
+            isRecording: false,
+          };
+
+          // Update state
+          setActiveCalls((prev) => [...prev, session]);
+          setActiveCallId(callId);
+
+          return callObject;
+        } catch (error) {
+          console.error("Failed to access call:", error);
+          throw new Error(
+            "Failed to access the call. Please check the call ID and try again."
+          );
         }
-
-        // Create session object
-        const session: CallSession = {
-          id: callId,
-          title: `Session ${callId}`,
-          callObject,
-          type: "default",
-          createdAt: new Date(),
-          instructorId: user.uid,
-          status: "active",
-          participants: [user.uid],
-        };
-
-        // Update state
-        setActiveCalls((prev) => [...prev, session]);
-        setActiveCallId(callId);
-
-        return callObject;
       } catch (error) {
         console.error("Failed to initialize call:", error);
         toast({
           title: "Failed to initialize session",
           description:
-            "The session may not exist or you don't have permission to join.",
+            error instanceof Error
+              ? error.message
+              : "The session may not exist or you don't have permission to join.",
           variant: "destructive",
         });
         return null;
@@ -370,7 +383,6 @@ export const VideoProvider = ({ children }: { children: ReactNode }) => {
     },
     [client, isClientReady, user, activeCalls, toast, updateSessionStatus]
   );
-
   // Leave call
   const leaveCall = useCallback(
     async (callId: string): Promise<void> => {
@@ -524,3 +536,5 @@ export const useVideo = (): VideoContextType => {
 
   return context;
 };
+
+  
