@@ -15,54 +15,43 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Sidebar */}
       <div className="w-[240px] bg-[#1a1d2d] border-r border-gray-800 p-4 flex flex-col">
         {/* Logo */}
-        <div className="flex items-center gap-2 mb-8 mt-2">
-          <div className="bg-emerald-500 rounded-md p-1">
-            <Graduation className="h-6 w-6 text-white" />
+        <div className="flex items-center gap-2 mt-2 mb-8">
+          <div className="p-1 rounded-md bg-emerald-500">
+            <Graduation className="w-6 h-6 text-white" />
           </div>
-          <span className="text-white text-xl font-bold">SkillChain</span>
+          <span className="text-xl font-bold text-white">SkillChain</span>
         </div>
 
         {/* Navigation */}
         <nav className="flex flex-col gap-2">
-          <NavItem href="/live-session" icon={<Home className="h-5 w-5" />} label="Dashboard" active={pathname === "/"} />
+          <NavItem href="/live-session" icon={<Home className="w-5 h-5" />} label="Dashboard" active={pathname === "/"} />
           <NavItem
             href="/live-session/upcoming"
-            icon={<Calendar className="h-5 w-5" />}
+            icon={<Calendar className="w-5 h-5" />}
             label="Upcoming Sessions"
             active={pathname === "/upcoming"}
           />
           <NavItem
             href="/live-session/previous"
-            icon={<Clock className="h-5 w-5" />}
+            icon={<Clock className="w-5 h-5" />}
             label="Previous Sessions"
             active={pathname === "/previous"}
           />
           <NavItem
             href="/live-session/recordings"
-            icon={<Video className="h-5 w-5" />}
+            icon={<Video className="w-5 h-5" />}
             label="Recordings"
             active={pathname === "/recordings"}
           />
-          {/* <NavItem
-            href="/courses"
-            icon={<BookOpen className="h-5 w-5" />}
-            label="My Courses"
-            active={pathname === "/courses"}
-          />
-          <NavItem
-            href="/students"
-            icon={<Users className="h-5 w-5" />}
-            label="Students"
-            active={pathname === "/students"}
-          /> */}
+          
         </nav>
       </div>
 
       {/* Main content */}
       <div className="flex-1 overflow-auto">
-        <header className="p-4 flex justify-end">
-          <div className="h-10 w-10 rounded-full bg-orange-300 flex items-center justify-center">
-            <User className="h-5 w-5 text-gray-800" />
+        <header className="flex justify-end p-4">
+          <div className="flex items-center justify-center w-10 h-10 bg-orange-300 rounded-full">
+            <User className="w-5 h-5 text-gray-800" />
           </div>
         </header>
         <main className="p-6">{children}</main>
