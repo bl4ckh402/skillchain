@@ -39,9 +39,9 @@ export default function UpcomingSessionsPage() {
 
   return (
     <Layout>
-      <h1 className="text-white text-3xl font-bold mb-8">Upcoming Sessions</h1>
+      <h1 className="mb-8 text-3xl font-bold text-white">Upcoming Sessions</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {upcomingSessions.length > 0 ? (
           upcomingSessions.map((session) => (
             <SessionCard
@@ -55,7 +55,7 @@ export default function UpcomingSessionsPage() {
           ))
         ) : (
           <div className="col-span-2 bg-[#232538] rounded-lg p-8 text-center">
-            <p className="text-gray-400 mb-4">
+            <p className="mb-4 text-gray-400">
               No upcoming sessions scheduled
             </p>
           </div>
@@ -102,14 +102,14 @@ function SessionCard({
 
   return (
     <Card className="bg-[#232538] border-0 p-6">
-      <div className="flex justify-between items-start mb-3">
+      <div className="flex items-start justify-between mb-3">
         <div className="mb-1">
-          <Calendar className="h-5 w-5 text-gray-400" />
+          <Calendar className="w-5 h-5 text-gray-400" />
         </div>
         <Badge className={getBadgeColor(type)}>{getTypeLabel(type)}</Badge>
       </div>
-      <h3 className="text-white text-xl font-medium mb-1">{title}</h3>
-      <p className="text-gray-400 mb-6">
+      <h3 className="mb-1 text-xl font-medium text-white">{title}</h3>
+      <p className="mb-6 text-gray-400">
         {date} - {time}
       </p>
 
@@ -132,9 +132,9 @@ function SessionCard({
       </div>
 
       <div className="flex gap-3">
-        <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">Start Session</Button>
+        <Button className="text-white bg-emerald-600 hover:bg-emerald-700">Start Session</Button>
         <Button variant="outline" className="text-gray-300 border-gray-700">
-          <Copy className="h-4 w-4 mr-2" />
+          <Copy className="w-4 h-4 mr-2" />
           Copy Invitation
         </Button>
       </div>
