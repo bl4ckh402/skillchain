@@ -53,7 +53,6 @@ interface NavigationItem {
   badge?: string;
   external?: boolean;
 }
- 
 
 interface NavigationSection {
   title: string;
