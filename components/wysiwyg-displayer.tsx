@@ -3,8 +3,13 @@
 import { useEffect, useRef } from 'react'
 import DOMPurify from 'dompurify';
 
-export function WysiwygDisplayer({ content, className = "" }) {
-  const contentRef = useRef(null)
+interface WysiwygDisplayerProps {
+  content: string;
+  className?: string;
+}
+
+export function WysiwygDisplayer({ content, className = "" }: WysiwygDisplayerProps) {
+  const contentRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (contentRef.current) {
@@ -12,7 +17,7 @@ export function WysiwygDisplayer({ content, className = "" }) {
       
       // Example: Make all links open in new tab
       const links = contentRef.current.querySelectorAll('a')
-      links.forEach(link => {
+      links.forEach((link: HTMLAnchorElement) => {
         link.setAttribute('target', '_blank')
         link.setAttribute('rel', 'noopener noreferrer')
       })

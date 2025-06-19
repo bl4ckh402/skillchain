@@ -47,6 +47,8 @@ export default function LiveSessionPage() {
 
   const { toast } = useToast();
   const router = useRouter();
+  const totalStudents = 0;
+  const activeCourses = 0;
   const {
     createCall,
     joinCall,
@@ -175,17 +177,20 @@ export default function LiveSessionPage() {
       }
 
       // Join the call
-      const call = await joinCall(callId);
+      const call = await joinCall(callId, true);
 
       if (call) {
         // Navigate to the session page
-        router.push(`/session/${callId}`);
+        router.push(`/live-session/session/${callId}`);
       }
     } catch (error) {
       console.error("Failed to join session:", error);
       toast({
         title: "Failed to join session",
-        description: "The session ID may be invalid or the session has ended.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "The session ID may be invalid or the session has ended.",
         variant: "destructive",
       });
     }
@@ -199,7 +204,7 @@ export default function LiveSessionPage() {
 
       if (call) {
         // Navigate to the session page
-        router.push(`/session/${callId}`);
+        router.push(`/live-session/session/${callId}`);
       }
     } catch (error) {
       console.error("Failed to start session:", error);
@@ -240,7 +245,7 @@ export default function LiveSessionPage() {
 
       {/* Current time display */}
       <div
-        className="rounded-xl overflow-hidden mb-8 p-8 relative"
+        className="relative p-8 mb-8 overflow-hidden rounded-xl"
         style={{
           backgroundImage:
             "linear-gradient(to right, rgba(26, 29, 45, 0.8), rgba(26, 29, 45, 0.6))",
@@ -248,55 +253,55 @@ export default function LiveSessionPage() {
         }}
       >
         <div className="relative z-10">
-          <h1 className="text-white text-7xl font-bold">
+          <h1 className="font-bold text-white text-7xl">
             {formatTime(currentTime).split(" ")[0]}
-            <span className="text-3xl ml-2">
+            <span className="ml-2 text-3xl">
               {formatTime(currentTime).split(" ")[1]}
             </span>
           </h1>
-          <p className="text-gray-300 text-xl mt-2">
+          <p className="mt-2 text-xl text-gray-300">
             {formatDate(currentTime)}
           </p>
         </div>
-        <div className="absolute right-0 top-0 h-full w-1/3">
-          <Image
+        <div className="absolute top-0 right-0 w-1/3 h-full">
+          {/* <Image
             src="/api/placeholder/400/300"
             alt="Decorative"
             width={400}
             height={300}
             className="object-cover h-full"
-          />
+          /> */}
         </div>
       </div>
 
       {/* Instructor stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 gap-4 mb-8 md:grid-cols-3">
         <Card className="bg-[#232538] border-0 p-6">
           <div className="flex items-center gap-3 mb-2">
-            <div className="bg-emerald-500/20 p-2 rounded-md">
-              <Users className="h-5 w-5 text-emerald-500" />
+            <div className="p-2 rounded-md bg-emerald-500/20">
+              <Users className="w-5 h-5 text-emerald-500" />
             </div>
-            <h3 className="text-gray-400 font-medium">Total Students</h3>
+            <h3 className="font-medium text-gray-400">Total Students</h3>
           </div>
-          <p className="text-3xl font-bold text-white">248</p>
+          <p className="text-3xl font-bold text-white">{totalStudents}</p>
         </Card>
 
         <Card className="bg-[#232538] border-0 p-6">
           <div className="flex items-center gap-3 mb-2">
-            <div className="bg-blue-500/20 p-2 rounded-md">
-              <BookOpen className="h-5 w-5 text-blue-500" />
+            <div className="p-2 rounded-md bg-blue-500/20">
+              <BookOpen className="w-5 h-5 text-blue-500" />
             </div>
-            <h3 className="text-gray-400 font-medium">Active Courses</h3>
+            <h3 className="font-medium text-gray-400">Active Courses</h3>
           </div>
-          <p className="text-3xl font-bold text-white">5</p>
+          <p className="text-3xl font-bold text-white">{activeCourses}</p>
         </Card>
 
         <Card className="bg-[#232538] border-0 p-6">
           <div className="flex items-center gap-3 mb-2">
-            <div className="bg-purple-500/20 p-2 rounded-md">
-              <Video className="h-5 w-5 text-purple-500" />
+            <div className="p-2 rounded-md bg-purple-500/20">
+              <Video className="w-5 h-5 text-purple-500" />
             </div>
-            <h3 className="text-gray-400 font-medium">Recorded Sessions</h3>
+            <h3 className="font-medium text-gray-400">Recorded Sessions</h3>
           </div>
           <p className="text-3xl font-bold text-white">
             {recentSessions.length}
@@ -305,30 +310,30 @@ export default function LiveSessionPage() {
       </div>
 
       {/* Action cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+      <div className="grid grid-cols-1 gap-4 mb-10 md:grid-cols-2 lg:grid-cols-4">
         <ActionCard
-          icon={<Plus className="h-6 w-6 text-white" />}
+          icon={<Plus className="w-6 h-6 text-white" />}
           title="New Session"
           description="Start a live class session"
           bgColor="bg-emerald-600"
           onClick={() => setShowCreateDialog(true)}
         />
         <ActionCard
-          icon={<Users className="h-6 w-6 text-white" />}
+          icon={<Users className="w-6 h-6 text-white" />}
           title="Join Session"
           description="via invitation link"
           bgColor="bg-blue-500"
           onClick={() => setShowJoinDialog(true)}
         />
         <ActionCard
-          icon={<CalendarClock className="h-6 w-6 text-white" />}
+          icon={<CalendarClock className="w-6 h-6 text-white" />}
           title="Schedule Session"
           description="Plan your class sessions"
           bgColor="bg-purple-600"
           onClick={() => setShowScheduleDialog(true)}
         />
         <ActionCard
-          icon={<Video className="h-6 w-6 text-white" />}
+          icon={<Video className="w-6 h-6 text-white" />}
           title="View Recordings"
           description="Session recordings"
           bgColor="bg-amber-500"
@@ -338,8 +343,8 @@ export default function LiveSessionPage() {
 
       {/* Today's sessions */}
       <div className="mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-white text-2xl font-bold">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold text-white">
             Today's Upcoming Sessions
           </h2>
           <Button variant="link" className="text-gray-400">
@@ -347,7 +352,7 @@ export default function LiveSessionPage() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {upcomingSessions.length > 0 ? (
             upcomingSessions
               .slice(0, 2)
@@ -366,14 +371,14 @@ export default function LiveSessionPage() {
               ))
           ) : (
             <div className="col-span-2 bg-[#232538] rounded-lg p-8 text-center">
-              <p className="text-gray-400 mb-4">
+              <p className="mb-4 text-gray-400">
                 No upcoming sessions scheduled for today
               </p>
               <Button
                 onClick={() => setShowCreateDialog(true)}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                className="text-white bg-emerald-600 hover:bg-emerald-700"
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="w-4 h-4 mr-2" />
                 Create New Session
               </Button>
             </div>
@@ -411,12 +416,12 @@ export default function LiveSessionPage() {
             </Button>
             <Button
               onClick={handleCreateSession}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="text-white bg-emerald-600 hover:bg-emerald-700"
               disabled={isCreatingSession}
             >
               {isCreatingSession ? (
                 <>
-                  <Loader className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader className="w-4 h-4 mr-2 animate-spin" />
                   Creating...
                 </>
               ) : (
@@ -456,7 +461,7 @@ export default function LiveSessionPage() {
             </Button>
             <Button
               onClick={handleJoinSession}
-              className="bg-blue-500 hover:bg-blue-600 text-white"
+              className="text-white bg-blue-500 hover:bg-blue-600"
             >
               Join Session
             </Button>
@@ -502,11 +507,11 @@ function ActionCard({
       className={`${bgColor} p-6 text-white cursor-pointer hover:opacity-90 transition-opacity`}
       onClick={onClick}
     >
-      <div className="bg-white/20 w-10 h-10 rounded-md flex items-center justify-center mb-4">
+      <div className="flex items-center justify-center w-10 h-10 mb-4 rounded-md bg-white/20">
         {icon}
       </div>
-      <h3 className="text-xl font-bold mb-1">{title}</h3>
-      <p className="text-white/80 text-sm">{description}</p>
+      <h3 className="mb-1 text-xl font-bold">{title}</h3>
+      <p className="text-sm text-white/80">{description}</p>
     </Card>
   );
 }
@@ -532,17 +537,17 @@ function SessionCard({
 }) {
   return (
     <Card className="bg-[#232538] border-0 p-6">
-      <div className="flex justify-between items-start mb-3">
+      <div className="flex items-start justify-between mb-3">
         <div className="mb-1">
-          <Calendar className="h-5 w-5 text-gray-400" />
+          <Calendar className="w-5 h-5 text-gray-400" />
         </div>
         <Badge className="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30">
           Live Session
         </Badge>
       </div>
-      <h3 className="text-white text-xl font-medium mb-1">{title}</h3>
-      <p className="text-emerald-400 text-sm mb-2">{course}</p>
-      <p className="text-gray-400 mb-6">
+      <h3 className="mb-1 text-xl font-medium text-white">{title}</h3>
+      <p className="mb-2 text-sm text-emerald-400">{course}</p>
+      <p className="mb-6 text-gray-400">
         {date} - {time}
       </p>
 
@@ -564,7 +569,7 @@ function SessionCard({
 
       <div className="flex gap-3">
         <Button
-          className="bg-emerald-600 hover:bg-emerald-700 text-white"
+          className="text-white bg-emerald-600 hover:bg-emerald-700"
           onClick={() => onStartSession(callId)}
         >
           Start Session
@@ -574,7 +579,7 @@ function SessionCard({
           className="text-gray-300 border-gray-700"
           onClick={() => onCopyInvitation(callId)}
         >
-          <Copy className="h-4 w-4 mr-2" />
+          <Copy className="w-4 h-4 mr-2" />
           Copy Invitation
         </Button>
       </div>

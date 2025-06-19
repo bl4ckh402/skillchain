@@ -25,11 +25,11 @@ const PLATFORM_FEE_PERCENTAGE = 5;
 interface PaymentContextType {
   loading: boolean;
   processingPayment: boolean;
-  payForCourse: (courseId: string) => Promise<void>;
+  payForCourse: (courseId: string) => Promise<boolean>;
   initializePayment: (
     courseId: string
   ) => Promise<{ reference: string; authorizationUrl: string } | null>;
-  verifyPayment: (reference: string) => Promise<boolean>;
+  verifyPayment: (reference: string) => Promise<{ success: boolean; courseId?: string }>;
   getPaymentHistory: () => Promise<any[]>;
 }
 
@@ -63,7 +63,7 @@ export function PaymentProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Calculate amounts
-      const totalAmount = course.price || 0;
+      const totalAmount = Number(course.price || 0);
       const platformFeeAmount = (totalAmount * PLATFORM_FEE_PERCENTAGE) / 100;
       const creatorAmount = totalAmount - platformFeeAmount;
 
@@ -75,7 +75,7 @@ export function PaymentProvider({ children }: { children: React.ReactNode }) {
         },
         body: JSON.stringify({
           courseId,
-          userId: user.uid,
+          userId: user.uid, 
           userEmail: user.email,
           courseTitle: course.title,
           coursePrice: totalAmount,
@@ -209,7 +209,7 @@ export function PaymentProvider({ children }: { children: React.ReactNode }) {
         courseId,
         instructorId: course.instructor.id,
         amount: course.price || 0,
-        platformFee: ((course.price || 0) * PLATFORM_FEE_PERCENTAGE) / 100,
+        platformFee: (Number(course.price || 0) * PLATFORM_FEE_PERCENTAGE) / 100,
         status: "completed",
         method: "direct",
         reference: `TEST_${Math.random().toString(36).substring(2, 15)}`,
