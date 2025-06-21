@@ -79,7 +79,7 @@ export default function LiveSessionLoading() {
                 className="p-3 rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                 disabled
               >
-                <Mic className="w-6 h-6" />
+                <Mic className="w-6 h-6 text-slate-700 dark:text-slate-300" />
               </Button>
               <Button
                 variant="secondary"
@@ -87,7 +87,7 @@ export default function LiveSessionLoading() {
                 className="p-3 rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                 disabled
               >
-                <Video className="w-6 h-6" />
+                <Video className="w-6 h-6 text-slate-700 dark:text-slate-300" />
               </Button>
               <Button
                 variant="secondary"
@@ -95,7 +95,7 @@ export default function LiveSessionLoading() {
                 className="p-3 rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                 disabled
               >
-                <ScreenShare className="w-6 h-6" />
+                <ScreenShare className="w-6 h-6 text-slate-700 dark:text-slate-300" />
               </Button>
               <Button
                 variant="secondary"
@@ -103,7 +103,7 @@ export default function LiveSessionLoading() {
                 className="p-3 rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                 disabled
               >
-                <PenTool className="w-6 h-6" />
+                <PenTool className="w-6 h-6 text-slate-700 dark:text-slate-300" />
               </Button>
               <Button
                 variant="secondary"

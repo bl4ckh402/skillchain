@@ -22,5 +22,6 @@ if (!globalForAdmin.adminApp) {
 export const adminApp = globalForAdmin.adminApp;
 export const db = adminApp.firestore();
 export const adminAuth = adminApp.auth();
+export const auth = adminAuth; // Add alias for backward compatibility
 export const adminStorage = adminApp.storage();
 export { admin };
