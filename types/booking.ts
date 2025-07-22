@@ -111,3 +111,4 @@ export interface BookingContextType {
   deleteBooking: (bookingId: string) => Promise<boolean>;
   getFilteredBookings: (status: BookingStatus | 'all') => Booking[];
 }
+
