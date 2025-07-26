@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, SetStateAction } from "react";
 import { Card } from "@/components/ui/card";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -10,7 +10,14 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { darcula } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
-import { Copy, CheckCheck, FileText, Download, Info, FileQuestion } from "lucide-react";
+import {
+  Copy,
+  CheckCheck,
+  FileText,
+  Download,
+  Info,
+  FileQuestion,
+} from "lucide-react";
 import { LessonType } from "@/types/course";
 
 interface LessonContentProps {
@@ -59,7 +66,7 @@ export default function LessonContent({ lesson }: LessonContentProps) {
     // Initialize defaults
     let textContent = "";
     let videoUrlValue = "";
-    let attachmentsValue = [];
+    let attachmentsValue: string | SetStateAction<any[]> = [];
     let transcriptValue = "";
     let descriptionValue = "";
     let instructionsValue = "";
@@ -69,11 +76,11 @@ export default function LessonContent({ lesson }: LessonContentProps) {
       if (lesson.content.textContent) {
         textContent = lesson.content.textContent;
       }
-      
+
       if (lesson.content.videoUrl) {
         videoUrlValue = lesson.content.videoUrl;
       }
-      
+
       if (lesson.content.description) {
         descriptionValue = lesson.content.description;
         // Use description as content if textContent is empty
@@ -81,16 +88,19 @@ export default function LessonContent({ lesson }: LessonContentProps) {
           textContent = lesson.content.description;
         }
       }
-      
+
       if (lesson.content.transcript) {
         transcriptValue = lesson.content.transcript;
       }
-      
+
       if (lesson.content.instructions) {
         instructionsValue = lesson.content.instructions;
       }
-      
-      if (lesson.content.attachments && Array.isArray(lesson.content.attachments)) {
+
+      if (
+        lesson.content.attachments &&
+        Array.isArray(lesson.content.attachments)
+      ) {
         attachmentsValue = lesson.content.attachments;
       }
     }
@@ -99,8 +109,12 @@ export default function LessonContent({ lesson }: LessonContentProps) {
     if (!videoUrlValue && lesson.videoUrl) {
       videoUrlValue = lesson.videoUrl;
     }
-    
-    if (attachmentsValue.length === 0 && lesson.attachments && Array.isArray(lesson.attachments)) {
+
+    if (
+      attachmentsValue.length === 0 &&
+      lesson.attachments &&
+      Array.isArray(lesson.attachments)
+    ) {
       attachmentsValue = lesson.attachments;
     }
 
@@ -121,7 +135,19 @@ export default function LessonContent({ lesson }: LessonContentProps) {
   };
 
   const components = {
-    code({ node, inline, className, children, ...props }) {
+    code({
+      node,
+      inline,
+      className,
+      children,
+      ...props
+    }: {
+      node?: any;
+      inline?: boolean;
+      className?: string;
+      children?: React.ReactNode;
+      [key: string]: any;
+    }) {
       const match = /language-(\w+)/.exec(className || "");
       const code = String(children).replace(/\n$/, "");
 
@@ -139,13 +165,13 @@ export default function LessonContent({ lesson }: LessonContentProps) {
           <Button
             variant="ghost"
             size="sm"
-            className="absolute top-2 right-2 h-8 w-8 p-0"
+            className="absolute w-8 h-8 p-0 top-2 right-2"
             onClick={() => handleCopyCode(code)}
           >
             {copiedCode === code ? (
-              <CheckCheck className="h-4 w-4 text-green-500" />
+              <CheckCheck className="w-4 h-4 text-green-500" />
             ) : (
-              <Copy className="h-4 w-4" />
+              <Copy className="w-4 h-4" />
             )}
             <span className="sr-only">Copy code</span>
           </Button>
@@ -159,70 +185,212 @@ export default function LessonContent({ lesson }: LessonContentProps) {
         </code>
       );
     },
-    h1: ({ children }) => (
-      <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight mb-4 mt-8">
+    h1: ({
+      children,
+      ...props
+    }: {
+      children?: React.ReactNode;
+      [key: string]: any;
+    }) => (
+      <h1
+        className="mt-8 mb-4 text-4xl font-extrabold tracking-tight scroll-m-20"
+        {...props}
+      >
         {children}
       </h1>
     ),
-    h2: ({ children }) => (
-      <h2 className="scroll-m-20 text-3xl font-semibold tracking-tight mb-3 mt-8">
+    h2: ({
+      children,
+      ...props
+    }: {
+      children?: React.ReactNode;
+      [key: string]: any;
+    }) => (
+      <h2
+        className="mt-8 mb-3 text-3xl font-semibold tracking-tight scroll-m-20"
+        {...props}
+      >
         {children}
       </h2>
     ),
-    h3: ({ children }) => (
-      <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight mb-3 mt-6">
+    h3: ({
+      children,
+      ...props
+    }: {
+      children?: React.ReactNode;
+      [key: string]: any;
+    }) => (
+      <h3
+        className="mt-6 mb-3 text-2xl font-semibold tracking-tight scroll-m-20"
+        {...props}
+      >
         {children}
       </h3>
     ),
-    h4: ({ children }) => (
-      <h4 className="scroll-m-20 text-xl font-semibold tracking-tight mb-2 mt-4">
+    h4: ({
+      children,
+      ...props
+    }: {
+      children?: React.ReactNode;
+      [key: string]: any;
+    }) => (
+      <h4
+        className="mt-4 mb-2 text-xl font-semibold tracking-tight scroll-m-20"
+        {...props}
+      >
         {children}
       </h4>
     ),
-    p: ({ children }) => <p className="leading-7 mb-4">{children}</p>,
-    ul: ({ children }) => (
-      <ul className="list-disc list-inside mb-4 ml-2 space-y-2">{children}</ul>
+    p: ({
+      children,
+      ...props
+    }: {
+      children?: React.ReactNode;
+      [key: string]: any;
+    }) => (
+      <p className="mb-4 leading-7" {...props}>
+        {children}
+      </p>
     ),
-    ol: ({ children }) => (
-      <ol className="list-decimal list-inside mb-4 ml-2 space-y-2">
+    ul: ({
+      children,
+      ...props
+    }: {
+      children?: React.ReactNode;
+      [key: string]: any;
+    }) => (
+      <ul className="mb-4 ml-2 space-y-2 list-disc list-inside" {...props}>
+        {children}
+      </ul>
+    ),
+    ol: ({
+      children,
+      ...props
+    }: {
+      children?: React.ReactNode;
+      [key: string]: any;
+    }) => (
+      <ol className="mb-4 ml-2 space-y-2 list-decimal list-inside" {...props}>
         {children}
       </ol>
     ),
-    li: ({ children }) => <li className="leading-7">{children}</li>,
-    blockquote: ({ children }) => (
-      <blockquote className="border-l-4 border-blue-500 pl-4 italic my-4">
+    li: ({
+      children,
+      ...props
+    }: {
+      children?: React.ReactNode;
+      [key: string]: any;
+    }) => (
+      <li className="leading-7" {...props}>
+        {children}
+      </li>
+    ),
+    blockquote: ({
+      children,
+      ...props
+    }: {
+      children?: React.ReactNode;
+      [key: string]: any;
+    }) => (
+      <blockquote
+        className="pl-4 my-4 italic border-l-4 border-blue-500"
+        {...props}
+      >
         {children}
       </blockquote>
     ),
-    a: ({ href, children }) => (
+    a: ({
+      href,
+      children,
+      ...props
+    }: {
+      href?: string;
+      children?: React.ReactNode;
+      [key: string]: any;
+    }) => (
       <a
         href={href}
         className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline"
+        {...props}
       >
         {children}
       </a>
     ),
-    img: ({ src, alt }) => (
-      <img src={src} alt={alt} className="rounded-lg my-4 max-w-full" />
+    img: ({
+      src,
+      alt,
+      ...props
+    }: {
+      src?: string;
+      alt?: string;
+      [key: string]: any;
+    }) => (
+      <img
+        src={src}
+        alt={alt}
+        className="max-w-full my-4 rounded-lg"
+        {...props}
+      />
     ),
-    table: ({ children }) => (
-      <div className="overflow-x-auto mb-4">
-        <table className="w-full border-collapse border border-slate-200 dark:border-slate-700">
+    table: ({
+      children,
+      ...props
+    }: {
+      children?: React.ReactNode;
+      [key: string]: any;
+    }) => (
+      <div className="mb-4 overflow-x-auto">
+        <table
+          className="w-full border border-collapse border-slate-200 dark:border-slate-700"
+          {...props}
+        >
           {children}
         </table>
       </div>
     ),
-    thead: ({ children }) => (
-      <thead className="bg-slate-100 dark:bg-slate-800">{children}</thead>
+    thead: ({
+      children,
+      ...props
+    }: {
+      children?: React.ReactNode;
+      [key: string]: any;
+    }) => (
+      <thead className="bg-slate-100 dark:bg-slate-800" {...props}>
+        {children}
+      </thead>
     ),
-    th: ({ children }) => (
-      <th className="border border-slate-200 dark:border-slate-700 px-4 py-2 text-left font-medium">
+    th: ({
+      children,
+      ...props
+    }: {
+      children?: React.ReactNode;
+      [key: string]: any;
+    }) => (
+      <th
+        className="px-4 py-2 font-medium text-left border border-slate-200 dark:border-slate-700"
+        {...props}
+      >
         {children}
       </th>
     ),
-    tr: ({ children }) => <tr>{children}</tr>,
-    td: ({ children }) => (
-      <td className="border border-slate-200 dark:border-slate-700 px-4 py-2">
+    tr: ({
+      children,
+      ...props
+    }: {
+      children?: React.ReactNode;
+      [key: string]: any;
+    }) => <tr {...props}>{children}</tr>,
+    td: ({
+      children,
+      ...props
+    }: {
+      children?: React.ReactNode;
+      [key: string]: any;
+    }) => (
+      <td
+        className="px-4 py-2 border border-slate-200 dark:border-slate-700"
+        {...props}
+      >
         {children}
       </td>
     ),
@@ -233,8 +401,9 @@ export default function LessonContent({ lesson }: LessonContentProps) {
   const hasQuiz = lesson.content?.quiz && lesson.content.quiz.length > 0;
   const isQuizType = lesson.type === LessonType.QUIZ || hasQuiz;
   const isVideoType = hasVideo || lesson.type === LessonType.VIDEO;
-  const isExerciseType = lesson.type === LessonType.EXERCISE || lesson.type === LessonType.PROJECT;
-  
+  const isExerciseType =
+    lesson.type === LessonType.EXERCISE || lesson.type === LessonType.PROJECT;
+
   // Helper to determine content to render for non-video lessons
   const getMainContent = () => {
     if (contentText) {
@@ -269,9 +438,9 @@ export default function LessonContent({ lesson }: LessonContentProps) {
       );
     } else {
       return (
-        <div className="p-4 bg-amber-50 border border-amber-200 rounded-md text-amber-800">
-          <h3 className="font-medium mb-2 flex items-center">
-            <FileText className="h-5 w-5 mr-2" />
+        <div className="p-4 border rounded-md bg-amber-50 border-amber-200 text-amber-800">
+          <h3 className="flex items-center mb-2 font-medium">
+            <FileText className="w-5 h-5 mr-2" />
             No Content Available
           </h3>
           <p>This lesson doesn't have any text content yet.</p>
@@ -281,10 +450,10 @@ export default function LessonContent({ lesson }: LessonContentProps) {
   };
 
   return (
-    <Card className="border-blue-100 dark:border-blue-900 overflow-hidden">
+    <Card className="overflow-hidden border-blue-100 dark:border-blue-900">
       {isVideoType ? (
         <Tabs defaultValue="video" className="w-full">
-          <TabsList className="w-full justify-start p-0 rounded-none bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+          <TabsList className="justify-start w-full p-0 border-b rounded-none bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
             <TabsTrigger
               value="video"
               className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-950 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 pt-4 pb-3 px-6"
@@ -308,7 +477,7 @@ export default function LessonContent({ lesson }: LessonContentProps) {
           </TabsList>
 
           <TabsContent value="video" className="m-0">
-            <div className="aspect-video w-full">
+            <div className="w-full aspect-video">
               {videoUrl?.includes("youtube.com") ||
               videoUrl?.includes("youtu.be") ? (
                 <iframe
@@ -339,7 +508,7 @@ export default function LessonContent({ lesson }: LessonContentProps) {
             </div>
 
             <div className="p-6">
-              <h2 className="text-2xl font-bold mb-4 text-slate-800 dark:text-slate-200">
+              <h2 className="mb-4 text-2xl font-bold text-slate-800 dark:text-slate-200">
                 {lesson.title}
               </h2>
 
@@ -362,7 +531,7 @@ export default function LessonContent({ lesson }: LessonContentProps) {
           </TabsContent>
 
           <TabsContent value="notes" className="p-6 m-0">
-            <h2 className="text-2xl font-bold mb-4 text-slate-800 dark:text-slate-200">
+            <h2 className="mb-4 text-2xl font-bold text-slate-800 dark:text-slate-200">
               {lesson.title}
             </h2>
             <div className="prose dark:prose-invert max-w-none">
@@ -384,7 +553,7 @@ export default function LessonContent({ lesson }: LessonContentProps) {
 
           {transcript && (
             <TabsContent value="transcript" className="p-6 m-0">
-              <h2 className="text-2xl font-bold mb-4 text-slate-800 dark:text-slate-200">
+              <h2 className="mb-4 text-2xl font-bold text-slate-800 dark:text-slate-200">
                 Video Transcript
               </h2>
               <div className="prose dark:prose-invert max-w-none">
@@ -406,8 +575,8 @@ export default function LessonContent({ lesson }: LessonContentProps) {
       ) : isQuizType ? (
         <div className="p-6">
           <div className="flex items-center gap-3 mb-4">
-            <div className="bg-blue-100 dark:bg-blue-900 w-10 h-10 rounded-full flex items-center justify-center">
-              <FileQuestion className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full dark:bg-blue-900">
+              <FileQuestion className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
             <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200">
               {lesson.title}
@@ -415,21 +584,22 @@ export default function LessonContent({ lesson }: LessonContentProps) {
           </div>
 
           {/* Instructions/Intro for quiz */}
-          <div className="prose dark:prose-invert max-w-none mb-6">
+          <div className="mb-6 prose dark:prose-invert max-w-none">
             {getMainContent()}
           </div>
 
           {hasQuiz && (
-            <div className="mt-6 border-t pt-6">
-              <h3 className="text-lg font-bold mb-4 text-slate-800 dark:text-slate-200">
+            <div className="pt-6 mt-6 border-t">
+              <h3 className="mb-4 text-lg font-bold text-slate-800 dark:text-slate-200">
                 Quiz Preview
               </h3>
-              <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg">
-                <p className="text-slate-600 dark:text-slate-400 mb-2">
-                  This quiz contains {lesson.content.quiz.length} questions. Complete it to progress in the course.
+              <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-900">
+                <p className="mb-2 text-slate-600 dark:text-slate-400">
+                  This quiz contains {lesson.content?.quiz?.length || 0}{" "}
+                  questions. Complete it to progress in the course.
                 </p>
-                <div className="text-sm text-blue-600 dark:text-blue-400 flex items-center gap-1">
-                  <Info className="h-4 w-4" />
+                <div className="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400">
+                  <Info className="w-4 h-4" />
                   Take the quiz in the "Quiz" tab.
                 </div>
               </div>
@@ -439,8 +609,8 @@ export default function LessonContent({ lesson }: LessonContentProps) {
       ) : isExerciseType ? (
         <div className="p-6">
           <div className="flex items-center gap-3 mb-4">
-            <div className="bg-emerald-100 dark:bg-emerald-900 w-10 h-10 rounded-full flex items-center justify-center">
-              <FileText className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900">
+              <FileText className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             </div>
             <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200">
               {lesson.title}
@@ -454,8 +624,8 @@ export default function LessonContent({ lesson }: LessonContentProps) {
 
           {/* Attachments section */}
           {attachments && attachments.length > 0 && (
-            <div className="mt-8 border-t pt-6">
-              <h3 className="text-lg font-medium mb-3 text-slate-800 dark:text-slate-200">
+            <div className="pt-6 mt-8 border-t">
+              <h3 className="mb-3 text-lg font-medium text-slate-800 dark:text-slate-200">
                 Exercise Resources
               </h3>
               <div className="space-y-2">
@@ -465,20 +635,20 @@ export default function LessonContent({ lesson }: LessonContentProps) {
                     href={attachment.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 p-3 border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors"
+                    className="flex items-center gap-2 p-3 transition-colors border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-900"
                   >
-                    <div className="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                    <div className="flex items-center justify-center flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full dark:bg-blue-900">
                       <span className="text-blue-600 dark:text-blue-400">
                         {index + 1}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">
+                      <p className="text-sm font-medium truncate text-slate-800 dark:text-slate-200">
                         {attachment.name}
                       </p>
                     </div>
                     <Button variant="outline" size="sm">
-                      <Download className="h-4 w-4 mr-1" />
+                      <Download className="w-4 h-4 mr-1" />
                       Download
                     </Button>
                   </a>
@@ -489,7 +659,7 @@ export default function LessonContent({ lesson }: LessonContentProps) {
         </div>
       ) : (
         <div className="p-6">
-          <h2 className="text-2xl font-bold mb-4 text-slate-800 dark:text-slate-200">
+          <h2 className="mb-4 text-2xl font-bold text-slate-800 dark:text-slate-200">
             {lesson.title}
           </h2>
 
@@ -500,8 +670,8 @@ export default function LessonContent({ lesson }: LessonContentProps) {
 
           {/* Transcript section if available but no video */}
           {transcript && (
-            <div className="mt-8 border-t pt-6">
-              <h3 className="text-lg font-medium mb-3 text-slate-800 dark:text-slate-200">
+            <div className="pt-6 mt-8 border-t">
+              <h3 className="mb-3 text-lg font-medium text-slate-800 dark:text-slate-200">
                 Transcript
               </h3>
               <div className="prose dark:prose-invert max-w-none">
@@ -518,8 +688,8 @@ export default function LessonContent({ lesson }: LessonContentProps) {
 
           {/* Attachments section */}
           {attachments && attachments.length > 0 && (
-            <div className="mt-8 border-t pt-6">
-              <h3 className="text-lg font-medium mb-3 text-slate-800 dark:text-slate-200">
+            <div className="pt-6 mt-8 border-t">
+              <h3 className="mb-3 text-lg font-medium text-slate-800 dark:text-slate-200">
                 Attachments
               </h3>
               <div className="space-y-2">
@@ -529,20 +699,20 @@ export default function LessonContent({ lesson }: LessonContentProps) {
                     href={attachment.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 p-3 border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors"
+                    className="flex items-center gap-2 p-3 transition-colors border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-900"
                   >
-                    <div className="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                    <div className="flex items-center justify-center flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full dark:bg-blue-900">
                       <span className="text-blue-600 dark:text-blue-400">
                         {index + 1}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">
+                      <p className="text-sm font-medium truncate text-slate-800 dark:text-slate-200">
                         {attachment.name}
                       </p>
                     </div>
                     <Button variant="outline" size="sm">
-                      <Download className="h-4 w-4 mr-1" />
+                      <Download className="w-4 h-4 mr-1" />
                       Download
                     </Button>
                   </a>

@@ -12,6 +12,7 @@ import {
 import {
   StreamVideoClient,
   StreamVideo,
+  StreamTheme,
   Call,
   CallType,
   UserResponse,
@@ -75,7 +76,9 @@ interface VideoContextType {
 const VideoContext = createContext<VideoContextType | null>(null);
 
 // Provider component
-export const VideoProvider = ({ children }: { children: ReactNode }) => {
+export const StreamClientProvider = ({ children }: { children: ReactNode }) => {
+  // Theme state
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
   // Authentication context
   const { user } = useAuth();
   const { toast } = useToast();
@@ -327,6 +330,7 @@ export const VideoProvider = ({ children }: { children: ReactNode }) => {
           await updateSessionStatus(callId, "active");
 
           // Add participant to Firestore
+
           const sessionsQuery = query(
             collection(db, "sessions"),
             where("id", "==", callId)
@@ -536,5 +540,3 @@ export const useVideo = (): VideoContextType => {
 
   return context;
 };
-
-  

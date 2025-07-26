@@ -858,6 +858,7 @@ const PaymentsDashboard = () => {
                               <td className="p-3">
                                 <Button
                                   variant="ghost"
+                                  
                                   size="sm"
                                   className="w-8 h-8 p-0"
                                 >

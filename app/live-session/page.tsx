@@ -1,5 +1,5 @@
 "use client";
-
+import "@stream-io/video-react-sdk/dist/css/styles.css";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";

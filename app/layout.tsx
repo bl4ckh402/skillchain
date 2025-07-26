@@ -16,9 +16,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { MainNav } from "@/components/main-nav";
 import { UserNav } from "@/components/user-nav";
 import { ModeToggle } from "@/components/mode-toggle";
+// import { PaymentProvider } from "@/context/PaymentProvider";
+
+import { StreamClientProvider } from "@/context/StreamClientProvider";
 import { PaymentProvider } from "@/context/PaymentProvider";
-import "./globals.css";
-// import  StreamClientProvider  from "@/context/StreamClientProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -44,39 +45,39 @@ export default function RootLayout({
         >
           <AuthProvider>
             {/* <StreamClientProvider> */}
-              <JobsProvider>
-                <InstructorApplicationProvider>
-                  <HackathonProvider>
-                    <ProjectProvider>
-                      <CourseProvider>
-                        <PaymentProvider>
-                          <CourseProgressProvider>
-                            <BootcampProvider>
-                              <CommunityProvider>
-                                <DashboardProvider>
-                                  <div className="flex min-h-screen flex-col">
-                                    <header className="sticky top-0 z-40 border-b bg-background">
-                                      <div className="container flex h-16 items-center justify-between py-4">
-                                        <MainNav />
-                                        <div className="flex items-center gap-4">
-                                          <UserNav />
-                                          <ModeToggle />
-                                        </div>
+            <JobsProvider>
+              <InstructorApplicationProvider>
+                <HackathonProvider>
+                  <ProjectProvider>
+                    <CourseProvider>
+                      <PaymentProvider>
+                        <CourseProgressProvider>
+                          <BootcampProvider>
+                            <CommunityProvider>
+                              <DashboardProvider>
+                                <div className="flex flex-col min-h-screen">
+                                  <header className="sticky top-0 z-40 border-b bg-background">
+                                    <div className="container flex items-center justify-between h-16 py-4">
+                                      <MainNav />
+                                      <div className="flex items-center gap-4">
+                                        <UserNav />
+                                        <ModeToggle />
                                       </div>
-                                    </header>
-                                    <main className="flex-1">{children}</main>
-                                  </div>
-                                  <Toaster />
-                                </DashboardProvider>
-                              </CommunityProvider>
-                            </BootcampProvider>
-                          </CourseProgressProvider>
-                        </PaymentProvider>
-                      </CourseProvider>
-                    </ProjectProvider>
-                  </HackathonProvider>
-                </InstructorApplicationProvider>
-              </JobsProvider>
+                                    </div>
+                                  </header>
+                                  <main className="flex-1">{children}</main>
+                                </div>
+                                <Toaster />
+                              </DashboardProvider>
+                            </CommunityProvider>
+                          </BootcampProvider>
+                        </CourseProgressProvider>
+                      </PaymentProvider>
+                    </CourseProvider>
+                  </ProjectProvider>
+                </HackathonProvider>
+              </InstructorApplicationProvider>
+            </JobsProvider>
             {/* </StreamClientProvider> */}
           </AuthProvider>
         </ThemeProvider>

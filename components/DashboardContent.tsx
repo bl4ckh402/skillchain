@@ -49,6 +49,8 @@ import {
   CheckCircle,
   PauseCircle,
   Trash2,
+  BanknoteIcon,
+  Loader2,
 } from "lucide-react";
 import {
   collection,
@@ -63,7 +65,7 @@ import { db } from "@/lib/firebase";
 import { formatDistanceToNow, startOfMonth, endOfMonth } from "date-fns";
 import { toast } from "./ui/use-toast";
 import { EnrolledBootcamps } from "./enrolled-bootcamps";
-
+import Link from "next/link";
 interface InstructorStats {
   totalStudents: number;
   totalRevenue: number;
@@ -85,7 +87,11 @@ interface Activity {
 
 export default function InstructorDashboardPage() {
   const { user } = useAuth();
-  const { courses: allCourses, loading: coursesLoading, deleteCourse } = useCourses();
+  const {
+    courses: allCourses,
+    loading: coursesLoading,
+    deleteCourse,
+  } = useCourses();
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState("courses");
@@ -101,6 +107,10 @@ export default function InstructorDashboardPage() {
   const [courses, setCourses] = useState<Course[] | null>();
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasSubaccount, setHasSubaccount] = useState(false);
+  const [subaccount, setSubaccount] = useState<{
+    percentageCharge?: number;
+  } | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -135,6 +145,7 @@ export default function InstructorDashboardPage() {
             status: data.status || "draft",
             tags: data.tags || [],
             modules: data.modules || [],
+            lessons: data.lessons || [],
             whatYouWillLearn: data.whatYouWillLearn || [],
             requirements: data.requirements || [],
             instructor: data.instructor || {
@@ -304,7 +315,7 @@ export default function InstructorDashboardPage() {
     {
       title: "Total Students",
       value: stats.totalStudents.toString(),
-      icon: <Users className="h-5 w-5 text-blue-500" />,
+      icon: <Users className="w-5 h-5 text-blue-500" />,
       change: `${
         stats.monthlyStudentsChange > 0 ? "+" : ""
       }${stats.monthlyStudentsChange.toFixed(1)}% this month`,
@@ -318,7 +329,7 @@ export default function InstructorDashboardPage() {
     {
       title: "Total Revenue",
       value: `$${stats.totalRevenue.toFixed(2)}`,
-      icon: <DollarSign className="h-5 w-5 text-green-500" />,
+      icon: <DollarSign className="w-5 h-5 text-green-500" />,
       change: `${
         stats.monthlyRevenueChange > 0 ? "+" : ""
       }${stats.monthlyRevenueChange.toFixed(1)}% this month`,
@@ -332,7 +343,7 @@ export default function InstructorDashboardPage() {
     {
       title: "Average Rating",
       value: stats.averageRating.toFixed(2),
-      icon: <Star className="h-5 w-5 text-amber-500" />,
+      icon: <Star className="w-5 h-5 text-amber-500" />,
       change: `${
         stats.monthlyRatingChange > 0 ? "+" : ""
       }${stats.monthlyRatingChange.toFixed(1)} this month`,
@@ -346,7 +357,7 @@ export default function InstructorDashboardPage() {
     {
       title: "Published Courses",
       value: stats.publishedCourses.toString(),
-      icon: <BookOpen className="h-5 w-5 text-teal-500" />,
+      icon: <BookOpen className="w-5 h-5 text-teal-500" />,
       change: "From last month",
       trend: "neutral",
     },
@@ -359,12 +370,12 @@ export default function InstructorDashboardPage() {
     time: formatDistanceToNow(activity.timestamp.toDate(), { addSuffix: true }),
   }));
 
-  const getStatusBadge = (status:CourseStatus) => {
+  const getStatusBadge = (status: CourseStatus) => {
     switch (status) {
       case "published":
         return (
-          <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
-            <CheckCircle className="mr-1 h-3 w-3" />
+          <Badge className="text-green-700 bg-green-100 dark:bg-green-900 dark:text-green-300">
+            <CheckCircle className="w-3 h-3 mr-1" />
             Published
           </Badge>
         );
@@ -374,7 +385,7 @@ export default function InstructorDashboardPage() {
             variant="outline"
             className="border-slate-200 text-slate-600 dark:border-slate-700 dark:text-slate-400"
           >
-            <FileText className="mr-1 h-3 w-3" />
+            <FileText className="w-3 h-3 mr-1" />
             Draft
           </Badge>
         );
@@ -386,9 +397,9 @@ export default function InstructorDashboardPage() {
   return (
     <div className="flex flex-col">
       <main className="flex-1">
-        <div className="bg-gradient-to-r from-blue-500/10 to-teal-500/10 dark:from-blue-900/20 dark:to-teal-900/20 py-8">
+        <div className="py-8 bg-gradient-to-r from-blue-500/10 to-teal-500/10 dark:from-blue-900/20 dark:to-teal-900/20">
           <div className="container px-4 md:px-6">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-200">
                   Instructor Dashboard
@@ -400,13 +411,13 @@ export default function InstructorDashboardPage() {
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
-                  className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                  className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
                 >
-                  <Settings className="mr-2 h-4 w-4" />
+                  <Settings className="w-4 h-4 mr-2" />
                   Settings
                 </Button>
-                <Button className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white">
-                  <Plus className="mr-2 h-4 w-4" />
+                <Button className="text-white bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700">
+                  <Plus className="w-4 h-4 mr-2" />
                   Create Course
                 </Button>
               </div>
@@ -442,7 +453,7 @@ export default function InstructorDashboardPage() {
                         {stat.change}
                       </p>
                     </div>
-                    <div className="rounded-full bg-blue-50 p-3 dark:bg-blue-950">
+                    <div className="p-3 rounded-full bg-blue-50 dark:bg-blue-950">
                       {stat.icon}
                     </div>
                   </div>
@@ -450,9 +461,62 @@ export default function InstructorDashboardPage() {
               </Card>
             ))}
           </div>
-
+          <div>
+            <Link
+              href="/instructors/payments"
+              className="block transition-all hover:shadow-md"
+            >
+              <Card className="border-blue-100 cursor-pointer dark:border-blue-900 hover:border-blue-300 dark:hover:border-blue-700">
+                <CardHeader className="pb-2 bg-blue-50 dark:bg-blue-950">
+                  <CardTitle>Payment Setup</CardTitle>
+                  <CardDescription>
+                    Configure your payment details to receive earnings
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <BanknoteIcon className="w-8 h-8 mr-2 text-blue-500" />
+                      <div>
+                        <p className="font-medium text-slate-800 dark:text-slate-200">
+                          {hasSubaccount
+                            ? "Bank account connected"
+                            : "Setup your bank account"}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {hasSubaccount
+                            ? `You receive ${
+                                100 - (subaccount?.percentageCharge || 0)
+                              }% of each payment`
+                            : "Configure to start receiving payments"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center px-4 py-2 text-sm font-medium text-blue-600 bg-white border border-blue-200 rounded-md dark:bg-slate-900 dark:border-blue-800 dark:text-blue-400">
+                      {hasSubaccount ? "Manage" : "Setup"}
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="ml-1"
+                      >
+                        <path d="M5 12h14"></path>
+                        <path d="m12 5 7 7-7 7"></path>
+                      </svg>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          </div>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8">
-            <TabsList className="mb-4 w-full justify-start bg-slate-100 dark:bg-slate-800/50 p-1 rounded-lg">
+            <TabsList className="justify-start w-full p-1 mb-4 rounded-lg bg-slate-100 dark:bg-slate-800/50">
               <TabsTrigger
                 value="courses"
                 className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-950 data-[state=active]:text-blue-600 rounded-md"
@@ -486,13 +550,13 @@ export default function InstructorDashboardPage() {
             </TabsList>
 
             <TabsContent value="courses" className="space-y-6">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Search className="absolute w-4 h-4 left-3 top-3 text-muted-foreground" />
                   <Input
                     type="search"
                     placeholder="Search your courses..."
-                    className="pl-9 border-blue-100 dark:border-blue-900"
+                    className="border-blue-100 pl-9 dark:border-blue-900"
                   />
                 </div>
                 <div className="flex items-center gap-2">
@@ -509,158 +573,164 @@ export default function InstructorDashboardPage() {
                   </Select>
                   <Button
                     variant="outline"
-                    className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                    className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
                   >
-                    <Filter className="mr-2 h-4 w-4" />
+                    <Filter className="w-4 h-4 mr-2" />
                     Filter
                   </Button>
                   <Button
                     variant="outline"
-                    className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                    className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
                   >
-                    <ArrowUpDown className="mr-2 h-4 w-4" />
+                    <ArrowUpDown className="w-4 h-4 mr-2" />
                     Sort
                   </Button>
                 </div>
 
-              <div className="space-y-4">
-                {courses?.map((course) => (
-                  <Card
-                    key={course.id}
-                    className={`overflow-hidden transition-all hover:shadow-md ${
-                      course.featured
-                        ? "border-blue-300 dark:border-blue-700"
-                        : "border-slate-200 dark:border-slate-800"
-                    }`}
-                  >
-                    <div className="flex flex-col md:flex-row">
-                      <div className="w-full md:w-1/4 lg:w-1/5">
-                        <div className="aspect-video md:h-full w-full overflow-hidden">
-                          <img
-                            src={
-                              course.thumbnail ||
-                              "/placeholder.svg?height=200&width=300"
-                            }
-                            alt={course.title}
-                            className="object-cover w-full h-full"
-                          />
+                <div className="space-y-4">
+                  {courses?.map((course) => (
+                    <Card
+                      key={course.id}
+                      className={`overflow-hidden transition-all hover:shadow-md ${
+                        course.featured
+                          ? "border-blue-300 dark:border-blue-700"
+                          : "border-slate-200 dark:border-slate-800"
+                      }`}
+                    >
+                      <div className="flex flex-col md:flex-row">
+                        <div className="w-full md:w-1/4 lg:w-1/5">
+                          <div className="w-full overflow-hidden aspect-video md:h-full">
+                            <img
+                              src={
+                                course.thumbnail ||
+                                "/placeholder.svg?height=200&width=300"
+                              }
+                              alt={course.title}
+                              className="object-cover w-full h-full"
+                            />
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex-1 p-6">
-                        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-bold text-xl text-slate-800 dark:text-slate-200">
-                                {course.title}
-                              </h3>
-                              {course.featured && (
-                                <Badge className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white">
-                                  Featured
+                        <div className="flex-1 p-6">
+                          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">
+                                  {course.title}
+                                </h3>
+                                {course.featured && (
+                                  <Badge className="text-white bg-gradient-to-r from-amber-500 to-yellow-500">
+                                    Featured
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">
+                                {course.description}
+                              </p>
+                              <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
+                                <Badge
+                                  variant="secondary"
+                                  className="font-normal text-blue-700 bg-blue-100 hover:bg-blue-200 dark:text-blue-300 dark:bg-blue-900 dark:hover:bg-blue-800"
+                                >
+                                  {course.category}
                                 </Badge>
-                              )}
-                            </div>
-                            <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">
-                              {course.description}
-                            </p>
-                            <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
-                              <Badge
-                                variant="secondary"
-                                className="font-normal text-blue-700 bg-blue-100 hover:bg-blue-200 dark:text-blue-300 dark:bg-blue-900 dark:hover:bg-blue-800"
-                              >
-                                {course.category}
-                              </Badge>
-                              <div className="flex items-center gap-1">
-                                <BookOpen className="h-4 w-4 text-blue-500" />
-                                <span>
-                                  {course.modules?.length || 0} modules •{" "}
-                                  {course.modules.map((module:Module)=>module.lessons.length) || 0} lessons
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Clock className="h-4 w-4 text-teal-500" />
-                                <span>{course.duration}</span>
+                                <div className="flex items-center gap-1">
+                                  <BookOpen className="w-4 h-4 text-blue-500" />
+                                  <span>
+                                    {course.modules?.length || 0} modules •{" "}
+                                    {course.modules.map(
+                                      (module: Module) => module.lessons.length
+                                    ) || 0}{" "}
+                                    lessons
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Clock className="w-4 h-4 text-teal-500" />
+                                  <span>{course.duration}</span>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                          <div className="flex flex-col items-end gap-2">
-                            {getStatusBadge(course.status)}
-                            <div className="text-sm text-slate-500 dark:text-slate-400">
-                              Last updated: {course.updatedAt?.toLocaleDateString()}
+                            <div className="flex flex-col items-end gap-2">
+                              {getStatusBadge(course.status)}
+                              <div className="text-sm text-slate-500 dark:text-slate-400">
+                                Last updated:{" "}
+                                {course.updatedAt?.toLocaleDateString()}
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        <Separator className="my-4" />
+                          <Separator className="my-4" />
 
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                          <div className="flex flex-col">
-                            <span className="text-sm text-slate-500 dark:text-slate-400">
-                              Students
-                            </span>
-                            <span className="font-medium text-slate-800 dark:text-slate-200 flex items-center">
-                              <Users className="mr-1 h-4 w-4 text-blue-500" />
-                              {course.students}
-                            </span>
-                          </div>
-                          {course.status === "draft" && (
-                            <div className="flex flex-col col-span-3">
+                          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+                            <div className="flex flex-col">
                               <span className="text-sm text-slate-500 dark:text-slate-400">
-                                Completion Progress
+                                Students
+                              </span>
+                              <span className="flex items-center font-medium text-slate-800 dark:text-slate-200">
+                                <Users className="w-4 h-4 mr-1 text-blue-500" />
+                                {course.students}
                               </span>
                             </div>
-                          )}
-                        </div>
-
-                        <Separator className="my-4" />
-
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
-                              onClick={() => handleEditCourse(course.id!)}
-                            >
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit Course
-                            </Button>
-                            <Button
-                              variant="outline"
-                              className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
-                              onClick={() => handlePreviewCourse(course.id!)}
-                            >
-                              <Eye className="mr-2 h-4 w-4" />
-                              Preview
-                            </Button>
-                            <Button
-                              variant="outline"
-                              className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950 dark:hover:text-red-300"
-                              onClick={() => handleDeleteCourse(course.id!)}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
-                            </Button>
+                            {course.status === "draft" && (
+                              <div className="flex flex-col col-span-3">
+                                <span className="text-sm text-slate-500 dark:text-slate-400">
+                                  Completion Progress
+                                </span>
+                              </div>
+                            )}
                           </div>
-                          {course.status === "published" && (
-                            <Button className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white">
-                              View Analytics
-                            </Button>
-                          )}
+
+                          <Separator className="my-4" />
+
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                                onClick={() => handleEditCourse(course.id!)}
+                              >
+                                <Edit className="w-4 h-4 mr-2" />
+                                Edit Course
+                              </Button>
+                              <Button
+                                variant="outline"
+                                className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                                onClick={() => handlePreviewCourse(course.id!)}
+                              >
+                                <Eye className="w-4 h-4 mr-2" />
+                                Preview
+                              </Button>
+                              <Button
+                                variant="outline"
+                                className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950 dark:hover:text-red-300"
+                                onClick={() => handleDeleteCourse(course.id!)}
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Delete
+                              </Button>
+                            </div>
+                            {course.status === "published" && (
+                              <Button className="text-white bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700">
+                                View Analytics
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </Card>
-                ))}
+                    </Card>
+                  ))}
+                </div>
               </div>
-            </div>
             </TabsContent>
 
             <TabsContent value="bootcamps" className="space-y-6">
               <Card className="border-blue-100 dark:border-blue-900">
-                <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50 rounded-t-lg">
+                <CardHeader className="rounded-t-lg bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50">
                   <CardTitle className="text-slate-800 dark:text-slate-200">
                     My Bootcamps
                   </CardTitle>
-                  <CardDescription>View and manage your enrolled bootcamps</CardDescription>
+                  <CardDescription>
+                    View and manage your enrolled bootcamps
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <EnrolledBootcamps bootcamps={courses ?? []} />
@@ -670,7 +740,7 @@ export default function InstructorDashboardPage() {
 
             {/* <TabsContent value="analytics" className="space-y-6">
               <Card className="border-blue-100 dark:border-blue-900">
-                <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50 rounded-t-lg">
+                <CardHeader className="rounded-t-lg bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50">
                   <CardTitle className="text-slate-800 dark:text-slate-200">
                     Course Performance
                   </CardTitle>
@@ -679,13 +749,13 @@ export default function InstructorDashboardPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-6">
-                  <div className="h-80 flex items-center justify-center border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
+                  <div className="flex items-center justify-center border border-dashed rounded-lg h-80 border-slate-200 dark:border-slate-800">
                     <div className="text-center">
-                      <BarChart3 className="h-10 w-10 text-blue-500 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-slate-800 dark:text-slate-200 mb-2">
+                      <BarChart3 className="w-10 h-10 mx-auto mb-4 text-blue-500" />
+                      <h3 className="mb-2 text-lg font-medium text-slate-800 dark:text-slate-200">
                         Analytics Dashboard
                       </h3>
-                      <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md">
+                      <p className="max-w-md text-sm text-slate-500 dark:text-slate-400">
                         Detailed analytics charts and metrics will be displayed
                         here, showing student engagement, course completion
                         rates, and revenue trends.
@@ -697,7 +767,7 @@ export default function InstructorDashboardPage() {
 
               <div className="grid gap-6 md:grid-cols-2">
                 <Card className="border-blue-100 dark:border-blue-900">
-                  <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50 rounded-t-lg">
+                  <CardHeader className="rounded-t-lg bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50">
                     <CardTitle className="text-slate-800 dark:text-slate-200">
                       Student Engagement
                     </CardTitle>
@@ -729,7 +799,7 @@ export default function InstructorDashboardPage() {
                 </Card>
 
                 <Card className="border-blue-100 dark:border-blue-900">
-                  <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50 rounded-t-lg">
+                  <CardHeader className="rounded-t-lg bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50">
                     <CardTitle className="text-slate-800 dark:text-slate-200">
                       Recent Activities
                     </CardTitle>
@@ -744,18 +814,18 @@ export default function InstructorDashboardPage() {
                           key={activity.id}
                           className="flex items-start gap-3"
                         >
-                          <div className="rounded-full p-2 bg-blue-50 dark:bg-blue-950">
+                          <div className="p-2 rounded-full bg-blue-50 dark:bg-blue-950">
                             {activity.type === "review" && (
-                              <Star className="h-4 w-4 text-amber-500" />
+                              <Star className="w-4 h-4 text-amber-500" />
                             )}
                             {activity.type === "enrollment" && (
-                              <Users className="h-4 w-4 text-blue-500" />
+                              <Users className="w-4 h-4 text-blue-500" />
                             )}
                             {activity.type === "comment" && (
-                              <MessageSquare className="h-4 w-4 text-teal-500" />
+                              <MessageSquare className="w-4 h-4 text-teal-500" />
                             )}
                             {activity.type === "revenue" && (
-                              <DollarSign className="h-4 w-4 text-green-500" />
+                              <DollarSign className="w-4 h-4 text-green-500" />
                             )}
                           </div>
                           <div className="flex-1">
@@ -773,7 +843,7 @@ export default function InstructorDashboardPage() {
                   <CardFooter>
                     <Button
                       variant="outline"
-                      className="w-full border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                      className="w-full text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
                     >
                       View All Activities
                     </Button>
@@ -784,7 +854,7 @@ export default function InstructorDashboardPage() {
 
             <TabsContent value="earnings" className="space-y-6">
               <Card className="border-blue-100 dark:border-blue-900">
-                <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50 rounded-t-lg">
+                <CardHeader className="rounded-t-lg bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50">
                   <CardTitle className="text-slate-800 dark:text-slate-200">
                     Earnings Overview
                   </CardTitle>
@@ -802,7 +872,7 @@ export default function InstructorDashboardPage() {
                         $6,420
                       </p>
                       <div className="flex items-center text-xs text-green-600 dark:text-green-400">
-                        <TrendingUp className="mr-1 h-3 w-3" />
+                        <TrendingUp className="w-3 h-3 mr-1" />
                         +12% from last month
                       </div>
                     </div>
@@ -814,7 +884,7 @@ export default function InstructorDashboardPage() {
                         $840
                       </p>
                       <div className="flex items-center text-xs text-green-600 dark:text-green-400">
-                        <TrendingUp className="mr-1 h-3 w-3" />
+                        <TrendingUp className="w-3 h-3 mr-1" />
                         +5% from last month
                       </div>
                     </div>
@@ -846,12 +916,12 @@ export default function InstructorDashboardPage() {
                             className="flex items-center justify-between"
                           >
                             <div className="flex items-center gap-3">
-                              <Avatar className="h-10 w-10">
+                              <Avatar className="w-10 h-10">
                                 <AvatarImage
                                   src={course.image}
                                   alt={course.title}
                                 />
-                                <AvatarFallback className="bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
+                                <AvatarFallback className="text-blue-600 bg-blue-100 dark:bg-blue-900 dark:text-blue-300">
                                   {course.title.charAt(0)}
                                 </AvatarFallback>
                               </Avatar>
@@ -880,7 +950,7 @@ export default function InstructorDashboardPage() {
               </Card>
 
               <Card className="border-blue-100 dark:border-blue-900">
-                <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50 rounded-t-lg">
+                <CardHeader className="rounded-t-lg bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50">
                   <CardTitle className="text-slate-800 dark:text-slate-200">
                     Payment History
                   </CardTitle>
@@ -888,7 +958,7 @@ export default function InstructorDashboardPage() {
                 </CardHeader>
                 <CardContent className="p-6">
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-800 rounded-lg">
+                    <div className="flex items-center justify-between p-4 border rounded-lg border-slate-200 dark:border-slate-800">
                       <div>
                         <p className="font-medium text-slate-800 dark:text-slate-200">
                           May 2023 Payout
@@ -901,12 +971,12 @@ export default function InstructorDashboardPage() {
                         <p className="font-medium text-slate-800 dark:text-slate-200">
                           $780
                         </p>
-                        <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+                        <Badge className="text-green-700 bg-green-100 dark:bg-green-900 dark:text-green-300">
                           Completed
                         </Badge>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-800 rounded-lg">
+                    <div className="flex items-center justify-between p-4 border rounded-lg border-slate-200 dark:border-slate-800">
                       <div>
                         <p className="font-medium text-slate-800 dark:text-slate-200">
                           April 2023 Payout
@@ -919,12 +989,12 @@ export default function InstructorDashboardPage() {
                         <p className="font-medium text-slate-800 dark:text-slate-200">
                           $620
                         </p>
-                        <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+                        <Badge className="text-green-700 bg-green-100 dark:bg-green-900 dark:text-green-300">
                           Completed
                         </Badge>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-800 rounded-lg">
+                    <div className="flex items-center justify-between p-4 border rounded-lg border-slate-200 dark:border-slate-800">
                       <div>
                         <p className="font-medium text-slate-800 dark:text-slate-200">
                           March 2023 Payout
@@ -937,7 +1007,7 @@ export default function InstructorDashboardPage() {
                         <p className="font-medium text-slate-800 dark:text-slate-200"></p>
                           $540
                         </p>
-                        <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+                        <Badge className="text-green-700 bg-green-100 dark:bg-green-900 dark:text-green-300">
                           Completed
                         </Badge>
                       </div>
@@ -946,7 +1016,7 @@ export default function InstructorDashboardPage() {
                 <CardFooter>
                   <Button
                     variant="outline"
-                    className="w-full border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                    className="w-full text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
                   >
                     View All Transactions
                   </Button>
@@ -956,7 +1026,7 @@ export default function InstructorDashboardPage() {
 
             <TabsContent value="reviews" className="space-y-6">
               <Card className="border-blue-100 dark:border-blue-900">
-                <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50 rounded-t-lg">
+                <CardHeader className="rounded-t-lg bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50">
                   <CardTitle className="text-slate-800 dark:text-slate-200">
                     Course Reviews
                   </CardTitle>
@@ -966,14 +1036,14 @@ export default function InstructorDashboardPage() {
                 </CardHeader>
                 <CardContent className="p-6">
                   <div className="space-y-6">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                       <div className="space-y-1">
                         <div className="flex items-center gap-1">
-                          <Star className="h-6 w-6 fill-amber-500 text-amber-500" />
-                          <Star className="h-6 w-6 fill-amber-500 text-amber-500" />
-                          <Star className="h-6 w-6 fill-amber-500 text-amber-500" />
-                          <Star className="h-6 w-6 fill-amber-500 text-amber-500" />
-                          <Star className="h-6 w-6 fill-amber-500 text-amber-500" />
+                          <Star className="w-6 h-6 fill-amber-500 text-amber-500" />
+                          <Star className="w-6 h-6 fill-amber-500 text-amber-500" />
+                          <Star className="w-6 h-6 fill-amber-500 text-amber-500" />
+                          <Star className="w-6 h-6 fill-amber-500 text-amber-500" />
+                          <Star className="w-6 h-6 fill-amber-500 text-amber-500" />
                           <span className="ml-2 text-2xl font-bold text-slate-800 dark:text-slate-200">
                             4.75
                           </span>
@@ -1003,9 +1073,9 @@ export default function InstructorDashboardPage() {
                         </Select>
                         <Button
                           variant="outline"
-                          className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                          className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
                         >
-                          <Filter className="mr-2 h-4 w-4" />
+                          <Filter className="w-4 h-4 mr-2" />
                           Filter
                         </Button>
                       </div>
@@ -1016,12 +1086,12 @@ export default function InstructorDashboardPage() {
                     <div className="space-y-6">
                       <div className="space-y-4">
                         <div className="flex items-start gap-4">
-                          <Avatar className="h-10 w-10">
+                          <Avatar className="w-10 h-10">
                             <AvatarImage
                               src="/images/users/user-1.jpg"
                               alt="User"
                             />
-                            <AvatarFallback className="bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
+                            <AvatarFallback className="text-blue-600 bg-blue-100 dark:bg-blue-900 dark:text-blue-300">
                               JD
                             </AvatarFallback>
                           </Avatar>
@@ -1033,11 +1103,11 @@ export default function InstructorDashboardPage() {
                                 </p>
                                 <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                                   <div className="flex items-center">
-                                    <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
-                                    <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
-                                    <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
-                                    <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
-                                    <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
+                                    <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
+                                    <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
+                                    <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
+                                    <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
+                                    <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
                                   </div>
                                   <span>•</span>
                                   <span>Blockchain Fundamentals</span>
@@ -1057,12 +1127,12 @@ export default function InstructorDashboardPage() {
                         </div>
 
                         <div className="flex items-start gap-4">
-                          <Avatar className="h-10 w-10">
+                          <Avatar className="w-10 h-10">
                             <AvatarImage
                               src="/images/users/user-2.jpg"
                               alt="User"
                             />
-                            <AvatarFallback className="bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
+                            <AvatarFallback className="text-blue-600 bg-blue-100 dark:bg-blue-900 dark:text-blue-300">
                               AS
                             </AvatarFallback>
                           </Avatar>
@@ -1074,11 +1144,11 @@ export default function InstructorDashboardPage() {
                                 </p>
                                 <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                                   <div className="flex items-center">
-                                    <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
-                                    <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
-                                    <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
-                                    <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
-                                    <Star className="h-4 w-4 text-slate-300 dark:text-slate-600" />
+                                    <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
+                                    <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
+                                    <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
+                                    <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
+                                    <Star className="w-4 h-4 text-slate-300 dark:text-slate-600" />
                                   </div>
                                   <span>•</span>
                                   <span>Smart Contract Development</span>
@@ -1099,12 +1169,12 @@ export default function InstructorDashboardPage() {
                         </div>
 
                         <div className="flex items-start gap-4">
-                          <Avatar className="h-10 w-10">
+                          <Avatar className="w-10 h-10">
                             <AvatarImage
                               src="/images/users/user-3.jpg"
                               alt="User"
                             />
-                            <AvatarFallback className="bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
+                            <AvatarFallback className="text-blue-600 bg-blue-100 dark:bg-blue-900 dark:text-blue-300">
                               RJ
                             </AvatarFallback>
                           </Avatar>
@@ -1116,11 +1186,11 @@ export default function InstructorDashboardPage() {
                                 </p>
                                 <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                                   <div className="flex items-center">
-                                    <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
-                                    <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
-                                    <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
-                                    <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
-                                    <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
+                                    <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
+                                    <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
+                                    <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
+                                    <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
+                                    <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
                                   </div>
                                   <span>•</span>
                                   <span>Blockchain Fundamentals</span>
@@ -1146,7 +1216,7 @@ export default function InstructorDashboardPage() {
                 <CardFooter>
                   <Button
                     variant="outline"
-                    className="w-full border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                    className="w-full text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
                   ></Button>
                 </CardFooter>
               </Card>

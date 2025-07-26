@@ -1,4 +1,4 @@
-import { VideoProvider } from "@/context/StreamClientProvider";
+import { StreamClientProvider as VideoProvider } from "@/context/StreamClientProvider";
 import type { ReactNode } from "react";
 
 export default function LiveSessionLayout({
