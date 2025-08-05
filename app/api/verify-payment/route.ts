@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import axios from 'axios';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, updateDoc, collection, query, where, getDocs, addDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, query, where, getDocs, addDoc, increment } from 'firebase/firestore';
 
-export async function GET(request) {
+export async function GET(request: { url: string | URL; }) {
   try {
     const { searchParams } = new URL(request.url);
     const reference = searchParams.get('reference');
@@ -103,14 +103,14 @@ export async function GET(request) {
           reference
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Paystack API error:', error.response?.data || error.message);
       return NextResponse.json(
         { message: error.response?.data?.message || 'Payment verification failed' },
         { status: error.response?.status || 500 }
       );
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Server error:', error);
     return NextResponse.json(
       { message: error.message || 'Internal server error' },

@@ -1,20 +1,21 @@
 // components/admin/UserManagement.tsx
 "use client";
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthProvider";
 import { collection, query, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-
+import { toast } from "../ui/use-toast";
 export default function UserManagement() {
-  const { promoteToInstructor } = useAuth();
+  const auth = useAuth();
+  // Checking if the function exists before destructuring
+  const promoteToInstructor = auth.promoteToInstructor || ((userId: string) => Promise.reject(new Error("Function not implemented")));
   type User = {
     id: string;
     firstName?: string;
     lastName?: string;
     email?: string;
-  role?: string;
-};
+    role?: string;
+  };
 
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,6 +53,11 @@ export default function UserManagement() {
       );
     } catch (error) {
       console.error("Error promoting user:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to promote user to instructor. Please try again.",
+      });
       alert("Failed to promote user to instructor. Please try again.");
     }
   };
