@@ -49,11 +49,11 @@ export default function CoursePreviewPage() {
         if (!params.id) {
           throw new Error("Course ID is undefined");
         }
-        const courseRef = doc(db, "courses", params.id);
+        const courseRef = doc(db, "courses", params.id as string);
         const courseSnap = await getDoc(courseRef);
 
         if (courseSnap.exists()) {
-          setCourse({ id: courseSnap.id, ...courseSnap.data() });
+          setCourse({ id: courseSnap.id, ...courseSnap.data() } as Course);
         } else {
           setError("Course not found");
         }
@@ -173,6 +173,24 @@ export default function CoursePreviewPage() {
                     >
                       <FileText className="mr-1 h-3 w-3" />
                       Draft
+                    </Badge>
+                  )}
+                  {courseData.status === "review" && (
+                    <Badge
+                      variant="outline"
+                      className="border-amber-200 text-amber-600 dark:border-amber-700 dark:text-amber-400"
+                    >
+                      <Clock className="mr-1 h-3 w-3" />
+                      In Review
+                    </Badge>
+                  )}
+                  {courseData.status === "published" && (
+                    <Badge
+                      variant="outline"
+                      className="border-green-200 text-green-600 dark:border-green-700 dark:text-green-400"
+                    >
+                      <CheckCircle2 className="mr-1 h-3 w-3" />
+                      Published
                     </Badge>
                   )}
                 </div>

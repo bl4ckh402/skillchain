@@ -136,7 +136,7 @@ export default function InstructorDashboardPage() {
             id: doc.id,
             title: data.title || "Untitled Course",
             description: data.description || "No description available",
-            shortDescription: data.shortDescription || "", // <-- Add this line
+            shortDescription: data.shortDescription || "",
             category: data.category || "Uncategorized",
             level: data.level || "Beginner",
             price: data.price || "0",
@@ -171,6 +171,7 @@ export default function InstructorDashboardPage() {
             revenue: 0,
             topicTag: data.topicTag || "",
             technologyUsed: data.technologyUsed || [],
+            nextLesson: data.nextLesson || null,
           };
         });
         setCourses(coursesData);
@@ -377,6 +378,16 @@ export default function InstructorDashboardPage() {
           <Badge className="text-green-700 bg-green-100 dark:bg-green-900 dark:text-green-300">
             <CheckCircle className="w-3 h-3 mr-1" />
             Published
+          </Badge>
+        );
+      case "review":
+        return (
+          <Badge
+            variant="outline"
+            className="border-amber-200 text-amber-600 dark:border-amber-700 dark:text-amber-400"
+          >
+            <Clock className="w-3 h-3 mr-1" />
+            In Review
           </Badge>
         );
       case "draft":

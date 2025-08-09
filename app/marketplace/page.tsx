@@ -93,28 +93,28 @@ export default function MarketplacePage() {
         let icon;
         switch (name.toLowerCase()) {
           case "blockchain basics":
-            icon = <BookOpen className="h-4 w-4 text-blue-500" />;
+            icon = <BookOpen className="w-4 h-4 text-blue-500" />;
             break;
           case "smart contracts":
-            icon = <Code2 className="h-4 w-4 text-purple-500" />;
+            icon = <Code2 className="w-4 h-4 text-purple-500" />;
             break;
           case "defi":
-            icon = <TrendingUp className="h-4 w-4 text-green-500" />;
+            icon = <TrendingUp className="w-4 h-4 text-green-500" />;
             break;
           case "nfts":
-            icon = <Sparkles className="h-4 w-4 text-amber-500" />;
+            icon = <Sparkles className="w-4 h-4 text-amber-500" />;
             break;
           case "web3":
-            icon = <Globe className="h-4 w-4 text-teal-500" />;
+            icon = <Globe className="w-4 h-4 text-teal-500" />;
             break;
           case "cryptocurrency":
-            icon = <Wallet className="h-4 w-4 text-red-500" />;
+            icon = <Wallet className="w-4 h-4 text-red-500" />;
             break;
           case "security":
-            icon = <Award className="h-4 w-4 text-indigo-500" />;
+            icon = <Award className="w-4 h-4 text-indigo-500" />;
             break;
           default:
-            icon = <BookOpen className="h-4 w-4 text-slate-500" />;
+            icon = <BookOpen className="w-4 h-4 text-slate-500" />;
         }
 
         return {
@@ -282,7 +282,8 @@ export default function MarketplacePage() {
       switch (value) {
         case "newest":
           return (
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            (b.createdAt instanceof Date ? b.createdAt.getTime() : 0) - 
+            (a.createdAt instanceof Date ? a.createdAt.getTime() : 0)
           );
         case "price-low":
           return (
@@ -309,36 +310,36 @@ export default function MarketplacePage() {
   return (
     <div className="flex flex-col">
       <main className="flex-1">
-        <div className="bg-gradient-to-r from-blue-500/10 to-teal-500/10 dark:from-blue-900/20 dark:to-teal-900/20 py-12">
+        <div className="py-12 bg-gradient-to-r from-blue-500/10 to-teal-500/10 dark:from-blue-900/20 dark:to-teal-900/20">
           <div className="container px-4 md:px-6">
             <div className="max-w-2xl">
-              <Badge className="mb-2 px-3 py-1 text-sm bg-blue-500 hover:bg-blue-600 text-white">
+              <Badge className="px-3 py-1 mb-2 text-sm text-white bg-blue-500 hover:bg-blue-600">
                 Course Marketplace
               </Badge>
-              <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl mb-4 text-slate-800 dark:text-slate-100">
+              <h1 className="mb-4 text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl text-slate-800 dark:text-slate-100">
                 Discover Blockchain Courses
               </h1>
-              <p className="text-lg text-muted-foreground mb-6">
+              <p className="mb-6 text-lg text-muted-foreground">
                 Explore our curated collection of high-quality blockchain and
                 Web3 courses
               </p>
-              <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Search className="absolute w-4 h-4 left-3 top-3 text-muted-foreground" />
                   <form onSubmit={handleSearch}>
                     <Input
                       type="search"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Search for courses..."
-                      className="pl-9 bg-background border-blue-100 dark:border-blue-900 h-12"
+                      className="h-12 border-blue-100 pl-9 bg-background dark:border-blue-900"
                     />
                   </form>
                 </div>
                 <Button
                   size="lg"
                   onClick={handleSearch}
-                  className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white"
+                  className="text-white bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
                 >
                   Find Courses
                 </Button>
@@ -352,7 +353,7 @@ export default function MarketplacePage() {
             <div className="grid grid-cols-1 gap-6 md:grid-cols-[250px_1fr]">
               <div className="space-y-6">
                 <Card className="border-blue-100 dark:border-blue-900">
-                  <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50 rounded-t-lg">
+                  <CardHeader className="rounded-t-lg bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50">
                     <CardTitle className="text-lg text-slate-800 dark:text-slate-200">
                       Categories
                     </CardTitle>
@@ -371,7 +372,7 @@ export default function MarketplacePage() {
                                 search: category.name,
                               }));
                             }}
-                            className="flex items-center justify-between rounded-md p-2 text-slate-700 dark:text-slate-300 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950/50 dark:hover:text-blue-300 transition-colors"
+                            className="flex items-center justify-between p-2 transition-colors rounded-md text-slate-700 dark:text-slate-300 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950/50 dark:hover:text-blue-300"
                           >
                             <div className="flex items-center gap-2">
                               {category.icon}
@@ -379,7 +380,7 @@ export default function MarketplacePage() {
                             </div>
                             <Badge
                               variant="secondary"
-                              className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                              className="text-blue-700 bg-blue-100 dark:bg-blue-900 dark:text-blue-300"
                             >
                               {category.count}
                             </Badge>
@@ -388,7 +389,7 @@ export default function MarketplacePage() {
                       ) : (
                         <EmptyState
                           icon={
-                            <BookOpen className="h-10 w-10 text-blue-500" />
+                            <BookOpen className="w-10 h-10 text-blue-500" />
                           }
                           title="No Categories"
                           description="Categories will appear once courses are added."
@@ -399,7 +400,7 @@ export default function MarketplacePage() {
                 </Card>
 
                 <Card className="border-blue-100 dark:border-blue-900">
-                  <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50 rounded-t-lg">
+                  <CardHeader className="rounded-t-lg bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50">
                     <CardTitle className="text-lg text-slate-800 dark:text-slate-200">
                       Filters
                     </CardTitle>
@@ -424,7 +425,7 @@ export default function MarketplacePage() {
                                   CourseLevel.BEGINNER
                                 )
                               }
-                              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600"
+                              className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
                             />
                             <label
                               htmlFor="beginner"
@@ -437,7 +438,7 @@ export default function MarketplacePage() {
                             <input
                               type="checkbox"
                               id="intermediate"
-                              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600"
+                              className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
                             />
                             <label
                               htmlFor="intermediate"
@@ -450,7 +451,7 @@ export default function MarketplacePage() {
                             <input
                               type="checkbox"
                               id="advanced"
-                              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600"
+                              className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
                             />
                             <label
                               htmlFor="advanced"
@@ -475,7 +476,7 @@ export default function MarketplacePage() {
                               onChange={() =>
                                 handleFilterChange("duration", "0-5")
                               }
-                              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600"
+                              className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
                             />
                             <label
                               htmlFor="short"
@@ -492,7 +493,7 @@ export default function MarketplacePage() {
                               onChange={() =>
                                 handleFilterChange("duration", "5-10")
                               }
-                              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600"
+                              className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
                             />
                             <label
                               htmlFor="medium"
@@ -509,7 +510,7 @@ export default function MarketplacePage() {
                               onChange={() =>
                                 handleFilterChange("duration", "10+")
                               }
-                              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600"
+                              className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
                             />
                             <label
                               htmlFor="long"
@@ -534,11 +535,11 @@ export default function MarketplacePage() {
                               onChange={() =>
                                 handleFilterChange("rating", "4.5")
                               }
-                              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600"
+                              className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
                             />
                             <label
                               htmlFor="rating-4.5"
-                              className="text-sm text-slate-700 dark:text-slate-300 flex items-center"
+                              className="flex items-center text-sm text-slate-700 dark:text-slate-300"
                             >
                               4.5 & up
                               <div className="flex ml-1">
@@ -559,7 +560,7 @@ export default function MarketplacePage() {
                             <input
                               type="checkbox"
                               id="rating-4.0"
-                              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600"
+                              className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
                               checked={activeFilters.rating === 4.0}
                               onChange={() =>
                                 handleFilterChange("rating", "4.0")
@@ -567,7 +568,7 @@ export default function MarketplacePage() {
                             />
                             <label
                               htmlFor="rating-4.0"
-                              className="text-sm text-slate-700 dark:text-slate-300 flex items-center"
+                              className="flex items-center text-sm text-slate-700 dark:text-slate-300"
                             >
                               4.0 & up
                               <div className="flex ml-1">
@@ -588,7 +589,7 @@ export default function MarketplacePage() {
                             <input
                               type="checkbox"
                               id="rating-3.5"
-                              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600"
+                              className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
                               checked={activeFilters.rating === 3.5}
                               onChange={() =>
                                 handleFilterChange("rating", "3.5")
@@ -596,7 +597,7 @@ export default function MarketplacePage() {
                             />
                             <label
                               htmlFor="rating-3.5"
-                              className="text-sm text-slate-700 dark:text-slate-300 flex items-center"
+                              className="flex items-center text-sm text-slate-700 dark:text-slate-300"
                             >
                               3.5 & up
                               <div className="flex ml-1">
@@ -629,7 +630,7 @@ export default function MarketplacePage() {
                               onChange={() =>
                                 handleFilterChange("price", "free")
                               }
-                              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600"
+                              className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
                             />
                             <label
                               htmlFor="free"
@@ -646,7 +647,7 @@ export default function MarketplacePage() {
                               onChange={() =>
                                 handleFilterChange("price", "paid")
                               }
-                              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600"
+                              className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
                             />
                             <label
                               htmlFor="paid"
@@ -665,7 +666,7 @@ export default function MarketplacePage() {
                               onChange={() =>
                                 handleFilterChange("price", "subscription")
                               }
-                              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600"
+                              className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
                             />
                             <label
                               htmlFor="subscription"
@@ -677,7 +678,7 @@ export default function MarketplacePage() {
                         </div>
                       </div>
 
-                      <Button className="w-full bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white">
+                      <Button className="w-full text-white bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700">
                         Apply Filters
                       </Button>
                     </div>
@@ -686,7 +687,7 @@ export default function MarketplacePage() {
               </div>
 
               <div>
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
+                <div className="flex flex-col gap-4 mb-6 md:flex-row md:items-center md:justify-between">
                   <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200">
                     Featured Courses
                   </h2>
@@ -711,14 +712,14 @@ export default function MarketplacePage() {
                 </div>
                 {loading ? (
                   <div className="flex items-center justify-center h-64">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <div className="w-8 h-8 border-b-2 border-blue-600 rounded-full animate-spin"></div>
                   </div>
                 ) : featuredCourses.length === 0 ? (
                   <EmptyState
                     title="No Courses Available"
                     description="Be the first to create a course and share your blockchain knowledge with the community."
                     icon={
-                      <BookOpen className="h-12 w-12 text-blue-500 dark:text-blue-300" />
+                      <BookOpen className="w-12 h-12 text-blue-500 dark:text-blue-300" />
                     }
                     // showCreateButton={true}
                   />
@@ -737,20 +738,20 @@ export default function MarketplacePage() {
                               : "border-slate-200 dark:border-slate-800"
                           }`}
                         >
-                          <div className="aspect-video w-full overflow-hidden relative">
+                          <div className="relative w-full overflow-hidden aspect-video">
                             <img
                               src={course.thumbnail!}
                               alt={course.title}
                               className="object-cover w-full h-full transition-transform group-hover:scale-105"
                             />
-                            <div className="absolute top-2 right-2 flex gap-2">
+                            <div className="absolute flex gap-2 top-2 right-2">
                               {course.bestseller && (
-                                <Badge className="bg-amber-500 hover:bg-amber-600 text-white">
+                                <Badge className="text-white bg-amber-500 hover:bg-amber-600">
                                   Bestseller
                                 </Badge>
                               )}
                               {course.new && (
-                                <Badge className="bg-green-500 hover:bg-green-600 text-white">
+                                <Badge className="text-white bg-green-500 hover:bg-green-600">
                                   New
                                 </Badge>
                               )}
@@ -770,7 +771,7 @@ export default function MarketplacePage() {
                                 {course.level}
                               </Badge>
                               <div className="flex items-center gap-1">
-                                <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
+                                <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
                                 <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
                                   {course.rating}
                                 </span>
@@ -779,11 +780,11 @@ export default function MarketplacePage() {
                                 </span>
                               </div>
                             </div>
-                            <CardTitle className="line-clamp-1 text-xl text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                            <CardTitle className="text-xl transition-colors line-clamp-1 text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">
                               {course.title}
                             </CardTitle>
                             <CardDescription className="flex items-center gap-1">
-                              <Avatar className="h-4 w-4">
+                              <Avatar className="w-4 h-4">
                                 <AvatarImage
                                   src={course.instructor.avatar}
                                   alt={course.instructor.name}
@@ -813,11 +814,11 @@ export default function MarketplacePage() {
                             </div>
                             <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
                               <div className="flex items-center gap-1">
-                                <Users className="h-4 w-4 text-blue-500" />
+                                <Users className="w-4 h-4 text-blue-500" />
                                 <span>{course.students} students</span>
                               </div>
                               <div className="flex items-center gap-1">
-                                <Clock className="h-4 w-4 text-teal-500" />
+                                <Clock className="w-4 h-4 text-teal-500" />
                                 <span>{course.duration}</span>
                               </div>
                             </div>
@@ -829,7 +830,7 @@ export default function MarketplacePage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                                className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
                               >
                                 View Course
                               </Button>
@@ -840,7 +841,7 @@ export default function MarketplacePage() {
                   </div>
                 )}
                 <div className="mt-12">
-                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
+                  <div className="flex flex-col gap-4 mb-6 md:flex-row md:items-center md:justify-between">
                     <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200">
                       All Courses
                     </h2>
@@ -856,7 +857,7 @@ export default function MarketplacePage() {
               </div>
             </div>
 
-            <div className="mt-12 rounded-lg border bg-gradient-to-br from-blue-500/10 to-teal-500/10 dark:from-blue-900/20 dark:to-teal-900/20 p-6 border-blue-200 dark:border-blue-800">
+            <div className="p-6 mt-12 border border-blue-200 rounded-lg bg-gradient-to-br from-blue-500/10 to-teal-500/10 dark:from-blue-900/20 dark:to-teal-900/20 dark:border-blue-800">
               <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
                 <div>
                   <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">
@@ -867,7 +868,7 @@ export default function MarketplacePage() {
                     on SkillChain
                   </p>
                 </div>
-                <Button className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white">
+                <Button className="text-white bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700">
                   Start Teaching
                 </Button>
               </div>

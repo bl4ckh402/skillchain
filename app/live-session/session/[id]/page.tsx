@@ -182,8 +182,21 @@ export default function LiveSessionPage() {
         let call = getCall(sessionId);
 
         if (!call && client) {
-          // Create the call (second parameter false means don't auto-join)
-          call = await joinCall(sessionId, false);
+          try {
+            // Create the call (second parameter false means don't auto-join)
+            call = await joinCall(sessionId, false);
+          } catch (getError) {
+            console.log("Call not found, creating new call...");
+            // If call doesn't exist, create it
+            try {
+              const callObject = client.call("default", sessionId);
+              await callObject.getOrCreate(); // This creates the call if it doesn't exist
+              call = callObject;
+            } catch (createError) {
+              console.error("Failed to create call:", createError);
+              throw new Error("Failed to create or join session");
+            }
+          }
         }
 
         if (!call) {
@@ -472,4 +485,7 @@ export default function LiveSessionPage() {
       </div>
     </StreamCall>
   );
+}
+function createCall(sessionId: string): Call | PromiseLike<Call | null> | null {
+  throw new Error("Function not implemented.");
 }

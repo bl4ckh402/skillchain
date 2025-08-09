@@ -51,7 +51,7 @@ import {
   Award,
   Sparkles,
 } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { toast, useToast } from "@/components/ui/use-toast";
 
 // Define instructor type
 interface Instructor {
@@ -109,36 +109,38 @@ export default function InstructorsClient() {
     "Cryptography",
     "dApp Development",
   ];
-
-  useEffect(() => {
-    fetchInstructors(true);
-    fetchFeaturedInstructors();
-  }, [sortBy, expertiseFilter]);
-
   const fetchInstructors = async (filterChanged = false) => {
     try {
       if (filterChanged) {
         setLoading(true);
-        setLastVisible(null); // Reset pagination when filters change
+        setLastVisible(null);
       } else {
-        setLoadingMore(true); // Show loading more indicator
+        setLoadingMore(true);
       }
 
-      // Create base query
+      // Create base query - remove the approved filter temporarily
       let instructorsQuery: any = query(
         collection(db, "users"),
-        where("role", "==", "instructor")
+        where("role", "==", "instructor"),
+        where("approved", "==", true) //Add approved check
       );
 
       // Add expertise filter if selected
       if (expertiseFilter !== "all") {
+        // Note: This might need adjustment based on your data structure
         instructorsQuery = query(
-          collection(db, "users"),
-          where("role", "==", "instructor")
-          //   where("approved", "==", true),
-          //   where("expertise", "array-contains", expertiseFilter)
+          instructorsQuery,
+          where("expertise", "array-contains", expertiseFilter)
         );
       }
+
+      //   instructorsQuery = query(
+
+      //     collection(db, "users"),
+      //     where("role", "==", "instructor")
+      //     // Remove the expertise filter for now to test
+      //   );
+      // }
 
       // Add sorting
       switch (sortBy) {
@@ -163,36 +165,83 @@ export default function InstructorsClient() {
             orderBy("joinedAt", "desc")
           );
           break;
+        default:
+          // If no specific sorting, just order by a field that exists
+          instructorsQuery = query(
+            instructorsQuery,
+            orderBy("createdAt", "desc")
+          );
       }
 
       // Add pagination
       instructorsQuery = query(instructorsQuery, limit(12));
 
-      // Add startAfter if we're paginating
       if (lastVisible && !filterChanged) {
         instructorsQuery = query(instructorsQuery, startAfter(lastVisible));
       }
 
       const snapshot = await getDocs(instructorsQuery);
 
-      // Check if we have more results
+      console.log("Fetched instructors:", snapshot.docs.length); // Debug log
+
       setHasMore(snapshot.docs.length === 12);
 
-      // Set the last visible document for pagination
       if (snapshot.docs.length > 0) {
         setLastVisible(snapshot.docs[snapshot.docs.length - 1]);
       } else {
         setLastVisible(null);
       }
 
-      // Map the documents to our Instructor type
-      const instructorsList = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...(doc.data() as Omit<Instructor, "id">),
-      })) as Instructor[];
+      const instructorsList = snapshot.docs.map((doc) => {
+        const data = doc.data() as Record<string, any>;
+        console.log("Instructor data:", data); // Debug log
+        return {
+          id: doc.id,
+          firstName: data.firstName || data.name || "Unknown",
+          lastName: data.lastName || "",
+          photoURL: data.photoURL || data.profileImage || "/placeholder.svg",
+          bio: data.bio || data.profileStatement || "",
+          expertise: data.expertise || [],
+          rating: data.rating || 0,
+          reviews: data.reviews || 0,
+          students: data.students || 0,
+          courses: data.courses || 0,
+          hourlyRate: data.hourlyRate,
+          featured: data.featured || false,
+          verified: data.verified || false,
+          joinedAt: data.joinedAt || data.createdAt,
+          socialLinks: data.socialLinks,
+          languages: data.languages,
+          role: data.role,
+          approved: data.approved,
+        } as Instructor;
+      });
 
-      // If this is a new search/filter, replace the list
-      // Otherwise append to the existing list
+      //update featured instructors
+
+      const fetchFeaturedInstructors = async () => {
+        try {
+          const featuredQuery = query(
+            collection(db, "users"),
+            where("role", "==", "instructor"),
+            // Remove the approved and featured filters temporarily
+            limit(4)
+          );
+
+          const snapshot = await getDocs(featuredQuery);
+          console.log("Featured instructors found:", snapshot.docs.length); // Debug log
+
+          const featuredList = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...(doc.data() as Omit<Instructor, "id">),
+          })) as Instructor[];
+
+          setFeaturedInstructors(featuredList);
+        } catch (error) {
+          console.error("Error fetching featured instructors:", error);
+        }
+      };
+
       if (filterChanged) {
         setInstructors(instructorsList);
       } else {
@@ -211,6 +260,11 @@ export default function InstructorsClient() {
       setLoadingMore(false);
     }
   };
+
+  useEffect(() => {
+    fetchInstructors(true);
+    fetchFeaturedInstructors();
+  }, [sortBy, expertiseFilter]);
 
   const fetchFeaturedInstructors = async () => {
     try {
@@ -269,7 +323,7 @@ export default function InstructorsClient() {
             instructor.expertise?.map((e) => e.toLowerCase()) || [];
 
           return searchTerms.some(
-            (term) =>
+            (term: string) =>
               fullName.includes(term) ||
               bio.includes(term) ||
               expertise.some((exp) => exp.includes(term))
@@ -830,4 +884,31 @@ export default function InstructorsClient() {
       <Footer />
     </div>
   );
+}
+function setExpertiseFilter(value: string) {
+  throw new Error("Function not implemented.");
+}
+
+function fetchInstructors(arg0: boolean) {
+  throw new Error("Function not implemented.");
+}
+
+function setFeaturedInstructors(featuredList: Instructor[]) {
+  throw new Error("Function not implemented.");
+}
+
+function setLoading(arg0: boolean) {
+  throw new Error("Function not implemented.");
+}
+
+function setHasMore(arg0: boolean) {
+  throw new Error("Function not implemented.");
+}
+
+function setSortBy(value: string) {
+  throw new Error("Function not implemented.");
+}
+
+function setSearchQuery(arg0: string) {
+  throw new Error("Function not implemented.");
 }

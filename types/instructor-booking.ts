@@ -1,5 +1,12 @@
 // types/instructor-booking.ts
-import { BookingStatus } from './booking';
+
+export enum BookingStatus {
+  PENDING = 'PENDING',
+  CONFIRMED = 'CONFIRMED',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
+  DECLINED = 'DECLINED'
+}
 
 export interface Student {
   id: string;

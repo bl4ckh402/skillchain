@@ -245,6 +245,7 @@ export default function CreateCoursePage() {
             status: LessonStatus.LOCKED,
             progress: 0,
             completedAt: null,
+            completed: false,
           })),
         })),
         status: CourseStatus.DRAFT,

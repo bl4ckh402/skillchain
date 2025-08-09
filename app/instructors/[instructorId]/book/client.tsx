@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { format, addDays, startOfWeek, addWeeks, subWeeks, isSameDay, parse } from "date-fns"
@@ -372,9 +372,9 @@ export default function InstructorBookingClient({ instructorId }: { instructorId
     return (
       <div className="flex flex-col min-h-screen">
         <main className="flex-1">
-          <div className="bg-gradient-to-r from-blue-500/10 to-teal-500/10 dark:from-blue-900/20 dark:to-teal-900/20 py-8">
+          <div className="py-8 bg-gradient-to-r from-blue-500/10 to-teal-500/10 dark:from-blue-900/20 dark:to-teal-900/20">
             <div className="container px-4 md:px-6">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
                   <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-200">Book a Session</h1>
                   <p className="text-muted-foreground">Loading instructor details...</p>
@@ -384,9 +384,9 @@ export default function InstructorBookingClient({ instructorId }: { instructorId
           </div>
           
           <div className="container py-8">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <Skeleton className="h-80 w-full" />
-              <Skeleton className="h-80 w-full lg:col-span-2" />
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+              <Skeleton className="w-full h-80" />
+              <Skeleton className="w-full h-80 lg:col-span-2" />
             </div>
           </div>
         </main>
@@ -398,12 +398,12 @@ export default function InstructorBookingClient({ instructorId }: { instructorId
   if (error || !instructor) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center p-8 max-w-md">
-          <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-4">
+        <div className="max-w-md p-8 text-center">
+          <div className="mb-4 text-6xl text-red-500">⚠️</div>
+          <h2 className="mb-4 text-2xl font-bold text-slate-800 dark:text-slate-200">
             {error || "Unable to load booking page"}
           </h2>
-          <p className="text-slate-600 dark:text-slate-400 mb-6">
+          <p className="mb-6 text-slate-600 dark:text-slate-400">
             {error === "Please log in to book a session" 
               ? "You need to be logged in to book a session with an instructor." 
               : "We encountered an error loading the instructor's booking information."}
@@ -425,9 +425,9 @@ export default function InstructorBookingClient({ instructorId }: { instructorId
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex-1">
-        <div className="bg-gradient-to-r from-blue-500/10 to-teal-500/10 dark:from-blue-900/20 dark:to-teal-900/20 py-8">
+        <div className="py-8 bg-gradient-to-r from-blue-500/10 to-teal-500/10 dark:from-blue-900/20 dark:to-teal-900/20">
           <div className="container px-4 md:px-6">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-200">Book a Session</h1>
                 <p className="text-muted-foreground">Schedule a one-on-one session with {getFullName(instructor)}</p>
@@ -435,9 +435,9 @@ export default function InstructorBookingClient({ instructorId }: { instructorId
               <Button
                 variant="outline"
                 onClick={() => router.back()}
-                className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
               >
-                <ChevronLeft className="mr-2 h-4 w-4" />
+                <ChevronLeft className="w-4 h-4 mr-2" />
                 Back to Instructor Profile
               </Button>
             </div>
@@ -445,14 +445,14 @@ export default function InstructorBookingClient({ instructorId }: { instructorId
         </div>
 
         <div className="container py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
             {/* Instructor Profile Card */}
             <Card className="border-blue-100 dark:border-blue-900 lg:col-span-1">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50 rounded-t-lg">
+              <CardHeader className="rounded-t-lg bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50">
                 <div className="flex items-center gap-4">
-                  <Avatar className="h-16 w-16 border-2 border-white shadow-sm">
+                  <Avatar className="w-16 h-16 border-2 border-white shadow-sm">
                     <AvatarImage src={instructor.photoURL} alt={getFullName(instructor)} />
-                    <AvatarFallback className="bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
+                    <AvatarFallback className="text-blue-600 bg-blue-100 dark:bg-blue-900 dark:text-blue-300">
                       {getInitials(instructor.firstName, instructor.lastName)}
                     </AvatarFallback>
                   </Avatar>
@@ -465,12 +465,12 @@ export default function InstructorBookingClient({ instructorId }: { instructorId
               <CardContent className="p-6 space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1">
-                    <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
+                    <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
                     <span className="font-medium">{instructor.rating || 0}</span>
                     <span className="text-sm text-muted-foreground">({instructor.reviews || 0} reviews)</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Users className="h-4 w-4 text-blue-500" />
+                    <Users className="w-4 h-4 text-blue-500" />
                     <span className="text-sm text-muted-foreground">{instructor.students || 0} students</span>
                   </div>
                 </div>
@@ -478,12 +478,12 @@ export default function InstructorBookingClient({ instructorId }: { instructorId
                 <Separator className="bg-blue-100 dark:bg-blue-900" />
 
                 <div>
-                  <h3 className="font-medium text-slate-800 dark:text-slate-200 mb-2">Expertise</h3>
+                  <h3 className="mb-2 font-medium text-slate-800 dark:text-slate-200">Expertise</h3>
                   <div className="flex flex-wrap gap-2">
-                    {instructor.expertise?.map((skill, index) => (
+                    {instructor.expertise?.map((skill: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined, index: number) => (
                       <Badge
                         key={index}
-                        className="bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-300 dark:hover:bg-blue-800"
+                        className="text-blue-700 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-300 dark:hover:bg-blue-800"
                       >
                         {skill}
                       </Badge>
@@ -494,20 +494,20 @@ export default function InstructorBookingClient({ instructorId }: { instructorId
                 <Separator className="bg-blue-100 dark:bg-blue-900" />
 
                 <div>
-                  <h3 className="font-medium text-slate-800 dark:text-slate-200 mb-2">About</h3>
+                  <h3 className="mb-2 font-medium text-slate-800 dark:text-slate-200">About</h3>
                   <p className="text-sm text-slate-600 dark:text-slate-400">{instructor.bio}</p>
                 </div>
 
                 <Separator className="bg-blue-100 dark:bg-blue-900" />
 
                 <div>
-                  <h3 className="font-medium text-slate-800 dark:text-slate-200 mb-2">Session Rates</h3>
+                  <h3 className="mb-2 font-medium text-slate-800 dark:text-slate-200">Session Rates</h3>
                   <div className="space-y-2">
                     {availabilitySettings?.sessionDurations.map(duration => (
                       <div key={duration} className="flex items-center justify-between">
                         <span className="text-sm">{duration}</span>
-                        <div className="text-lg font-bold text-slate-800 dark:text-slate-200 flex items-center">
-                          <DollarSign className="h-4 w-4 text-green-500" />
+                        <div className="flex items-center text-lg font-bold text-slate-800 dark:text-slate-200">
+                          <DollarSign className="w-4 h-4 text-green-500" />
                           {availabilitySettings.pricing[duration] || instructor.hourlyRate || 60}
                         </div>
                       </div>
@@ -519,13 +519,13 @@ export default function InstructorBookingClient({ instructorId }: { instructorId
 
             {/* Booking Calendar and Slots */}
             <Card className="border-blue-100 dark:border-blue-900 lg:col-span-2">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50 rounded-t-lg">
+              <CardHeader className="rounded-t-lg bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50">
                 <CardTitle className="text-slate-800 dark:text-slate-200">Select Date & Time</CardTitle>
                 <CardDescription>Choose a date and available time slot for your session</CardDescription>
               </CardHeader>
               <CardContent className="p-6">
                 <Tabs defaultValue="calendar" className="w-full">
-                  <TabsList className="mb-4 w-full justify-start bg-slate-100 dark:bg-slate-800/50 p-1 rounded-lg">
+                  <TabsList className="justify-start w-full p-1 mb-4 rounded-lg bg-slate-100 dark:bg-slate-800/50">
                     <TabsTrigger
                       value="calendar"
                       className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-950 data-[state=active]:text-blue-600 rounded-md"
@@ -541,9 +541,9 @@ export default function InstructorBookingClient({ instructorId }: { instructorId
                   </TabsList>
 
                   <TabsContent value="calendar" className="space-y-4">
-                    <div className="flex flex-col md:flex-row gap-6">
+                    <div className="flex flex-col gap-6 md:flex-row">
                       <div className="md:w-1/2">
-                        <div className="border border-blue-100 dark:border-blue-900 rounded-lg overflow-hidden">
+                        <div className="overflow-hidden border border-blue-100 rounded-lg dark:border-blue-900">
                           <Calendar
                             mode="single"
                             selected={date}
@@ -568,7 +568,7 @@ export default function InstructorBookingClient({ instructorId }: { instructorId
                         </div>
                       </div>
                       <div className="md:w-1/2">
-                        <h3 className="font-medium text-slate-800 dark:text-slate-200 mb-3">
+                        <h3 className="mb-3 font-medium text-slate-800 dark:text-slate-200">
                           {date ? (
                             <>Available times for {format(date, "EEEE, MMMM d, yyyy")}</>
                           ) : (
@@ -577,7 +577,7 @@ export default function InstructorBookingClient({ instructorId }: { instructorId
                         </h3>
                         {date ? (
                           availableTimesForDate.length > 0 ? (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                               {availableTimesForDate.map((slot) => (
                                 <Button
                                 key={slot}
@@ -591,19 +591,19 @@ export default function InstructorBookingClient({ instructorId }: { instructorId
                                 `}
                                 onClick={() => setSelectedSlot(slot)}
                               >
-                                <Clock className="mr-2 h-4 w-4" />
+                                <Clock className="w-4 h-4 mr-2" />
                                 {slot}
                               </Button>
                             ))}
                           </div>
                         ) : (
-                          <div className="text-center p-6 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
+                          <div className="p-6 text-center border border-dashed rounded-lg border-slate-200 dark:border-slate-800">
                             <p className="text-muted-foreground">No available slots for this date</p>
                           </div>
                         )
                       ) : (
-                        <div className="text-center p-6 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
-                          <CalendarIcon className="h-10 w-10 text-blue-500 mx-auto mb-2" />
+                        <div className="p-6 text-center border border-dashed rounded-lg border-slate-200 dark:border-slate-800">
+                          <CalendarIcon className="w-10 h-10 mx-auto mb-2 text-blue-500" />
                           <p className="text-muted-foreground">Please select a date to view available time slots</p>
                         </div>
                       )}
@@ -615,9 +615,9 @@ export default function InstructorBookingClient({ instructorId }: { instructorId
                       <Button
                         variant="outline"
                         onClick={goToPreviousWeek}
-                        className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                        className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
                       >
-                        <ChevronLeft className="h-4 w-4" />
+                        <ChevronLeft className="w-4 h-4" />
                         Previous Week
                       </Button>
                       <h3 className="font-medium text-slate-800 dark:text-slate-200">
@@ -626,17 +626,17 @@ export default function InstructorBookingClient({ instructorId }: { instructorId
                       <Button
                         variant="outline"
                         onClick={goToNextWeek}
-                        className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                        className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
                       >
                         Next Week
-                        <ChevronRight className="h-4 w-4 ml-2" />
+                        <ChevronRight className="w-4 h-4 ml-2" />
                       </Button>
                     </div>
 
                     <div className="grid grid-cols-7 gap-2">
                       {weekDays.map((day, index) => (
                         <div key={index} className="text-center">
-                          <div className="font-medium text-sm mb-1">{format(day, "EEE")}</div>
+                          <div className="mb-1 text-sm font-medium">{format(day, "EEE")}</div>
                           <div
                             className={`
                               rounded-full w-8 h-8 mx-auto flex items-center justify-center text-sm mb-2 cursor-pointer
@@ -662,7 +662,7 @@ export default function InstructorBookingClient({ instructorId }: { instructorId
                     <Separator className="my-4 bg-blue-100 dark:bg-blue-900" />
 
                     <div>
-                      <h3 className="font-medium text-slate-800 dark:text-slate-200 mb-3">
+                      <h3 className="mb-3 font-medium text-slate-800 dark:text-slate-200">
                         {date ? (
                           <>Available times for {format(date, "EEEE, MMMM d")}</>
                         ) : (
@@ -671,7 +671,7 @@ export default function InstructorBookingClient({ instructorId }: { instructorId
                       </h3>
                       {date ? (
                         availableSlots.length > 0 ? (
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                             {availableTimesForDate.map((slot) => (
                               <Button
                                 key={slot}
@@ -685,19 +685,19 @@ export default function InstructorBookingClient({ instructorId }: { instructorId
                                 `}
                                 onClick={() => setSelectedSlot(slot)}
                               >
-                                <Clock className="mr-2 h-4 w-4" />
+                                <Clock className="w-4 h-4 mr-2" />
                                 {slot}
                               </Button>
                             ))}
                           </div>
                         ) : (
-                          <div className="text-center p-6 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
+                          <div className="p-6 text-center border border-dashed rounded-lg border-slate-200 dark:border-slate-800">
                             <p className="text-muted-foreground">No available slots for this date</p>
                           </div>
                         )
                       ) : (
-                        <div className="text-center p-6 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
-                          <CalendarIcon className="h-10 w-10 text-blue-500 mx-auto mb-2" />
+                        <div className="p-6 text-center border border-dashed rounded-lg border-slate-200 dark:border-slate-800">
+                          <CalendarIcon className="w-10 h-10 mx-auto mb-2 text-blue-500" />
                           <p className="text-muted-foreground">Please select a date to view available time slots</p>
                         </div>
                       )}
@@ -707,8 +707,8 @@ export default function InstructorBookingClient({ instructorId }: { instructorId
 
                 {availabilitySettings?.sessionDurations.length! > 1 && (
                   <div className="mt-6">
-                    <h3 className="font-medium text-slate-800 dark:text-slate-200 mb-3">Session Duration</h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <h3 className="mb-3 font-medium text-slate-800 dark:text-slate-200">Session Duration</h3>
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                       {availabilitySettings?.sessionDurations.map((duration) => (
                         <Button
                           key={duration}
@@ -722,7 +722,7 @@ export default function InstructorBookingClient({ instructorId }: { instructorId
                           `}
                           onClick={() => handleDurationChange(duration)}
                         >
-                          <Clock className="mr-2 h-4 w-4" />
+                          <Clock className="w-4 h-4 mr-2" />
                           {duration}
                         </Button>
                       ))}
@@ -730,7 +730,7 @@ export default function InstructorBookingClient({ instructorId }: { instructorId
                   </div>
                 )}
               </CardContent>
-              <CardFooter className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50 rounded-b-lg flex justify-between">
+              <CardFooter className="flex justify-between rounded-b-lg bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50">
                 <div>
                   {date && selectedSlot && (
                     <div className="text-sm">
@@ -742,7 +742,7 @@ export default function InstructorBookingClient({ instructorId }: { instructorId
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                   <Button
                     disabled={!date || !selectedSlot}
-                    className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white"
+                    className="text-white bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
                     onClick={() => setIsDialogOpen(true)}
                   >
                     Book This Slot
@@ -755,14 +755,14 @@ export default function InstructorBookingClient({ instructorId }: { instructorId
                         {selectedSlot}.
                       </DialogDescription>
                     </DialogHeader>
-                    <div className="space-y-4 py-4">
+                    <div className="py-4 space-y-4">
                       <div className="space-y-2">
                         <label htmlFor="topic" className="text-sm font-medium">
                           Session Topic
                         </label>
                         <input
                           id="topic"
-                          className="w-full p-2 border border-slate-300 dark:border-slate-700 rounded-md"
+                          className="w-full p-2 border rounded-md border-slate-300 dark:border-slate-700"
                           placeholder="e.g., Smart Contract Development Help"
                           value={bookingDetails.topic}
                           onChange={(e) => setBookingDetails({ ...bookingDetails, topic: e.target.value })}
@@ -781,8 +781,8 @@ export default function InstructorBookingClient({ instructorId }: { instructorId
                           className="min-h-[100px]"
                         />
                       </div>
-                      <div className="bg-blue-50 dark:bg-blue-950/50 p-4 rounded-lg">
-                        <h4 className="font-medium text-slate-800 dark:text-slate-200 mb-2">Session Details</h4>
+                      <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-950/50">
+                        <h4 className="mb-2 font-medium text-slate-800 dark:text-slate-200">Session Details</h4>
                         <div className="space-y-2 text-sm">
                           <div className="flex justify-between">
                             <span className="text-slate-500 dark:text-slate-400">Date:</span>
@@ -818,12 +818,12 @@ export default function InstructorBookingClient({ instructorId }: { instructorId
                       </Button>
                       <Button
                         onClick={handleConfirmBooking}
-                        className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white"
+                        className="text-white bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
                         disabled={!bookingDetails.topic || submitting}
                       >
                         {submitting ? (
                           <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                             Processing...
                           </>
                         ) : (
@@ -839,13 +839,13 @@ export default function InstructorBookingClient({ instructorId }: { instructorId
 
           {/* Session Types */}
           <div className="mt-8">
-            <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-4">Session Types</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <h2 className="mb-4 text-2xl font-bold text-slate-800 dark:text-slate-200">Session Types</h2>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               <Card className="border-blue-100 dark:border-blue-900">
-                <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50 rounded-t-lg">
+                <CardHeader className="rounded-t-lg bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50">
                   <div className="flex items-center gap-2">
-                    <div className="rounded-full bg-blue-100 p-2 dark:bg-blue-900">
-                      <Video className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    <div className="p-2 bg-blue-100 rounded-full dark:bg-blue-900">
+                      <Video className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                     </div>
                     <CardTitle className="text-slate-800 dark:text-slate-200">Video Session</CardTitle>
                   </div>
@@ -873,10 +873,10 @@ export default function InstructorBookingClient({ instructorId }: { instructorId
               </Card>
 
               <Card className="border-blue-100 dark:border-blue-900">
-                <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50 rounded-t-lg">
+                <CardHeader className="rounded-t-lg bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50">
                   <div className="flex items-center gap-2">
-                    <div className="rounded-full bg-teal-100 p-2 dark:bg-teal-900">
-                      <MessageSquare className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+                    <div className="p-2 bg-teal-100 rounded-full dark:bg-teal-900">
+                      <MessageSquare className="w-5 h-5 text-teal-600 dark:text-teal-400" />
                     </div>
                     <CardTitle className="text-slate-800 dark:text-slate-200">Code Review</CardTitle>
                   </div>
@@ -904,10 +904,10 @@ export default function InstructorBookingClient({ instructorId }: { instructorId
               </Card>
 
               <Card className="border-blue-100 dark:border-blue-900">
-                <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50 rounded-t-lg">
+                <CardHeader className="rounded-t-lg bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50">
                   <div className="flex items-center gap-2">
-                    <div className="rounded-full bg-amber-100 p-2 dark:bg-amber-900">
-                      <Users className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                    <div className="p-2 rounded-full bg-amber-100 dark:bg-amber-900">
+                      <Users className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                     </div>
                     <CardTitle className="text-slate-800 dark:text-slate-200">Career Guidance</CardTitle>
                   </div>
@@ -938,8 +938,8 @@ export default function InstructorBookingClient({ instructorId }: { instructorId
 
           {/* FAQ Section */}
           <div className="mt-8">
-            <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-4">Frequently Asked Questions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <h2 className="mb-4 text-2xl font-bold text-slate-800 dark:text-slate-200">Frequently Asked Questions</h2>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <Card className="border-blue-100 dark:border-blue-900">
                 <CardHeader>
                   <CardTitle className="text-lg text-slate-800 dark:text-slate-200">
