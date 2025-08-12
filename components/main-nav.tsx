@@ -106,7 +106,7 @@ const dialogStyles = `
     to { opacity: 0; }
   }
 `;
-<!-- =======
+
 // Enhanced navigation item structure for better organization and maintenance
 interface NavigationItem {
   href: string;

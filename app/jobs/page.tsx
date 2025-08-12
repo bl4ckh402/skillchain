@@ -1170,8 +1170,11 @@ export default function JobsPage() {
                     blockchain professionals
                   </p>
                 </div>
-                <Button className="w-full px-6 text-white md:w-auto bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700">
-                  Post a Job
+                <Button
+                  className="w-full px-6 text-white md:w-auto bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
+                  asChild
+                >
+                  <Link href="/jobs/post">Post a Job </Link>
                 </Button>
               </div>
             </div>
