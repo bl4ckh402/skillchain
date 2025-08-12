@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Users, Clock, Star } from "lucide-react";
 import { useCourses } from "@/context/CourseContext";
-import { Course, CourseLevel } from "@/types/course";
+import { Course, CourseLevel, CourseStatus } from "@/types/course";
 
 export function FeaturedCourses() {
   const { getFeaturedCourses } = useCourses();
@@ -26,8 +26,7 @@ export function FeaturedCourses() {
     {
       id: "1",
       title: "Blockchain Fundamentals",
-      description:
-        "Master the core concepts of blockchain technology and cryptocurrency",
+      description: "Master the core concepts of blockchain technology and cryptocurrency",
       thumbnail: "/course-thumbnails/blockchain-basics.jpg",
       level: CourseLevel.BEGINNER,
       rating: 4.8,
@@ -36,7 +35,23 @@ export function FeaturedCourses() {
       instructor: {
         name: "Sarah Chen",
         avatar: "/avatars/sarah-chen.jpg",
+        id: "",
+        bio: ""
       },
+      nextLesson: null,
+      lessons: undefined,
+      shortDescription: "",
+      category: "",
+      language: "",
+      price: "",
+      modules: [],
+      whatYouWillLearn: [],
+      requirements: [],
+      featured: false,
+      status: CourseStatus.DRAFT,
+      visibility: "public",
+      certificate: false,
+      tags: []
     },
     {
       id: "2",
@@ -56,8 +71,7 @@ export function FeaturedCourses() {
     {
       id: "3",
       title: "DeFi Protocols & Applications",
-      description:
-        "Explore decentralized finance protocols and their implementations",
+      description: "Explore decentralized finance protocols and their implementations",
       thumbnail: "/course-thumbnails/defi-dev.jpg",
       level: CourseLevel.ADVANCED,
       rating: 4.9,
@@ -66,7 +80,23 @@ export function FeaturedCourses() {
       instructor: {
         name: "Emily Johnson",
         avatar: "/avatars/emily-johnson.jpg",
+        id: "",
+        bio: ""
       },
+      nextLesson: null,
+      lessons: undefined,
+      shortDescription: "",
+      category: "",
+      language: "",
+      price: "",
+      modules: [],
+      whatYouWillLearn: [],
+      requirements: [],
+      featured: false,
+      status: CourseStatus.DRAFT,
+      visibility: "public",
+      certificate: false,
+      tags: []
     },
   ];
 
