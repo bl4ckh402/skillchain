@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,7 +18,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Footer } from "@/components/footer";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useToast } from "@/components/ui/use-toast";
+import { toast, useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/context/AuthProvider";
 import {
   User,
@@ -44,6 +44,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
+import { storage, db } from "@/lib/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { doc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore";
+import { updateProfile } from "firebase/auth";
 
 export default function SettingsPage() {
   const { user, signOut, updatePassword, enable2FA, verify2FA } = useAuth();
@@ -66,17 +70,214 @@ export default function SettingsPage() {
   const [twoFAVerificationError, setTwoFAVerificationError] = useState("");
   const [twoFALoading, setTwoFALoading] = useState(false);
   const [twoFACopied, setTwoFACopied] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [profileData, setProfileData] = useState({
+    firstName: "",
+    lastName: "",
+    bio: "",
+    photoURL: "",
+  });
 
-  const handleSaveProfile = () => {
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user?.uid) return;
+
+      try {
+        const userRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setProfileData({
+            firstName:
+              userData.firstName || user.displayName?.split(" ")[0] || "",
+            lastName:
+              userData.lastName || user.displayName?.split(" ")[1] || "",
+            bio: userData.bio || "",
+            photoURL: userData.photoURL || user.photoURL || "",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load profile data",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchUserProfile();
+  }, [user]);
+  // Add this function to handle image upload
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user?.uid) {
+      toast({
+        title: "Error",
+        description: "No file selected or user not authenticated",
+        variant: "destructive",
+      });
+      return;
+    }
+    //Validate file size and type
+    const validTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!validTypes.includes(file.type)) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a JPEG, PNG, or WebP image.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    if (file.size > MAX_FILE_SIZE) {
+      toast({
+        title: "File too large",
+        description: "Please upload an image smaller than 5MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setUploading(true);
+    try {
+      // create unique file name using timestamp
+      const timestamp = Date.now();
+      const fileName = `${user.uid}-${timestamp}-${file.name}`;
+
+      //create a reference to the storage location
+      const storageRef = ref(storage, `profile-images/${user.uid}/${fileName}`);
+      // Upload the file
+      const uploadTask = await uploadBytes(storageRef, file);
+      console.log("File uploaded successfully:", uploadTask);
+      // Get the download URL
+      const photoURL = await getDownloadURL(storageRef);
+      console.log("File available at:", photoURL);
+      // update auth profile
+      await updateProfile(user, { photoURL });
+      // Update Firestore document
+      const userRef = doc(db, "users", user.uid);
+      await updateDoc(userRef, {
+        photoURL,
+        updatedAt: serverTimestamp(),
+      });
+      // Update local state
+      setProfileData((prev) => ({
+        ...prev,
+        photoURL,
+      }));
+      toast({
+        title: "Success",
+        description: "Profile image uploaded successfully",
+      });
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast({
+        title: "Error",
+        description: "Failed to upload image. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+  //   if (file.size > 5 * 1024 * 1024) {
+  //     toast({
+  //       title: "File too large",
+  //       description: "Please upload an image smaller than 5MB.",
+  //       variant: "destructive",
+  //     });
+  //     return;
+  //   }
+  //   if (uploading) return; // Prevent multiple uploads
+  //   setUploading(true);
+
+  //   try {
+  //     setUploading(true);
+
+  //     // Create unique file name
+  //     const fileName = `${user?.uid}-${Date.now()}-${file.name}`;
+  //     // Upload to Firebase Storage
+  //     const storageRef = ref(
+  //       storage,
+  //       `profile-images/${user?.uid}/${file.name}`
+  //     );
+  //     await uploadBytes(storageRef, file);
+  //     const photoURL = await getDownloadURL(storageRef);
+
+  //     if (user) {
+  //       await updateProfile(user, { photoURL });
+  //     }
+  //     //Update user Profile in firestore
+  //     if (user?.uid) {
+  //       const userRef = doc(db, "users", user.uid);
+  //       await updateDoc(userRef, {
+  //         photoURL,
+  //         updatedAt: serverTimestamp(),
+  //       });
+  //     }
+  //     //update local state
+  //     setProfileData((prev) => ({
+  //       ...prev,
+  //       photoURL,
+  //     }));
+
+  //     toast({
+  //       title: "Success",
+  //       description: "Profile image uploaded successfully",
+  //     });
+  //   } catch (error) {
+  //     console.error("Error uploading image:", error);
+  //     toast({
+  //       title: "Error",
+  //       description: "Failed to upload image. Please try again.",
+  //       variant: "destructive",
+  //     });
+  //   } finally {
+  //     setUploading(false);
+  //   }
+  // };
+
+  const handleSaveProfile = async () => {
+    if (!user) return;
+
     setIsLoading(true);
-    // Simulate saving profile
-    setTimeout(() => {
-      setIsLoading(false);
+
+    try {
+      const userRef = doc(db, "users", user.uid);
+      await updateDoc(userRef, {
+        firstName: profileData.firstName,
+        lastName: profileData.lastName,
+        displayName: `${profileData.firstName} ${profileData.lastName}`,
+        bio: profileData.bio,
+        photoURL: profileData.photoURL,
+        updatedAt: serverTimestamp(),
+      });
+
+      // Update Firebase Auth display name
+      if (
+        user.displayName !== `${profileData.firstName} ${profileData.lastName}`
+      ) {
+        await updateProfile(user, {
+          displayName: `${profileData.firstName} ${profileData.lastName}`,
+        });
+      }
+
+      // setTimeout(() => {
+      //   setIsLoading(false);
       toast({
         title: "Profile updated",
         description: "Your profile has been updated successfully.",
       });
-    }, 1500);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update profile. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
   // Password update function
   const handleUpdatePassword = async () => {
@@ -116,9 +317,9 @@ export default function SettingsPage() {
       toast({
         title: "Password updated",
         description: "Your password has been updated successfully.",
-        variant: "success",
+        variant: "default",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Password update error:", error);
       setPasswordError(
         error.message || "Failed to update password. Please try again."
@@ -166,14 +367,14 @@ export default function SettingsPage() {
     setTwoFALoading(true);
     try {
       // Verify the 2FA code
-      await verify2FA(twoFASecret, twoFAVerificationCode);
+      await verify2FA(twoFAVerificationCode);
       setTwoFASetupStep(3); // Success step
 
       toast({
         title: "2FA Enabled",
         description:
           "Two-factor authentication has been successfully enabled for your account.",
-        variant: "success",
+        variant: "default",
       });
     } catch (error) {
       console.error("2FA verification error:", error);
@@ -197,6 +398,17 @@ export default function SettingsPage() {
       setTwoFAVerificationCode("");
       setTwoFAVerificationError("");
     }, 300);
+  };
+
+  const hasChanges = () => {
+    if (!user?.uid) return false;
+
+    return (
+      profileData.firstName !== (user?.displayName?.split(" ")[0] || "") ||
+      profileData.lastName !== (user?.displayName?.split(" ")[1] || "") ||
+      profileData.bio !== "" || // Compare with default or empty string
+      profileData.photoURL !== (user?.photoURL || "")
+    );
   };
 
   return (
@@ -256,19 +468,54 @@ export default function SettingsPage() {
                   <div className="space-y-4">
                     <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
                       <div className="flex flex-col items-center gap-2">
-                        <Avatar className="w-24 h-24">
-                          <AvatarImage
-                            src={user?.photoURL || ""}
-                            alt={user?.displayName || "Profile picture"}
-                          />
-                          <AvatarFallback>
-                            {user?.displayName?.[0] || user?.email?.[0] || "U"}
-                          </AvatarFallback>
+                        <Avatar className="relative w-24 h-24">
+                          {uploading ? (
+                            <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
+                              <Loader2 className="w-8 h-8 animate-spin" />
+                            </div>
+                          ) : (
+                            <>
+                              <AvatarImage
+                                src={profileData.photoURL}
+                                alt={`${profileData.firstName} ${profileData.lastName}`}
+                                className="object-cover rounded-full"
+                              />
+                              <AvatarFallback className="text-lg font-semibold">
+                                {profileData.firstName[0]}
+                                {profileData.lastName[0]}
+                              </AvatarFallback>
+                            </>
+                          )}
                         </Avatar>
-                        <Button size="sm" variant="outline">
-                          <Upload className="w-4 h-4 mr-2" />
-                          Change
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="relative"
+                            disabled={uploading}
+                            asChild
+                          >
+                            <label
+                              htmlFor="photo-upload"
+                              className="flex items-centercursor-pointer"
+                            >
+                              {uploading ? (
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              ) : (
+                                <Upload className="w-4 h-4 mr-2" />
+                              )}
+                              Change Photo
+                            </label>
+                          </Button>
+                          <input
+                            id="photo-upload"
+                            type="file"
+                            accept="image/jpeg, image/png, image/webp*"
+                            className="hidden"
+                            onChange={handleImageUpload}
+                            disabled={uploading}
+                          />
+                        </div>
                       </div>
                       <div className="flex-1 space-y-4">
                         <div className="grid gap-4 sm:grid-cols-2">
@@ -276,8 +523,12 @@ export default function SettingsPage() {
                             <Label htmlFor="first-name">First name</Label>
                             <Input
                               id="first-name"
-                              defaultValue={
-                                user?.displayName?.split(" ")[0] || ""
+                              value={profileData.firstName}
+                              onChange={(e) =>
+                                setProfileData((prev) => ({
+                                  ...prev,
+                                  firstName: e.target.value,
+                                }))
                               }
                             />
                           </div>
@@ -285,8 +536,12 @@ export default function SettingsPage() {
                             <Label htmlFor="last-name">Last name</Label>
                             <Input
                               id="last-name"
-                              defaultValue={
-                                user?.displayName?.split(" ")[1] || ""
+                              value={profileData.lastName}
+                              onChange={(e) =>
+                                setProfileData((prev) => ({
+                                  ...prev,
+                                  lastName: e.target.value,
+                                }))
                               }
                             />
                           </div>
@@ -299,6 +554,9 @@ export default function SettingsPage() {
                             defaultValue={user?.email || ""}
                             disabled
                           />
+                          <p className="text-sm text-muted-foreground">
+                            You cannot change your email address.
+                          </p>
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="bio">Bio</Label>
@@ -306,6 +564,13 @@ export default function SettingsPage() {
                             id="bio"
                             placeholder="Tell us about yourself"
                             className="min-h-[100px]"
+                            value={profileData.bio}
+                            onChange={(e) =>
+                              setProfileData((prev) => ({
+                                ...prev,
+                                bio: e.target.value,
+                              }))
+                            }
                           />
                         </div>
                       </div>
@@ -313,7 +578,10 @@ export default function SettingsPage() {
                   </div>
                 </CardContent>
                 <CardFooter className="flex justify-end">
-                  <Button onClick={handleSaveProfile} disabled={isLoading}>
+                  <Button
+                    onClick={handleSaveProfile}
+                    disabled={isLoading || !hasChanges()}
+                  >
                     {isLoading ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -679,4 +947,71 @@ export default function SettingsPage() {
       <Footer />
     </div>
   );
+}
+function setIsLoading(arg0: boolean) {
+  throw new Error("Function not implemented.");
+}
+
+function setPasswordError(arg0: string) {
+  throw new Error("Function not implemented.");
+}
+
+function setPasswordUpdateLoading(arg0: boolean) {
+  throw new Error("Function not implemented.");
+}
+
+function updatePassword(currentPassword: any, newPassword: any) {
+  throw new Error("Function not implemented.");
+}
+
+function setCurrentPassword(arg0: string) {
+  throw new Error("Function not implemented.");
+}
+
+function setNewPassword(arg0: string) {
+  throw new Error("Function not implemented.");
+}
+
+function setConfirmPassword(arg0: string) {
+  throw new Error("Function not implemented.");
+}
+
+function setTwoFALoading(arg0: boolean) {
+  throw new Error("Function not implemented.");
+}
+
+function enable2FA() {
+  throw new Error("Function not implemented.");
+}
+
+function setTwoFAQrCode(qrCodeUrl: any) {
+  throw new Error("Function not implemented.");
+}
+
+function setTwoFASecret(secret: any) {
+  throw new Error("Function not implemented.");
+}
+
+function setTwoFADialogOpen(arg0: boolean) {
+  throw new Error("Function not implemented.");
+}
+
+function setTwoFASetupStep(arg0: number) {
+  throw new Error("Function not implemented.");
+}
+
+function setTwoFAVerificationError(arg0: string) {
+  throw new Error("Function not implemented.");
+}
+
+function verify2FA(twoFAVerificationCode: any) {
+  throw new Error("Function not implemented.");
+}
+
+function setTwoFACopied(arg0: boolean) {
+  throw new Error("Function not implemented.");
+}
+
+function setTwoFAVerificationCode(arg0: string) {
+  throw new Error("Function not implemented.");
 }

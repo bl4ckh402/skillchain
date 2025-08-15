@@ -13,3 +13,5 @@ export function useAuthRoles() {
       userProfile?.role ? roles.includes(userProfile.role) : false
   };
 }
+
+export { useAuth };
