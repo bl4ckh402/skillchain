@@ -1,41 +1,49 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { CreditCard, DollarSign } from "lucide-react"
-import { initializePaystackPayment, generatePaymentReference } from "@/lib/paystack"
-import { sendBookingConfirmation } from "@/lib/email"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { CreditCard, DollarSign } from "lucide-react";
+import {
+  initializePaystackPayment,
+  generatePaymentReference,
+} from "@/lib/paystack";
 
 interface PaymentCheckoutProps {
   instructor: {
-    name: string
-    paystackPublicKey: string
-    paystackEmail: string
-  }
+    name: string;
+    paystackPublicKey: string;
+    paystackEmail: string;
+  };
   bookingDetails: {
-    date: string
-    time: string
-    amount: number
-  }
-  clientEmail: string
-  onPaymentSuccessAction: (reference: string) => void
+    date: string;
+    time: string;
+    amount: number;
+  };
+  clientEmail: string;
+  onPaymentSuccessAction: (reference: string) => void;
+  onPaymentSuccess?: (reference: string) => void;
 }
 
-export function PaymentCheckout({ instructor, bookingDetails, clientEmail, onPaymentSuccessAction }: PaymentCheckoutProps) {
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [paymentAmount, setPaymentAmount] = useState(bookingDetails.amount)
+export function PaymentCheckout({
+  instructor,
+  bookingDetails,
+  clientEmail,
+  onPaymentSuccessAction,
+}: PaymentCheckoutProps) {
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState(bookingDetails.amount);
 
   const handlePayment = async () => {
     if (!clientEmail) {
-      alert("Please provide your email address")
-      return
+      alert("Please provide your email address");
+      return;
     }
 
-    setIsProcessing(true)
-    const reference = generatePaymentReference()
+    setIsProcessing(true);
+    const reference = generatePaymentReference();
 
     try {
       initializePaystackPayment({
@@ -54,25 +62,24 @@ export function PaymentCheckout({ instructor, bookingDetails, clientEmail, onPay
               reference: response.reference,
               instructorEmail: instructor.paystackEmail,
             }),
-          })
+          });
 
           if (verifyResponse.ok) {
             // Send confirmation email
-            await sendBookingConfirmation(clientEmail, instructor.name, bookingDetails)
-
-            onPaymentSuccessAction(response.reference)
+            // Payment verified, proceed with post-payment actions
+            onPaymentSuccessAction(response.reference);
           }
-          setIsProcessing(false)
+          setIsProcessing(false);
         },
         onClose: () => {
-          setIsProcessing(false)
+          setIsProcessing(false);
         },
-      })
+      });
     } catch (error) {
-      console.error("Payment failed:", error)
-      setIsProcessing(false)
+      console.error("Payment failed:", error);
+      setIsProcessing(false);
     }
-  }
+  };
 
   return (
     <Card className="w-full max-w-md">
@@ -115,10 +122,17 @@ export function PaymentCheckout({ instructor, bookingDetails, clientEmail, onPay
         <div className="pt-4 border-t">
           <div className="flex items-center justify-between mb-4">
             <span className="font-medium">Total:</span>
-            <span className="text-xl font-bold">₦{paymentAmount.toLocaleString()}</span>
+            <span className="text-xl font-bold">
+              ₦{paymentAmount.toLocaleString()}
+            </span>
           </div>
 
-          <Button onClick={handlePayment} disabled={isProcessing || !clientEmail} className="w-full" size="lg">
+          <Button
+            onClick={handlePayment}
+            disabled={isProcessing || !clientEmail}
+            className="w-full"
+            size="lg"
+          >
             {isProcessing ? (
               <>
                 <div className="w-4 h-4 mr-2 border-b-2 border-white rounded-full animate-spin" />
@@ -134,6 +148,5 @@ export function PaymentCheckout({ instructor, bookingDetails, clientEmail, onPay
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
-

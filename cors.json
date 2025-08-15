@@ -1,0 +1,15 @@
+[
+  {
+    "origin": ["http://localhost:3000", "http://localhost:3001", "https://www.skillchain.space"],
+    "method": ["GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS"],
+    "responseHeader": [
+      "Content-Type",
+      "Authorization",
+      "x-goog-resumable",
+      "Access-Control-Allow-Origin",
+      "Cross-Origin-Resource-Policy",
+      "Cross-Origin-Embedder-Policy"
+    ],
+    "maxAgeSeconds": 3600
+  }
+]

@@ -1,40 +1,40 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useJobs } from "@/context/JobsProvider"
-import { Job } from "@/types/job"
-import { Loader2 } from "lucide-react"
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useJobs } from "@/context/JobsProvider";
+import { Job } from "@/types/job";
+import { Loader2 } from "lucide-react";
 
 interface SimilarJobsProps {
-  currentJob: Job
+  currentJob: Job;
 }
 
 export function SimilarJobs({ currentJob }: SimilarJobsProps) {
-  const { getSimilarJobs } = useJobs()
-  const [similarJobs, setSimilarJobs] = useState<Job[]>([])
-  const [loading, setLoading] = useState(true)
+  const { getSimilarJobs } = useJobs();
+  const [similarJobs, setSimilarJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchSimilarJobs = async () => {
-      setLoading(true)
+      setLoading(true);
       try {
-        const jobs = await getSimilarJobs(currentJob, 3)
-        setSimilarJobs(jobs)
+        const jobs = await getSimilarJobs(currentJob, 3);
+        setSimilarJobs(jobs);
       } catch (error) {
-        console.error("Error fetching similar jobs:", error)
+        console.error("Error fetching similar jobs:", error);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
     if (currentJob?.id) {
-      fetchSimilarJobs()
+      fetchSimilarJobs();
     }
-  }, [currentJob, getSimilarJobs])
+  }, [currentJob, getSimilarJobs]);
 
   return (
     <Card>
@@ -52,11 +52,16 @@ export function SimilarJobs({ currentJob }: SimilarJobsProps) {
               <Link href={`/jobs/${job.id}`} key={job.id} className="block">
                 <div className="flex items-start gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 p-2 rounded-md transition-colors">
                   <Avatar className="h-10 w-10 border">
-                    <AvatarImage src={job.logo || "/placeholder.svg?height=40&width=40"} alt={job.company} />
+                    <AvatarImage
+                      src={job.logo || "/placeholder.svg?height=40&width=40"}
+                      alt={job.company}
+                    />
                     <AvatarFallback>{job.company.charAt(0)}</AvatarFallback>
                   </Avatar>
                   <div>
-                    <h4 className="text-sm font-medium line-clamp-1">{job.title}</h4>
+                    <h4 className="text-sm font-medium line-clamp-1">
+                      {job.title}
+                    </h4>
                     <p className="text-xs text-muted-foreground">
                       {job.company} • {job.location}
                     </p>
@@ -67,16 +72,18 @@ export function SimilarJobs({ currentJob }: SimilarJobsProps) {
           </div>
         ) : (
           <div className="text-center py-6">
-            <p className="text-sm text-muted-foreground">No similar jobs found</p>
+            <p className="text-sm text-muted-foreground">
+              No similar jobs found
+            </p>
           </div>
         )}
-        
+
         <Link href="/jobs">
           <Button variant="outline" className="w-full">
-            View More Jobs
+            Bid for more Jobs
           </Button>
         </Link>
       </CardContent>
     </Card>
-  )
+  );
 }

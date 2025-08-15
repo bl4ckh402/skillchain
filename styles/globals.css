@@ -92,3 +92,33 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* video controls styles */
+.stream-video-call {
+  @apply h-full;
+}
+
+.video-container {
+  @apply relative aspect-video bg-[#149b3d] rounded-lg overflow-hidden;
+}
+
+.video-overlay {
+  @apply absolute inset-0 flex items-center justify-center;
+}
+
+.control-button {
+  @apply rounded-full w-12 h-12 flex items-center justify-center transition-colors;
+}
+
+.control-button:hover {
+  @apply bg-opacity-80;
+}
+
+/* Styles for participant videos */
+.participant-video {
+  @apply w-full h-full object-cover;
+}
+
+.participant-name {
+  @apply absolute bottom-4 left-4 bg-black/50 px-2 py-1 rounded text-white text-sm;
+}

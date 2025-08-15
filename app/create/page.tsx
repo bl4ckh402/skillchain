@@ -73,7 +73,9 @@ export default function CreateCoursePage() {
   const [activeTab, setActiveTab] = useState("basic");
   const [showContentEditor, setShowContentEditor] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState(null);
-  const [saveStatus, setSaveStatus] = useState<"saving" | "saved" | "error" | null>(null);
+  const [saveStatus, setSaveStatus] = useState<
+    "saving" | "saved" | "error" | null
+  >(null);
   const [isUploading, setIsUploading] = useState(false);
   // RESPONSIVE ENHANCEMENT: Added mobile state management
   const [isMobile, setIsMobile] = useState(false);
@@ -84,7 +86,7 @@ export default function CreateCoursePage() {
   const { toast } = useToast();
   const router = useRouter();
   const { user, userProfile } = useAuth();
-
+s
   // RESPONSIVE ENHANCEMENT: Added mobile detection
   useEffect(() => {
     const checkIfMobile = () => {
@@ -128,7 +130,7 @@ export default function CreateCoursePage() {
             videoUrl: "",
             description: "A brief introduction to the course",
             transcript: "",
-            attachments: [],
+            attachments: [] as any[],
           },
         },
       ],
@@ -249,12 +251,12 @@ export default function CreateCoursePage() {
           })),
         })),
         status: CourseStatus.DRAFT,
-              instructor: user?.uid || '', // Add instructor ID from authenticated user
-              totalLessons: modules.reduce(
-                (acc, module) => acc + module.lessons.length,
-                0
-              ),
-              duration: calculateTotalDuration(),
+        instructor: { id: user?.uid || "" }, // Create instructor object with user ID
+        totalLessons: modules.reduce(
+          (acc, module) => acc + module.lessons.length,
+          0
+        ),
+        duration: calculateTotalDuration(),
       });
 
       setSaveStatus("saved");
@@ -307,7 +309,7 @@ export default function CreateCoursePage() {
           0
         ),
         duration: calculateTotalDuration(),
-        instructor: undefined
+        instructor: undefined,
       });
 
       setSaveStatus("saved");
@@ -535,18 +537,13 @@ export default function CreateCoursePage() {
         break;
       case "text":
         updatedModules[moduleIndex].lessons[lessonIndex].content = {
-          description: "",
-          textContent: "",
+          description: currentContent.description || "",
+          textContent: currentContent.textContent || "",
           attachments: currentContent.attachments || [],
-        } as {
-          description: string;
-          textContent: string;
-          attachments: any[];
         };
         break;
       case "quiz":
         updatedModules[moduleIndex].lessons[lessonIndex].content = {
-          ...currentContent,
           quiz: currentContent.quiz || [
             {
               question: "Sample question",
@@ -554,21 +551,22 @@ export default function CreateCoursePage() {
               correctAnswer: 0,
             },
           ],
+          attachments: currentContent.attachments || [],
         };
         break;
       case "exercise":
         updatedModules[moduleIndex].lessons[lessonIndex].content = {
-          ...currentContent,
-          instructions: currentContent.instructions || "",
-          solution: currentContent.solution || "",
+          instructions: (currentContent as any).instructions || "",
+          solution: (currentContent as any).solution || "",
+          attachments: currentContent.attachments || [],
         };
         break;
       case "project":
         updatedModules[moduleIndex].lessons[lessonIndex].content = {
-          ...currentContent,
           description: currentContent.description || "",
           requirements: currentContent.requirements || "",
           rubric: currentContent.rubric || "",
+          attachments: currentContent.attachments || [],
         };
         break;
     }
@@ -613,7 +611,7 @@ export default function CreateCoursePage() {
         videoUrl: "",
         description: "",
         transcript: "",
-        attachments: []
+        attachments: [],
       };
     }
     updatedModules[moduleIndex].lessons[lessonIndex].content.videoUrl =
@@ -636,7 +634,12 @@ export default function CreateCoursePage() {
 
     const updatedModules = [...modules];
     if (!updatedModules[moduleIndex].lessons[lessonIndex].content) {
-      updatedModules[moduleIndex].lessons[lessonIndex].content = {};
+      updatedModules[moduleIndex].lessons[lessonIndex].content = {
+        videoUrl: "",
+        description: "",
+        transcript: "",
+        attachments: [],
+      };
     }
     updatedModules[moduleIndex].lessons[lessonIndex].content.textContent =
       textContent;
@@ -658,7 +661,12 @@ export default function CreateCoursePage() {
 
     const updatedModules = [...modules];
     if (!updatedModules[moduleIndex].lessons[lessonIndex].content) {
-      updatedModules[moduleIndex].lessons[lessonIndex].content = {};
+      updatedModules[moduleIndex].lessons[lessonIndex].content = {
+        videoUrl: "",
+        description: "",
+        transcript: "",
+        attachments: [],
+      };
     }
     updatedModules[moduleIndex].lessons[lessonIndex].content.description =
       description;
@@ -680,7 +688,12 @@ export default function CreateCoursePage() {
 
     const updatedModules = [...modules];
     if (!updatedModules[moduleIndex].lessons[lessonIndex].content) {
-      updatedModules[moduleIndex].lessons[lessonIndex].content = {};
+      updatedModules[moduleIndex].lessons[lessonIndex].content = {
+        videoUrl: "",
+        description: "",
+        transcript: "",
+        attachments: [],
+      };
     }
     updatedModules[moduleIndex].lessons[lessonIndex].content.transcript =
       transcript;
@@ -829,7 +842,7 @@ export default function CreateCoursePage() {
     }
 
     // Update attachments
-    updatedModules[moduleIndex].lessons[lessonIndex].content.attachments =
+    (updatedModules[moduleIndex].lessons[lessonIndex].content as { attachments: any[] }).attachments =
       attachments;
     setModules(updatedModules);
   };
@@ -1085,7 +1098,7 @@ export default function CreateCoursePage() {
             <div className="md:hidden">
               <MobileTabNavigation />
             </div>
-            <TabsList className="hidden w-full p-1 rounded-lg md:flex bg-slate-100 dark:bg-slate-800/50">
+            <TabsList className="hidden w-full p-1 overflow-x-auto rounded-lg md:flex bg-slate-100 dark:bg-slate-800/50">
               <TabsTrigger
                 value="basic"
                 className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-950 data-[state=active]:text-blue-600 rounded-md"
@@ -1224,7 +1237,11 @@ export default function CreateCoursePage() {
                           </SelectItem>
                           <SelectItem value="defi">DeFi</SelectItem>
                           <SelectItem value="nft">NFTs</SelectItem>
+
                           <SelectItem value="web3">Web3</SelectItem>
+                          <SelectItem value="Artificial Intelligence">
+                            Artificial Intelligence
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -1249,6 +1266,9 @@ export default function CreateCoursePage() {
                           <SelectItem value="security">Security</SelectItem>
                           <SelectItem value="trading">Trading</SelectItem>
                           <SelectItem value="investing">Investing</SelectItem>
+                          <SelectItem value="automation">
+                            AI automation
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -2119,12 +2139,20 @@ export default function CreateCoursePage() {
                                                                     Add Question
                                                                   </Button>
                                                                 </div>
-                                                                {lesson.content
-                                                                  ?.quiz
-                                                                  ?.length >
-                                                                0 ? (
+                                                                {Array.isArray(
+                                                                  lesson.content
+                                                                    ?.quiz
+                                                                ) &&
+                                                                lesson.content
+                                                                  .quiz.length >
+                                                                  0 ? (
                                                                   <div className="space-y-4">
-                                                                    {lesson.content.quiz.map(
+                                                                    {(
+                                                                      lesson
+                                                                        .content
+                                                                        .quiz ??
+                                                                      []
+                                                                    ).map(
                                                                       (
                                                                         question: any,
                                                                         qIndex: number
@@ -2274,7 +2302,11 @@ export default function CreateCoursePage() {
                                                                     placeholder="Enter detailed instructions for the exercise"
                                                                     className="border-blue-100 min-h-24 sm:min-h-32 dark:border-blue-900"
                                                                     value={
-                                                                      (lesson.content as { instructions?: string })
+                                                                      (
+                                                                        lesson.content as {
+                                                                          instructions?: string;
+                                                                        }
+                                                                      )
                                                                         ?.instructions ||
                                                                       ""
                                                                     }
@@ -2292,8 +2324,11 @@ export default function CreateCoursePage() {
                                                                     placeholder="Enter solution guide or hints"
                                                                     className="border-blue-100 min-h-20 sm:min-h-24 dark:border-blue-900"
                                                                     value={
-                                                                      lesson
-                                                                        .content
+                                                                      (
+                                                                        lesson.content as {
+                                                                          solution?: string;
+                                                                        }
+                                                                      )
                                                                         ?.solution ||
                                                                       ""
                                                                     }
@@ -2359,7 +2394,11 @@ export default function CreateCoursePage() {
                                                                     placeholder="Enter grading criteria and expectations"
                                                                     className="border-blue-100 min-h-20 sm:min-h-24 dark:border-blue-900"
                                                                     value={
-                                                                      (lesson.content as { rubric?: string })
+                                                                      (
+                                                                        lesson.content as {
+                                                                          rubric?: string;
+                                                                        }
+                                                                      )
                                                                         ?.rubric ||
                                                                       ""
                                                                     }

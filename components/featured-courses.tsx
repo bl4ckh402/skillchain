@@ -22,113 +22,19 @@ export function FeaturedCourses() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const PLACEHOLDER_COURSES: Course[] = [
-    {
-      id: "1",
-      title: "Blockchain Fundamentals",
-      description: "Master the core concepts of blockchain technology and cryptocurrency",
-      thumbnail: "/course-thumbnails/blockchain-basics.jpg",
-      level: CourseLevel.BEGINNER,
-      rating: 4.8,
-      students: 1240,
-      duration: "6 hours",
-      instructor: {
-        name: "Sarah Chen",
-        avatar: "/avatars/sarah-chen.jpg",
-        id: "",
-        bio: ""
-      },
-      nextLesson: null,
-      lessons: undefined,
-      shortDescription: "",
-      category: "",
-      language: "",
-      price: "",
-      modules: [],
-      whatYouWillLearn: [],
-      requirements: [],
-      featured: false,
-      status: CourseStatus.DRAFT,
-      visibility: "public",
-      certificate: false,
-      tags: []
-    },
-    {
-      id: "2",
-      title: "Smart Contract Development",
-      description:
-        "Learn to build secure and efficient smart contracts with Solidity",
-      thumbnail: "/course-thumbnails/smart-contracts.jpg",
-      level: CourseLevel.INTERMEDIATE,
-      rating: 4.7,
-      students: 890,
-      duration: "8 hours",
-      instructor: {
-        name: "Michael Rodriguez",
-        avatar: "/avatars/michael-rodriguez.jpg",
-      },
-    },
-    {
-      id: "3",
-      title: "DeFi Protocols & Applications",
-      description: "Explore decentralized finance protocols and their implementations",
-      thumbnail: "/course-thumbnails/defi-dev.jpg",
-      level: CourseLevel.ADVANCED,
-      rating: 4.9,
-      students: 650,
-      duration: "10 hours",
-      instructor: {
-        name: "Emily Johnson",
-        avatar: "/avatars/emily-johnson.jpg",
-        id: "",
-        bio: ""
-      },
-      nextLesson: null,
-      lessons: undefined,
-      shortDescription: "",
-      category: "",
-      language: "",
-      price: "",
-      modules: [],
-      whatYouWillLearn: [],
-      requirements: [],
-      featured: false,
-      status: CourseStatus.DRAFT,
-      visibility: "public",
-      certificate: false,
-      tags: []
-    },
-  ];
-
   useEffect(() => {
     async function loadFeaturedCourses() {
       try {
         setLoading(true);
+        setError(null);
         const featuredCourses = await getFeaturedCourses();
         setCourses(featuredCourses);
-
-        //use fetched courses if available, otherwise use placeholders
-        if (featuredCourses && featuredCourses.length >= 2) {
-          setCourses(featuredCourses);
-        } else {
-          console.log("Using placeholder courses");
-          setCourses(PLACEHOLDER_COURSES);
-        }
-        // Fallback to placeholder courses instead of showing error
-        setCourses(PLACEHOLDER_COURSES);
+      } catch (err) {
+        setError("Failed to load featured courses");
       } finally {
         setLoading(false);
       }
     }
-
-    //   } catch (err) {
-    //     console.error("Error loading featured courses:", err);
-    //     setError("Failed to load featured courses");
-    //   } finally {
-    //     setLoading(false);
-    //   }
-    // }
-
     loadFeaturedCourses();
   }, [getFeaturedCourses]);
 
@@ -273,7 +179,7 @@ export function FeaturedCourses() {
               Featured Courses
             </h2>
             <p className="max-w-[700px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-              Discover our most popular blockchain courses and start your
+              Discover our most popular Web3 & Artificial Intelligence courses and start your
               learning journey today
             </p>
           </div>

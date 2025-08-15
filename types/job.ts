@@ -4,12 +4,36 @@ export enum JobType {
   PART_TIME = "Part-time",
   CONTRACT = "Contract",
   FREELANCE = "Freelance",
+  FIXED_PRICE = "FIXED_PRICE",
+  // HOURLY = "HOURLY",
+}
+export interface JobPost {
+  id?: string;
+  title: string;
+  company: string;
+  location: string;
+  type: JobType;
+  salary: string;
+  description: string;
+  requirements: string[];
+  benefits: string;
+  companyDescription: string;
+  website: string;
+  logo: string;
+  tags: string[];
+  postedAt: string;
+  featured: boolean;
+  // Add payment related fields
+  paymentStatus: "pending" | "completed";
+  paymentReference?: string;
+  postingFee: number;
 }
 
 export enum JobStatus {
   ACTIVE = "active",
   EXPIRED = "expired",
   CLOSED = "closed",
+  OPEN = "OPEN",
 }
 
 // Base job interface
@@ -50,8 +74,14 @@ export interface Job {
     students: number;
     price: string;
   }>;
+  requiredSkills?: string[];
 }
-
+/**
+ * Add priceRange property to Job interface
+ */
+export interface Job {
+  priceRange?: RangeFilterValue;
+}
 // Filter value types
 export type ArrayFilterValue = string[];
 export type RangeFilterValue = { min: number; max: number };
@@ -87,7 +117,14 @@ export type FilterOperation<T> = {
   clear: () => T;
   has: (value: string) => boolean;
 };
-
+/**
+ * Add priceRange property to Job interface
+ */
+declare module "." {
+  interface Job {
+    priceRange?: RangeFilterValue;
+  }
+}
 // Application related types
 export interface JobApplication {
   jobId: string;
