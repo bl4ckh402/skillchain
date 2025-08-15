@@ -76,23 +76,6 @@ export default function LoginPage() {
     }
   };
 
-  //     await signIn(email, password)
-  //     toast({
-  //       title: "Success",
-  //       description: "You have been logged in successfully"
-  //     })
-  //     router.push("/dashboard")
-  //   } catch (error: any) {
-  //     toast({
-  //       title: "Error",
-  //       description: error.message,
-  //       variant: "destructive"
-  //     })
-  //   } finally {
-  //     setLoading(false)
-  //   }
-  // }
-
   const handleGoogleSignIn = async () => {
     try {
       await signInWithGoogle();

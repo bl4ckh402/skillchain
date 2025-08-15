@@ -36,6 +36,28 @@ import { WysiwygDisplayer } from "@/components/wysiwyg-displayer";
 import { useParams } from "next/navigation";
 import { SimilarJobs } from "@/components/similar-jobs";
 
+// import { date } from "zod";
+
+// Utility function to format date as "day shortMonth year"
+function formatDate(dateInput: string | Date) {
+  const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+  return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+}
+
 export default function JobDetailPage() {
   const params = useParams();
   const { job, loading, error } = useJob(params.id as string);
@@ -180,12 +202,7 @@ export default function JobDetailPage() {
                         </div>
                         <div className="flex items-center text-sm text-muted-foreground">
                           <Clock className="w-4 h-4 mr-1" />
-                          Posted{" "}
-                          {new Date(job.postedAt).toLocaleDateString("en-US", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })}
+                          Posted {formatDate(job.postedAt)}
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-2">
@@ -439,11 +456,7 @@ export default function JobDetailPage() {
                         Posted
                       </span>
                       <span className="text-sm font-medium">
-                        {new Date(job.postedAt).toLocaleDateString("en-US", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}
+                        {formatDate(job.postedAt)}
                       </span>
                     </div>
                     {job.expiresAt && (
@@ -454,14 +467,7 @@ export default function JobDetailPage() {
                             Expires
                           </span>
                           <span className="text-sm font-medium">
-                            {new Date(job.expiresAt).toLocaleDateString(
-                              "en-US",
-                              {
-                                day: "numeric",
-                                month: "short",
-                                year: "numeric",
-                              }
-                            )}
+                            {formatDate(job.expiresAt)}
                           </span>
                         </div>
                       </>

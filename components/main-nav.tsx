@@ -117,7 +117,6 @@ interface NavigationItem {
   external?: boolean;
 }
 
-
 // Mock auth hook (replace with actual auth logic)
 const useAuth = () => {
   const { isInstructor, isAdmin } = useAuthRoles();
@@ -251,6 +250,12 @@ const getNavigationConfig = (
           icon: GraduationCap,
         },
         {
+          href: "/bookings",
+          title: "Bookings",
+          description: "Manage your course bookings and sessions",
+          icon: MessageSquare,
+        },
+        {
           href: "/live-session",
           title: "Live Sessions",
           description: "Join interactive live learning sessions",
@@ -310,6 +315,25 @@ const getNavigationConfig = (
           title: "Create Bootcamp",
           description: "Design intensive training programs",
           icon: GraduationCap,
+        },
+        {
+          href: "/instructor/bookings",
+          title: "Manage Bookings",
+          description: "Handle course bookings and student sessions",
+          icon: Users,
+        },
+
+        {
+          href: "/instructor/students",
+          title: "Student Management",
+          description: "Manage your students and their progress",
+          icon: Users,
+        },
+        {
+          href: "/instructor/earnings",
+          title: "Earnings & Payments",
+          description: "Track your earnings and payment history",
+          icon: Briefcase,
         },
       ],
     });

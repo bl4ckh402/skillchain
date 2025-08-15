@@ -28,6 +28,7 @@ import { Footer } from "@/components/footer";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/context/AuthProvider";
 import { JobType } from "@/types/job";
+import { JobPayment } from "@/components/job-payment";
 
 // Form validation schema
 const jobFormSchema = z.object({
@@ -61,7 +62,10 @@ export default function PostJobPage() {
   const { user } = useAuth();
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
+  const [paymentCompleted, setPaymentCompleted] = useState(false);
 
+  
   const form = useForm<z.infer<typeof jobFormSchema>>({
     resolver: zodResolver(jobFormSchema),
     defaultValues: {
@@ -120,7 +124,12 @@ export default function PostJobPage() {
       });
       return;
     }
-
+// Check for payment before proceeding
+if (!paymentCompleted) {
+      setShowPayment(true);
+      return;
+    }
+    
     try {
       setIsSubmitting(true);
 
@@ -191,6 +200,16 @@ export default function PostJobPage() {
               </p>
             </div>
 
+{ showPayment ? (
+               <JobPayment 
+                onPaymentComplete={() => {
+                  setPaymentCompleted(true);
+                  setShowPayment(false);
+                  // Automatically submit the form after payment
+                  form.handleSubmit(onSubmit)();
+                }} 
+              />
+            ) : (
             <Card>
               <CardHeader>
                 <CardTitle>Job Details</CardTitle>
@@ -454,6 +473,7 @@ export default function PostJobPage() {
                 </Form>
               </CardContent>
             </Card>
+            )}
           </div>
         </div>
       </main>
