@@ -73,7 +73,9 @@ export default function CreateCoursePage() {
   const [activeTab, setActiveTab] = useState("basic");
   const [showContentEditor, setShowContentEditor] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState(null);
-  const [saveStatus, setSaveStatus] = useState<"saving" | "saved" | "error" | null>(null);
+  const [saveStatus, setSaveStatus] = useState<
+    "saving" | "saved" | "error" | null
+  >(null);
   const [isUploading, setIsUploading] = useState(false);
   // RESPONSIVE ENHANCEMENT: Added mobile state management
   const [isMobile, setIsMobile] = useState(false);
@@ -249,12 +251,12 @@ export default function CreateCoursePage() {
           })),
         })),
         status: CourseStatus.DRAFT,
-              instructor: user?.uid || '', // Add instructor ID from authenticated user
-              totalLessons: modules.reduce(
-                (acc, module) => acc + module.lessons.length,
-                0
-              ),
-              duration: calculateTotalDuration(),
+        instructor: { id: user?.uid || "" }, // Create instructor object with user ID
+        totalLessons: modules.reduce(
+          (acc, module) => acc + module.lessons.length,
+          0
+        ),
+        duration: calculateTotalDuration(),
       });
 
       setSaveStatus("saved");
@@ -307,7 +309,7 @@ export default function CreateCoursePage() {
           0
         ),
         duration: calculateTotalDuration(),
-        instructor: undefined
+        instructor: undefined,
       });
 
       setSaveStatus("saved");
@@ -613,7 +615,7 @@ export default function CreateCoursePage() {
         videoUrl: "",
         description: "",
         transcript: "",
-        attachments: []
+        attachments: [],
       };
     }
     updatedModules[moduleIndex].lessons[lessonIndex].content.videoUrl =
@@ -2274,7 +2276,11 @@ export default function CreateCoursePage() {
                                                                     placeholder="Enter detailed instructions for the exercise"
                                                                     className="border-blue-100 min-h-24 sm:min-h-32 dark:border-blue-900"
                                                                     value={
-                                                                      (lesson.content as { instructions?: string })
+                                                                      (
+                                                                        lesson.content as {
+                                                                          instructions?: string;
+                                                                        }
+                                                                      )
                                                                         ?.instructions ||
                                                                       ""
                                                                     }
@@ -2359,7 +2365,11 @@ export default function CreateCoursePage() {
                                                                     placeholder="Enter grading criteria and expectations"
                                                                     className="border-blue-100 min-h-20 sm:min-h-24 dark:border-blue-900"
                                                                     value={
-                                                                      (lesson.content as { rubric?: string })
+                                                                      (
+                                                                        lesson.content as {
+                                                                          rubric?: string;
+                                                                        }
+                                                                      )
                                                                         ?.rubric ||
                                                                       ""
                                                                     }

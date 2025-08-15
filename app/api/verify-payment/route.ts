@@ -1,16 +1,26 @@
-import { NextResponse } from 'next/server';
-import axios from 'axios';
-import { db } from '@/lib/firebase';
-import { doc, getDoc, updateDoc, collection, query, where, getDocs, addDoc, increment } from 'firebase/firestore';
+import { NextResponse } from "next/server";
+import axios from "axios";
+import { db } from "@/lib/firebase";
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  increment,
+} from "firebase/firestore";
 
-export async function GET(request: { url: string | URL; }) {
+export async function GET(request: { url: string | URL }) {
   try {
     const { searchParams } = new URL(request.url);
-    const reference = searchParams.get('reference');
+    const reference = searchParams.get("reference");
 
     if (!reference) {
       return NextResponse.json(
-        { message: 'Missing reference parameter' },
+        { message: "Missing reference parameter" },
         { status: 400 }
       );
     }
@@ -18,45 +28,138 @@ export async function GET(request: { url: string | URL; }) {
     // Verify the transaction with Paystack
     try {
       const response = await axios({
-        method: 'get',
+        method: "get",
         url: `https://api.paystack.co/transaction/verify/${reference}`,
         headers: {
-          'Authorization': `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+          "Content-Type": "application/json",
+        },
       });
 
       // Check if API call was successful
       if (!response.data.status) {
         return NextResponse.json(
-          { message: 'Failed to verify payment with Paystack' },
+          { message: "Failed to verify payment with Paystack" },
           { status: 500 }
         );
       }
 
       // Get transaction data
       const transaction = response.data.data;
-      
-      // Extract courseId and userId from metadata
-      const metadata = typeof transaction.metadata === 'string' 
-        ? JSON.parse(transaction.metadata) 
-        : transaction.metadata;
-      
-      const courseId = metadata?.courseId;
-      const userId = metadata?.userId;
-      const instructorId = metadata?.instructorId;
-      const platformFee = metadata?.platformFee;
-      const creatorAmount = metadata?.creatorAmount;
+      // Extract metadata
+      const metadata =
+        typeof transaction.metadata === "string"
+          ? JSON.parse(transaction.metadata)
+          : transaction.metadata;
+
+      // Check payment type
+      const paymentType = metadata?.paymentType;
 
       // Check if payment was successful
-      if (transaction.status === 'success') {
+      if (transaction.status === "success") {
         // Create a payment record in Firestore
-        const paymentsCollection = collection(db, 'payments');
-        
+        const paymentsCollection = collection(db, "payments");
+
         // First check if payment record already exists
-        const paymentQuery = query(paymentsCollection, where('reference', '==', reference));
+        const paymentQuery = query(
+          paymentsCollection,
+          where("reference", "==", reference)
+        );
         const paymentSnapshot = await getDocs(paymentQuery);
-        
+
+        // Only create a new payment record if it doesn't exist
+        if (paymentSnapshot.empty) {
+          if (paymentType === "job_posting") {
+            // Handle job posting payment
+            await addDoc(paymentsCollection, {
+              reference,
+              userId: metadata.userId,
+              amount: transaction.amount / 100,
+              status: "completed",
+              type: "job_posting",
+              method: "paystack",
+              paymentDate: new Date(transaction.paid_at),
+              createdAt: new Date(),
+            });
+
+            return NextResponse.json({
+              status: "success",
+              type: "job_posting",
+              reference,
+            });
+          } else {
+            // Extract courseId and userId from metadata
+            const courseId = metadata?.courseId;
+            const userId = metadata?.userId;
+            const instructorId = metadata?.instructorId;
+            const platformFee = metadata?.platformFee;
+            const creatorAmount = metadata?.creatorAmount;
+
+            // Create a new payment record
+            await addDoc(paymentsCollection, {
+              reference,
+              userId,
+              courseId,
+              instructorId,
+              amount: transaction.amount / 100, // Convert from kobo to naira
+              platformFee: platformFee || 0,
+              creatorAmount: creatorAmount || 0,
+              status: "completed",
+              method: "paystack",
+              paymentDate: new Date(transaction.paid_at),
+              createdAt: new Date(),
+            });
+
+            // Update instructor revenue stats
+            if (instructorId) {
+              const instructorStatsRef = doc(
+                db,
+                "instructorStats",
+                instructorId
+              );
+              const instructorStatsDoc = await getDoc(instructorStatsRef);
+
+              if (instructorStatsDoc.exists()) {
+                await updateDoc(instructorStatsRef, {
+                  totalRevenue: increment(creatorAmount || 0),
+                });
+              }
+            }
+
+            // Return success with courseId to allow enrollment
+            return NextResponse.json({
+              status: "success",
+              courseId,
+              userId,
+              reference,
+            });
+          }
+        } else {
+          // Payment already processed
+          return NextResponse.json({
+            status: "success",
+            message: "Payment already processed",
+            reference,
+          });
+        }
+      } else {
+        // Create a payment record in Firestore
+        const paymentsCollection = collection(db, "payments");
+
+        // First check if payment record already exists
+        const paymentQuery = query(
+          paymentsCollection,
+          where("reference", "==", reference)
+        );
+        const paymentSnapshot = await getDocs(paymentQuery);
+
+        // Extract data from metadata
+        const courseId = metadata?.courseId;
+        const userId = metadata?.userId;
+        const instructorId = metadata?.instructorId;
+        const platformFee = metadata?.platformFee;
+        const creatorAmount = metadata?.creatorAmount;
+
         // Only create a new payment record if it doesn't exist
         if (paymentSnapshot.empty) {
           // Create a new payment record
@@ -68,52 +171,58 @@ export async function GET(request: { url: string | URL; }) {
             amount: transaction.amount / 100, // Convert from kobo to naira
             platformFee: platformFee || 0,
             creatorAmount: creatorAmount || 0,
-            status: 'completed',
-            method: 'paystack',
+            status: "completed",
+            method: "paystack",
             paymentDate: new Date(transaction.paid_at),
-            createdAt: new Date()
+            createdAt: new Date(),
           });
-          
+
           // Update instructor revenue stats
           if (instructorId) {
-            const instructorStatsRef = doc(db, 'instructorStats', instructorId);
+            const instructorStatsRef = doc(db, "instructorStats", instructorId);
             const instructorStatsDoc = await getDoc(instructorStatsRef);
-            
+
             if (instructorStatsDoc.exists()) {
               await updateDoc(instructorStatsRef, {
-                totalRevenue: increment(creatorAmount || 0)
+                totalRevenue: increment(creatorAmount || 0),
               });
             }
           }
-        }
 
-        // Return success with courseId to allow enrollment
-        return NextResponse.json({
-          status: 'success',
-          courseId,
-          userId,
-          reference
-        });
-      } else {
-        // Payment failed or is pending
-        return NextResponse.json({
-          status: transaction.status,
-          courseId,
-          userId,
-          reference
-        });
+          // Return success with courseId to allow enrollment
+          return NextResponse.json({
+            status: "success",
+            courseId,
+            userId,
+            reference,
+          });
+        } else {
+          // Payment failed or is pending
+          return NextResponse.json({
+            status: transaction.status,
+            courseId,
+            userId,
+            reference,
+          });
+        }
       }
     } catch (error: any) {
-      console.error('Paystack API error:', error.response?.data || error.message);
+      console.error(
+        "Paystack API error:",
+        error.response?.data || error.message
+      );
       return NextResponse.json(
-        { message: error.response?.data?.message || 'Payment verification failed' },
+        {
+          message:
+            error.response?.data?.message || "Payment verification failed",
+        },
         { status: error.response?.status || 500 }
       );
     }
   } catch (error: any) {
-    console.error('Server error:', error);
+    console.error("Server error:", error);
     return NextResponse.json(
-      { message: error.message || 'Internal server error' },
+      { message: error.message || "Internal server error" },
       { status: 500 }
     );
   }

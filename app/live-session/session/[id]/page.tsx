@@ -388,7 +388,12 @@ export default function LiveSessionPage() {
   if (!isPreJoinComplete) {
     return (
       <StreamCall call={callInstance}>
+      <div className="min-h-screen bg-[#1A1D2D] flex flex-col">
+        <header className="bg-[#232538] px-4 py-3 flex justify-between items-center border-b border-gray-700 sticky top-0 z-10">
+           
         <PreJoinSetup onJoinAction={handleJoinSession} />
+        </header>
+      </div>
       </StreamCall>
     );
   }

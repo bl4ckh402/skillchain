@@ -57,7 +57,7 @@ export default function JobsPage() {
     tags: [],
     experience: [],
     salaryRange: undefined,
-    search: undefined,
+    search: "",
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState("newest");
