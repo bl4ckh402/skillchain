@@ -95,10 +95,9 @@ export default function SignupPage() {
       });
 
       // redirect to 2FA setup
-      router.push("/setup-2fa");
+      //router.push("/setup-2fa");
 
-      // If you want to redirect to dashboard after signup, uncomment the line below
-      // router.push("/dashboard");
+      router.push("/dashboard");
     } catch (error: any) {
       toast({
         title: "Error",

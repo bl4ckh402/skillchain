@@ -8,6 +8,7 @@ import { Calendar, Clock } from "lucide-react";
 interface CalendlyBookingProps {
   calendlyUrl: string;
   onBookingCompleteAction: (eventData: any) => void;
+  onBookingComplete?: (eventData: any) => void; // Optional callback for booking completion
 }
 
 export function CalendlyBooking({

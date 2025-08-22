@@ -31,6 +31,13 @@ import {
 import { SessionCreatedDialog } from "@/components/session-created-dialog";
 import { ScheduleSessionDialog } from "@/components/schedule-session-dialog";
 
+interface Session {
+  id: string;
+  title: string;
+  createdAt: Date | string;
+  students?: number;
+}
+
 export default function LiveSessionPage() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -44,16 +51,17 @@ export default function LiveSessionPage() {
     id: string;
     title: string;
   } | null>(null);
+  const [isFetchingSessions, setIsFetchingSessions] = useState(false);
 
   const { toast } = useToast();
   const router = useRouter();
-  const totalStudents = 0;
-  const activeCourses = 0;
+  const totalStudents = 0; // TODO: Fetch from backend
+  const activeCourses = 0; // TODO: Fetch from backend
   const {
     createCall,
     joinCall,
-    upcomingSessions,
-    recentSessions,
+    upcomingSessions = [],
+    recentSessions = [],
     fetchSessions,
     isClientReady,
   } = useVideo();
@@ -69,12 +77,21 @@ export default function LiveSessionPage() {
 
   // Fetch sessions when component mounts
   useEffect(() => {
-    if (isClientReady) {
-      fetchSessions();
+    if (isClientReady && !isFetchingSessions) {
+      setIsFetchingSessions(true);
+      fetchSessions()
+        .catch((error) => {
+          console.error("Failed to fetch sessions:", error);
+          toast({
+            title: "Failed to load sessions",
+            description: "Please try refreshing the page.",
+            variant: "destructive",
+          });
+        })
+        .finally(() => setIsFetchingSessions(false));
     }
-  }, [isClientReady, fetchSessions]);
+  }, [isClientReady, fetchSessions, toast]);
 
-  // Format time as HH:MM
   const formatTime = (date: Date) => {
     const hours = date.getHours();
     const minutes = date.getMinutes().toString().padStart(2, "0");
@@ -83,7 +100,6 @@ export default function LiveSessionPage() {
     return `${displayHours}:${minutes} ${ampm}`;
   };
 
-  // Format date as Day, DD Month YYYY
   const formatDate = (date: Date) => {
     return date.toLocaleDateString("en-US", {
       weekday: "long",
@@ -93,25 +109,28 @@ export default function LiveSessionPage() {
     });
   };
 
-  // Format session time
-  const formatSessionTime = (date: Date) => {
-    return date.toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
+  const formatSessionTime = (date: Date | string) => {
+    const d = typeof date === "string" ? new Date(date) : date;
+    return isNaN(d.getTime())
+      ? "Invalid Time"
+      : d.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        });
   };
 
-  // Format session date
-  const formatSessionDate = (date: Date) => {
-    return date.toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
+  const formatSessionDate = (date: Date | string) => {
+    const d = typeof date === "string" ? new Date(date) : date;
+    return isNaN(d.getTime())
+      ? "Invalid Date"
+      : d.toLocaleDateString("en-US", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        });
   };
 
-  // Handle creating a new session
   const handleCreateSession = async () => {
     if (!sessionTitle.trim()) {
       toast({
@@ -123,26 +142,13 @@ export default function LiveSessionPage() {
     }
 
     setIsCreatingSession(true);
-
     try {
-      // Create a new call using the Video context
       const session = await createCall(sessionTitle);
-
-      // Update session info for displaying to user
-      setSessionInfo({
-        id: session.id,
-        title: sessionTitle,
-      });
-
-      // Show success dialog
+      setSessionInfo({ id: session.id, title: sessionTitle });
       setShowCreateDialog(false);
       setShowSessionCreated(true);
       setSessionTitle("");
-
-      // Refresh the sessions list
       await fetchSessions();
-
-      // After meeting is created
       router.push(`/live-session/session/${session.id}`);
     } catch (error) {
       console.error("Failed to create session:", error);
@@ -157,7 +163,6 @@ export default function LiveSessionPage() {
     }
   };
 
-  // Handle joining a session
   const handleJoinSession = async () => {
     if (!joinCallId.trim()) {
       toast({
@@ -169,18 +174,15 @@ export default function LiveSessionPage() {
     }
 
     try {
-      // Extract call ID from invitation link if necessary
       let callId = joinCallId.trim();
       if (callId.includes("/")) {
         const parts = callId.split("/");
         callId = parts[parts.length - 1];
       }
+      if (!callId) throw new Error("Invalid session ID");
 
-      // Join the call
       const call = await joinCall(callId, true);
-
       if (call) {
-        // Navigate to the session page
         router.push(`/live-session/session/${callId}`);
       }
     } catch (error) {
@@ -189,21 +191,28 @@ export default function LiveSessionPage() {
         title: "Failed to join session",
         description:
           error instanceof Error
-            ? error.message
-            : "The session ID may be invalid or the session has ended.",
+            ? error.message.includes("not found") ||
+              error.message.includes("ended")
+              ? "The session ID is invalid or the session has ended."
+              : error.message
+            : "An unexpected error occurred.",
         variant: "destructive",
       });
     }
   };
 
-  // Handle starting an existing session
   const handleStartSession = async (callId: string) => {
+    if (!callId) {
+      toast({
+        title: "Invalid session",
+        description: "Session ID is missing.",
+        variant: "destructive",
+      });
+      return;
+    }
     try {
-      // Join the call (create if it doesn't exist)
       const call = await joinCall(callId, true);
-
       if (call) {
-        // Navigate to the session page
         router.push(`/live-session/session/${callId}`);
       }
     } catch (error) {
@@ -217,24 +226,35 @@ export default function LiveSessionPage() {
     }
   };
 
-  // Handle copying invitation link
-  const handleCopyInvitation = (callId: string) => {
+  const handleCopyInvitation = async (callId: string) => {
     const inviteLink = `${window.location.origin}/join/${callId}`;
-    navigator.clipboard.writeText(inviteLink);
-    toast({
-      title: "Invitation link copied",
-      description: "Share this link with your students to join the session.",
-    });
+    try {
+      await navigator.clipboard.writeText(inviteLink);
+      toast({
+        title: "Invitation link copied",
+        description: "Share this link with your students to join the session.",
+      });
+    } catch (error) {
+      console.error("Failed to copy invitation link:", error);
+      toast({
+        title: "Failed to copy link",
+        description: "Please copy the link manually.",
+        variant: "destructive",
+      });
+    }
   };
 
-  // Get the next upcoming session (if any)
-  const nextSession = upcomingSessions.length > 0 ? upcomingSessions[0] : null;
+  const nextSession =
+    upcomingSessions.length > 0 ? (upcomingSessions[0] as Session) : null;
 
   return (
     <Layout>
-      {/* Upcoming session notification */}
       <div className="mb-6">
-        {nextSession ? (
+        {isFetchingSessions ? (
+          <p className="flex items-center text-gray-400">
+            <Loader className="w-4 h-4 mr-2 animate-spin" /> Loading sessions...
+          </p>
+        ) : nextSession ? (
           <p className="text-gray-400">
             Upcoming Session at: {formatSessionTime(nextSession.createdAt)}
           </p>
@@ -243,38 +263,20 @@ export default function LiveSessionPage() {
         )}
       </div>
 
-      {/* Current time display */}
-      <div
-        className="relative p-8 mb-8 overflow-hidden rounded-xl"
-        style={{
-          backgroundImage:
-            "linear-gradient(to right, rgba(26, 29, 45, 0.8), rgba(26, 29, 45, 0.6))",
-          backgroundSize: "cover",
-        }}
-      >
+      <div className="relative p-8 mb-8 overflow-hidden rounded-xl bg-gradient-to-r from-[#1A1D2D] to-[#232538]">
         <div className="relative z-10">
-          <h1 className="font-bold text-white text-7xl">
+          <h1 className="text-6xl font-bold text-white md:text-7xl">
             {formatTime(currentTime).split(" ")[0]}
-            <span className="ml-2 text-3xl">
+            <span className="ml-2 text-2xl md:text-3xl">
               {formatTime(currentTime).split(" ")[1]}
             </span>
           </h1>
-          <p className="mt-2 text-xl text-gray-300">
+          <p className="mt-2 text-lg text-gray-300 md:text-xl">
             {formatDate(currentTime)}
           </p>
         </div>
-        <div className="absolute top-0 right-0 w-1/3 h-full">
-          {/* <Image
-            src="/api/placeholder/400/300"
-            alt="Decorative"
-            width={400}
-            height={300}
-            className="object-cover h-full"
-          /> */}
-        </div>
       </div>
 
-      {/* Instructor stats */}
       <div className="grid grid-cols-1 gap-4 mb-8 md:grid-cols-3">
         <Card className="bg-[#232538] border-0 p-6">
           <div className="flex items-center gap-3 mb-2">
@@ -285,7 +287,6 @@ export default function LiveSessionPage() {
           </div>
           <p className="text-3xl font-bold text-white">{totalStudents}</p>
         </Card>
-
         <Card className="bg-[#232538] border-0 p-6">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 rounded-md bg-blue-500/20">
@@ -295,7 +296,6 @@ export default function LiveSessionPage() {
           </div>
           <p className="text-3xl font-bold text-white">{activeCourses}</p>
         </Card>
-
         <Card className="bg-[#232538] border-0 p-6">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 rounded-md bg-purple-500/20">
@@ -309,7 +309,6 @@ export default function LiveSessionPage() {
         </Card>
       </div>
 
-      {/* Action cards */}
       <div className="grid grid-cols-1 gap-4 mb-10 md:grid-cols-2 lg:grid-cols-4">
         <ActionCard
           icon={<Plus className="w-6 h-6 text-white" />}
@@ -341,34 +340,40 @@ export default function LiveSessionPage() {
         />
       </div>
 
-      {/* Today's sessions */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold text-white">
             Today's Upcoming Sessions
           </h2>
-          <Button variant="link" className="text-gray-400">
+          <Button
+            variant="link"
+            className="text-gray-400"
+            onClick={() => router.push("/live-session/all")}
+          >
             See all
           </Button>
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {upcomingSessions.length > 0 ? (
-            upcomingSessions
-              .slice(0, 2)
-              .map((session: any) => (
-                <SessionCard
-                  key={session.id}
-                  title={session.title}
-                  course="Your Course"
-                  date={formatSessionDate(session.createdAt)}
-                  time={formatSessionTime(session.createdAt)}
-                  students={18}
-                  callId={session.id}
-                  onStartSession={handleStartSession}
-                  onCopyInvitation={handleCopyInvitation}
-                />
-              ))
+          {isFetchingSessions ? (
+            <div className="col-span-2 bg-[#232538] rounded-lg p-8 text-center">
+              <Loader className="w-6 h-6 mx-auto mb-4 text-gray-400 animate-spin" />
+              <p className="text-gray-400">Loading sessions...</p>
+            </div>
+          ) : upcomingSessions.length > 0 ? (
+            upcomingSessions.slice(0, 2).map((session: Session) => (
+              <SessionCard
+                key={session.id}
+                title={session.title}
+                course="Your Course" // TODO: Fetch from session data
+                date={formatSessionDate(session.createdAt)}
+                time={formatSessionTime(session.createdAt)}
+                students={session.students ?? 0}
+                callId={session.id}
+                onStartSession={handleStartSession}
+                onCopyInvitation={handleCopyInvitation}
+              />
+            ))
           ) : (
             <div className="col-span-2 bg-[#232538] rounded-lg p-8 text-center">
               <p className="mb-4 text-gray-400">
@@ -386,8 +391,13 @@ export default function LiveSessionPage() {
         </div>
       </div>
 
-      {/* Create session dialog */}
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+      <Dialog
+        open={showCreateDialog}
+        onOpenChange={(open) => {
+          setShowCreateDialog(open);
+          if (!open) setSessionTitle("");
+        }}
+      >
         <DialogContent className="bg-[#1A1D2D] text-white border-gray-700">
           <DialogHeader>
             <DialogTitle>Create New Session</DialogTitle>
@@ -396,16 +406,15 @@ export default function LiveSessionPage() {
               your class.
             </DialogDescription>
           </DialogHeader>
-
           <div className="py-4">
             <Input
               placeholder="Session Title"
               value={sessionTitle}
               onChange={(e) => setSessionTitle(e.target.value)}
               className="bg-[#232538] border-gray-700 text-white"
+              aria-label="Session title"
             />
           </div>
-
           <DialogFooter>
             <Button
               variant="outline"
@@ -432,8 +441,13 @@ export default function LiveSessionPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Join session dialog */}
-      <Dialog open={showJoinDialog} onOpenChange={setShowJoinDialog}>
+      <Dialog
+        open={showJoinDialog}
+        onOpenChange={(open) => {
+          setShowJoinDialog(open);
+          if (!open) setJoinCallId("");
+        }}
+      >
         <DialogContent className="bg-[#1A1D2D] text-white border-gray-700">
           <DialogHeader>
             <DialogTitle>Join Session</DialogTitle>
@@ -441,16 +455,15 @@ export default function LiveSessionPage() {
               Enter the session ID or paste the invitation link.
             </DialogDescription>
           </DialogHeader>
-
           <div className="py-4">
             <Input
               placeholder="Session ID or Invitation Link"
               value={joinCallId}
               onChange={(e) => setJoinCallId(e.target.value)}
               className="bg-[#232538] border-gray-700 text-white"
+              aria-label="Session ID or invitation link"
             />
           </div>
-
           <DialogFooter>
             <Button
               variant="outline"
@@ -469,10 +482,12 @@ export default function LiveSessionPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Session created dialog */}
       {showSessionCreated && sessionInfo && (
         <SessionCreatedDialog
-          onClose={() => setShowSessionCreated(false)}
+          onClose={() => {
+            setShowSessionCreated(false);
+            setSessionInfo(null);
+          }}
           sessionId={sessionInfo.id}
           sessionTitle={sessionInfo.title}
           onStartSession={() => handleStartSession(sessionInfo.id)}
@@ -480,7 +495,6 @@ export default function LiveSessionPage() {
         />
       )}
 
-      {/* Schedule session dialog */}
       <ScheduleSessionDialog
         open={showScheduleDialog}
         onOpenChange={setShowScheduleDialog}
@@ -504,8 +518,10 @@ function ActionCard({
 }) {
   return (
     <Card
-      className={`${bgColor} p-6 text-white cursor-pointer hover:opacity-90 transition-opacity`}
+      className={`${bgColor} p-6 text-white cursor-pointer hover:opacity-90 transition-opacity max-w-[300px]`}
       onClick={onClick}
+      role="button"
+      aria-label={title}
     >
       <div className="flex items-center justify-center w-10 h-10 mb-4 rounded-md bg-white/20">
         {icon}
@@ -536,7 +552,7 @@ function SessionCard({
   onCopyInvitation: (callId: string) => void;
 }) {
   return (
-    <Card className="bg-[#232538] border-0 p-6">
+    <Card className="bg-[#232538] border-0 p-6 max-w-[500px]">
       <div className="flex items-start justify-between mb-3">
         <div className="mb-1">
           <Calendar className="w-5 h-5 text-gray-400" />
@@ -550,10 +566,9 @@ function SessionCard({
       <p className="mb-6 text-gray-400">
         {date} - {time}
       </p>
-
       <div className="flex items-center mb-4">
         <div className="flex -space-x-2">
-          {[...Array(4)].map((_, i) => (
+          {[...Array(Math.min(students, 4))].map((_, i) => (
             <div
               key={i}
               className="h-8 w-8 rounded-full bg-gray-500 border-2 border-[#232538] flex items-center justify-center text-xs text-white"
@@ -562,15 +577,17 @@ function SessionCard({
             </div>
           ))}
         </div>
-        <div className="h-8 w-8 rounded-full bg-gray-700 border-2 border-[#232538] flex items-center justify-center text-xs text-white ml-1">
-          +{students - 4}
-        </div>
+        {students > 4 && (
+          <div className="h-8 w-8 rounded-full bg-gray-700 border-2 border-[#232538] flex items-center justify-center text-xs text-white ml-1">
+            +{students - 4}
+          </div>
+        )}
       </div>
-
       <div className="flex gap-3">
         <Button
           className="text-white bg-emerald-600 hover:bg-emerald-700"
           onClick={() => onStartSession(callId)}
+          aria-label={`Start session ${title}`}
         >
           Start Session
         </Button>
@@ -578,6 +595,7 @@ function SessionCard({
           variant="outline"
           className="text-gray-300 border-gray-700"
           onClick={() => onCopyInvitation(callId)}
+          aria-label={`Copy invitation for ${title}`}
         >
           <Copy className="w-4 h-4 mr-2" />
           Copy Invitation

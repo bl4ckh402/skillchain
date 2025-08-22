@@ -36,7 +36,7 @@ import {
   Wallet,
   Globe,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { JSX, useEffect, useState } from "react";
 import { useCourses } from "@/context/CourseContext";
 import { Course, CourseFilters, CourseLevel } from "@/types/course";
 import { EmptyState } from "@/components/empty-state";

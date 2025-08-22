@@ -183,8 +183,9 @@ export default function InstructorBookingPage() {
           {currentStep === "booking" && (
             <CalendlyBooking
               calendlyUrl={instructor.calendlyUrl}
-              onBookingComplete={handleBookingComplete}
-            />
+              onBookingComplete={handleBookingComplete} onBookingCompleteAction={function (eventData: any): void {
+                throw new Error("Function not implemented.");
+              } }            />
           )}
 
           {currentStep === "payment" && bookingDetails && (
@@ -196,8 +197,9 @@ export default function InstructorBookingPage() {
               }}
               bookingDetails={bookingDetails}
               clientEmail={clientEmail}
-              onPaymentSuccess={handlePaymentSuccess}
-            />
+              onPaymentSuccess={handlePaymentSuccess} onPaymentSuccessAction={function (reference: string): void {
+                throw new Error("Function not implemented.");
+              } }            />
           )}
 
           {currentStep === "success" && (

@@ -11,6 +11,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera, Edit2, Save, X } from "lucide-react";
 import type { Instructor } from "@/types/index";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db } from "@/lib/firebase"; // adjust path as needed
+import { doc, updateDoc } from "firebase/firestore";
 
 interface InstructorProfileProps {
   instructor: Instructor;
@@ -40,19 +43,19 @@ export function InstructorProfile({
     formData.append("file", file);
 
     try {
-      const response = await fetch("/api/upload-image", {
-        method: "POST",
-        body: formData,
-      });
+      const storage = getStorage();
+      const fileRef =  ref(storage, `instructor-profiles/${editedInstructor.id}/${file.name}`);
+      await uploadBytes(fileRef, file);
+      const imageUrl = await getDownloadURL(fileRef);
+      
+    // Update Firestore
+    setEditedInstructor((prev: any) => ({ ...prev, profileImage: imageUrl }));
+  } catch (error) {
+    console.error("Failed to upload image:", error);
+  } finally {
+    setIsUploading(false);
+  }
 
-      if (response.ok) {
-        const { imageUrl } = await response.json();
-        setEditedInstructor((prev: any) => ({ ...prev, profileImage: imageUrl }));
-      }
-    } catch (error) {
-      console.error("Failed to upload image:", error);
-    } finally {
-      setIsUploading(false);
     }
   };
 
@@ -215,3 +218,9 @@ export function InstructorProfile({
     </Card>
   );
 }
+
+
+function setIsEditing(arg0: boolean) {
+  throw new Error("Function not implemented.");
+}
+
