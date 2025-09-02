@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthProvider";
@@ -28,7 +28,19 @@ interface FormData {
 }
 
 export default function SignupPage() {
+  const { user } = useAuth();
+  if (user) {
+    // If user is already logged in, redirect to dashboard
+    if (typeof window !== "undefined") {
+      window.location.href = "/dashboard";
+    }
+  }
   const router = useRouter();
+  useEffect(() => {
+    if (user) {
+      router.push("/dashboard");
+    }
+  }, [user, router]);
   const { signUp, signInWithGoogle, signInWithGithub } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
@@ -95,10 +107,9 @@ export default function SignupPage() {
       });
 
       // redirect to 2FA setup
-      router.push("/setup-2fa");
+      //router.push("/setup-2fa");
 
-      // If you want to redirect to dashboard after signup, uncomment the line below
-      // router.push("/dashboard");
+      router.push("/dashboard");
     } catch (error: any) {
       toast({
         title: "Error",

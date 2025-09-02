@@ -19,7 +19,7 @@ export const sendEmailInvite = async ({
   joinLink,
   customMessage,
 }: EmailInviteParams) => {
-  if (!process.env.SENDGAPIRID_API_KEY) {
+  if (!process.env.SENDGRID_API_KEY) {
     console.warn("SendGrid API key not configured - skipping email send");
     return;
   }
@@ -51,6 +51,43 @@ export const sendEmailInvite = async ({
     await sgMail.send(msg);
   } catch (err) {
     console.error("Error sending email:", err);
+    throw err;
+  }
+};
+
+// Example implementation for sendBookingConfirmation
+interface BookingConfirmationParams {
+  to: string[];
+  subject: string;
+  bookingDetails: string;
+}
+
+export const sendBookingConfirmation = async ({
+  to,
+  subject,
+  bookingDetails,
+}: BookingConfirmationParams) => {
+  if (!process.env.SENDGRID_API_KEY) {
+    console.warn("SendGrid API key not configured - skipping email send");
+    return;
+  }
+
+  const msg = {
+    to,
+    from: process.env.EMAIL_FROM || "noreply@yourlms.com",
+    subject,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #2563eb;">Booking Confirmation</h2>
+        <p>${bookingDetails}</p>
+      </div>
+    `,
+  };
+
+  try {
+    await sgMail.send(msg);
+  } catch (err) {
+    console.error("Error sending booking confirmation email:", err);
     throw err;
   }
 };

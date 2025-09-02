@@ -94,6 +94,8 @@ export interface RelatedCourse {
 }
 
 export interface Course {
+  courseId: any;
+  courseData: any;
   nextLesson: null;
   lessons: any;
   // Basic information

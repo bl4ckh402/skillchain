@@ -38,9 +38,10 @@ import { TipTapEditor } from "@/components/tiptap-editor";
 export default function DiscussionDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { getPostById, likePost, getComments, createComment, likeComment } = useCommunity();
+  const { getPostById, likePost, getComments, createComment, likeComment } =
+    useCommunity();
   const { user } = useAuth();
-  
+
   const [post, setPost] = useState<Post | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newCommentContent, setNewCommentContent] = useState("");
@@ -88,9 +89,7 @@ export default function DiscussionDetailPage() {
     try {
       await likePost(id as string);
       // Update the post local state
-      setPost((prev) => 
-        prev ? { ...prev, likes: prev.likes + 1 } : null
-      );
+      setPost((prev) => (prev ? { ...prev, likes: prev.likes + 1 } : null));
     } catch (error: any) {
       toast({
         title: "Error",
@@ -113,10 +112,10 @@ export default function DiscussionDetailPage() {
     try {
       await likeComment(commentId);
       // Update the comment state locally
-      setComments(prevComments => 
-        prevComments.map(comment => 
-          comment.id === commentId 
-            ? { ...comment, likes: comment.likes + 1 } 
+      setComments((prevComments) =>
+        prevComments.map((comment) =>
+          comment.id === commentId
+            ? { ...comment, likes: comment.likes + 1 }
             : comment
         )
       );
@@ -131,7 +130,7 @@ export default function DiscussionDetailPage() {
 
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user) {
       toast({
         title: "Authentication required",
@@ -152,7 +151,7 @@ export default function DiscussionDetailPage() {
 
     try {
       setSubmittingComment(true);
-      
+
       const commentData = {
         postId: id as string,
         content: newCommentContent,
@@ -160,6 +159,7 @@ export default function DiscussionDetailPage() {
           id: user.uid,
           name: user.displayName || "Anonymous",
           avatar: user.photoURL || "",
+          email: user.email,
         },
         likes: 0,
         createdAt: new Date(),
@@ -167,22 +167,22 @@ export default function DiscussionDetailPage() {
       };
 
       const commentId = await createComment(commentData);
-      
+
       // Add the new comment to the state
-      setComments(prevComments => [
-        ...prevComments, 
+      setComments((prevComments) => [
+        ...prevComments,
         {
           ...commentData,
           id: commentId,
-        } as Comment
+        } as Comment,
       ]);
-      
+
       // Clear the form
       setNewCommentContent("");
       if (commentFormRef.current) {
         commentFormRef.current.reset();
       }
-      
+
       toast({
         title: "Success",
         description: "Your comment has been posted",
@@ -202,24 +202,24 @@ export default function DiscussionDetailPage() {
   const formatDate = (date: Date | string) => {
     // Convert to Date object if it's a string
     const dateObj = date instanceof Date ? date : new Date(date);
-    
+
     // Check if the date is valid
     if (isNaN(dateObj.getTime())) {
       return "Unknown date";
     }
-    
+
     return formatDistanceToNow(dateObj, { addSuffix: true });
   };
 
   if (loading) {
     return (
-      <div className="container mx-auto py-12 px-4 max-w-4xl">
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-pulse flex flex-col w-full gap-4">
-            <div className="h-6 bg-slate-200 rounded w-3/4"></div>
-            <div className="h-4 bg-slate-200 rounded w-1/2"></div>
-            <div className="h-32 bg-slate-200 rounded w-full"></div>
-            <div className="h-4 bg-slate-200 rounded w-1/4"></div>
+      <div className="container max-w-4xl px-4 py-12 mx-auto">
+        <div className="flex items-center justify-center h-64">
+          <div className="flex flex-col w-full gap-4 animate-pulse">
+            <div className="w-3/4 h-6 rounded bg-slate-200"></div>
+            <div className="w-1/2 h-4 rounded bg-slate-200"></div>
+            <div className="w-full h-32 rounded bg-slate-200"></div>
+            <div className="w-1/4 h-4 rounded bg-slate-200"></div>
           </div>
         </div>
       </div>
@@ -228,13 +228,14 @@ export default function DiscussionDetailPage() {
 
   if (!post) {
     return (
-      <div className="container mx-auto py-12 px-4 max-w-4xl">
+      <div className="container max-w-4xl px-4 py-12 mx-auto">
         <div className="flex flex-col items-center justify-center h-64">
-          <h2 className="text-2xl font-bold text-gray-700 mb-4">
+          <h2 className="mb-4 text-2xl font-bold text-gray-700">
             Discussion not found
           </h2>
-          <p className="text-gray-500 mb-8">
-            The discussion you are looking for might have been removed or does not exist.
+          <p className="mb-8 text-gray-500">
+            The discussion you are looking for might have been removed or does
+            not exist.
           </p>
           <Button onClick={() => router.push("/community")}>
             Back to Community
@@ -245,14 +246,14 @@ export default function DiscussionDetailPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-4xl">
+    <div className="container max-w-4xl px-4 py-8 mx-auto">
       {/* Back Button */}
       <Button
         variant="ghost"
         className="mb-6"
         onClick={() => router.push("/community")}
       >
-        <ArrowLeft className="h-4 w-4 mr-2" />
+        <ArrowLeft className="w-4 h-4 mr-2" />
         Back to Community
       </Button>
 
@@ -265,7 +266,7 @@ export default function DiscussionDetailPage() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
-                <MoreHorizontal className="h-5 w-5" />
+                <MoreHorizontal className="w-5 h-5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -278,7 +279,7 @@ export default function DiscussionDetailPage() {
                   });
                 }}
               >
-                <Share2 className="h-4 w-4 mr-2" />
+                <Share2 className="w-4 h-4 mr-2" />
                 Share
               </DropdownMenuItem>
               <DropdownMenuItem
@@ -289,7 +290,7 @@ export default function DiscussionDetailPage() {
                   });
                 }}
               >
-                <Flag className="h-4 w-4 mr-2" />
+                <Flag className="w-4 h-4 mr-2" />
                 Report
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -299,22 +300,22 @@ export default function DiscussionDetailPage() {
         <div className="flex items-center mb-4">
           <Badge
             variant="secondary"
-            className="mr-2 bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900 dark:text-purple-300"
+            className="mr-2 text-purple-700 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900 dark:text-purple-300"
           >
             {post.category}
           </Badge>
           <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-            <Eye className="h-4 w-4 mr-1" />
+            <Eye className="w-4 h-4 mr-1" />
             {post.views} views
           </div>
-          <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 ml-4">
-            <Clock className="h-4 w-4 mr-1" />
+          <div className="flex items-center ml-4 text-sm text-gray-500 dark:text-gray-400">
+            <Clock className="w-4 h-4 mr-1" />
             {formatDate(post.createdAt)}
           </div>
         </div>
 
         <div className="flex items-center mb-6">
-          <Avatar className="h-10 w-10 mr-3">
+          <Avatar className="w-10 h-10 mr-3">
             <AvatarImage src={post.author.avatar} alt={post.author.name} />
             <AvatarFallback>
               {post.author.name.substring(0, 2).toUpperCase()}
@@ -351,7 +352,7 @@ export default function DiscussionDetailPage() {
       {/* Attachments */}
       {post.attachments && post.attachments.length > 0 && (
         <div className="mb-8">
-          <h3 className="text-lg font-semibold mb-3">Attachments</h3>
+          <h3 className="mb-3 text-lg font-semibold">Attachments</h3>
           <div className="flex flex-wrap gap-3">
             {post.attachments.map((attachment, index) => (
               <a
@@ -369,15 +370,15 @@ export default function DiscussionDetailPage() {
                   <img
                     src={attachment.url}
                     alt={attachment.name}
-                    className="absolute inset-0 w-full h-full object-cover"
+                    className="absolute inset-0 object-cover w-full h-full"
                   />
                 ) : (
                   <>
                     {attachment.type === "document" && (
-                      <Paperclip className="h-5 w-5 mr-2 text-blue-500" />
+                      <Paperclip className="w-5 h-5 mr-2 text-blue-500" />
                     )}
                     {attachment.type === "code" && (
-                      <div className="h-5 w-5 mr-2 text-green-500">{"{ }"}</div>
+                      <div className="w-5 h-5 mr-2 text-green-500">{"{ }"}</div>
                     )}
                     <span className="text-sm truncate">{attachment.name}</span>
                   </>
@@ -414,7 +415,7 @@ export default function DiscussionDetailPage() {
             }
           }}
         >
-          <MessageSquare className="h-5 w-5 mr-1" />
+          <MessageSquare className="w-5 h-5 mr-1" />
           <span>{comments.length}</span>
         </Button>
         <Button
@@ -429,7 +430,7 @@ export default function DiscussionDetailPage() {
             });
           }}
         >
-          <Share2 className="h-5 w-5 mr-1" />
+          <Share2 className="w-5 h-5 mr-1" />
           <span>Share</span>
         </Button>
       </div>
@@ -438,7 +439,7 @@ export default function DiscussionDetailPage() {
 
       {/* Comments Section */}
       <div id="comments-section" className="mb-8">
-        <h2 className="text-2xl font-bold mb-6">
+        <h2 className="mb-6 text-2xl font-bold">
           Comments ({comments.length})
         </h2>
 
@@ -450,8 +451,11 @@ export default function DiscussionDetailPage() {
             className="mb-8"
           >
             <div className="flex items-start mb-4">
-              <Avatar className="h-10 w-10 mr-3">
-                <AvatarImage src={user.photoURL || ""} alt={user.displayName || "User"} />
+              <Avatar className="w-10 h-10 mr-3">
+                <AvatarImage
+                  src={user.photoURL || ""}
+                  alt={user.displayName || "User"}
+                />
                 <AvatarFallback>
                   {user.displayName
                     ? user.displayName.substring(0, 2).toUpperCase()
@@ -470,13 +474,13 @@ export default function DiscussionDetailPage() {
                   <Button
                     type="submit"
                     disabled={submittingComment || !newCommentContent.trim()}
-                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+                    className="text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
                   >
                     {submittingComment ? (
                       "Posting..."
                     ) : (
                       <>
-                        <Send className="h-4 w-4 mr-2" />
+                        <Send className="w-4 h-4 mr-2" />
                         Post Comment
                       </>
                     )}
@@ -486,11 +490,11 @@ export default function DiscussionDetailPage() {
             </div>
           </form>
         ) : (
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-8 text-center">
+          <div className="p-4 mb-8 text-center rounded-lg bg-gray-50 dark:bg-gray-800">
             <p className="mb-4">Please sign in to join the discussion</p>
             <Button
               onClick={() => router.push("/login")}
-              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+              className="text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
             >
               Sign In
             </Button>
@@ -503,10 +507,10 @@ export default function DiscussionDetailPage() {
             {comments.map((comment) => (
               <div
                 key={comment.id}
-                className="bg-white dark:bg-gray-850 rounded-lg p-5 shadow-sm"
+                className="p-5 bg-white rounded-lg shadow-sm dark:bg-gray-850"
               >
                 <div className="flex items-start">
-                  <Avatar className="h-9 w-9 mr-3">
+                  <Avatar className="mr-3 h-9 w-9">
                     <AvatarImage
                       src={comment.author.avatar}
                       alt={comment.author.name}
@@ -518,14 +522,14 @@ export default function DiscussionDetailPage() {
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-2">
                       <div>
-                        <span className="font-semibold text-gray-800 dark:text-gray-200 mr-2">
+                        <span className="mr-2 font-semibold text-gray-800 dark:text-gray-200">
                           {comment.author.name}
                         </span>
                         <span className="text-sm text-gray-500 dark:text-gray-400">
                           {formatDate(comment.createdAt)}
                         </span>
                         {comment.isEdited && (
-                          <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
+                          <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
                             (edited)
                           </span>
                         )}
@@ -535,9 +539,9 @@ export default function DiscussionDetailPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8"
+                            className="w-8 h-8"
                           >
-                            <MoreHorizontal className="h-4 w-4" />
+                            <MoreHorizontal className="w-4 h-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
@@ -550,13 +554,13 @@ export default function DiscussionDetailPage() {
                               });
                             }}
                           >
-                            <Flag className="h-4 w-4 mr-2" />
+                            <Flag className="w-4 h-4 mr-2" />
                             Report
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
-                    <div className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 mb-3">
+                    <div className="mb-3 prose text-gray-700 dark:prose-invert max-w-none dark:text-gray-300">
                       {comment.content}
                     </div>
                     <div className="flex items-center">
@@ -582,8 +586,8 @@ export default function DiscussionDetailPage() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-10 text-gray-500 dark:text-gray-400">
-            <MessageSquare className="h-10 w-10 mx-auto mb-3 opacity-50" />
+          <div className="py-10 text-center text-gray-500 dark:text-gray-400">
+            <MessageSquare className="w-10 h-10 mx-auto mb-3 opacity-50" />
             <p>Be the first to comment on this discussion</p>
           </div>
         )}

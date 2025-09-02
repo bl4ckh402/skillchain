@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { User, onAuthStateChanged } from "firebase/auth";
+import { User, getIdToken, onAuthStateChanged } from "firebase/auth";
 import {
   collection,
   doc,
@@ -21,6 +21,9 @@ import {
   GithubAuthProvider,
   signOut as firebaseSignOut,
   sendPasswordResetEmail,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  updatePassword as firebaseUpdatePassword,
 } from "firebase/auth";
 
 interface UserProfile {
@@ -32,10 +35,18 @@ interface UserProfile {
   enrolledCourses?: string[];
   createdCourses?: string[];
   role: "student" | "instructor" | "admin";
+  is2FAEnabled?: boolean;
+  twoFactorSecret?: string;
 }
 
 interface AuthContextType {
-  promoteToInstructor: (userId: string) => Promise<never>;
+
+  enable2FA: () => Promise<{ qrCodeUrl: string; secret: string }>;
+  verify2FA: (code: string) => Promise<boolean>;
+  disable2FA: () => Promise<void>;
+  is2FAEnabled: boolean;
+
+  promoteToInstructor: (userId: string) => Promise<void>;
   user: User | null;
   userProfile: UserProfile | null;
   loading: boolean;
@@ -50,6 +61,11 @@ interface AuthContextType {
   signInWithGithub: () => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
+  updatePassword: (
+    currentPassword: string,
+    newPassword: string
+  ) => Promise<void>;
+
   updateUserProfile: (data: Partial<UserProfile>) => Promise<void>;
 }
 
@@ -59,6 +75,81 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+const [is2FAEnabled, setIs2FAEnabled] = useState(false);
+
+const enable2FA = async () => {
+  if (!user) throw new Error("User not authenticated");
+  try {
+    const response = await fetch("/api/auth/enable-2fa", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${await getIdToken(user)}`,
+      },
+    });
+    if (!response.ok) throw new Error("Failed to enable 2FA");
+
+    const data = await response.json();
+    return {
+      qrCodeUrl: data.qrCodeUrl,
+      secret: data.secret,
+    };
+  } catch (error) {
+    console.error("Error enabling 2FA:", error);
+    throw error;
+  }
+};
+const verify2FA = async (code: string) => {
+  if (!user) throw new Error("User not authenticated");
+  try {
+    const response = await fetch("/api/auth/verify-2fa", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ 
+        userId: user.uid,
+        code,
+      }),
+    });
+    if (!response.ok) throw new Error("Invalid Verification code");
+      
+ setIs2FAEnabled(true);
+      return true;
+    } catch (error) {
+      console.error("Error verifying 2FA:", error);
+      throw error;
+    }
+  };
+
+  const disable2FA = async () => {
+    if (!user) throw new Error("Must be logged in");
+    
+    try {
+      const response = await fetch("/api/auth/2fa/disable", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId: user.uid }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to disable 2FA");
+      }
+
+      await updateDoc(doc(db, "users", user.uid), {
+        is2FAEnabled: false,
+      });
+
+      setIs2FAEnabled(false);
+    } catch (error) {
+      console.error("Error disabling 2FA:", error);
+      throw error;
+    }
+  };
+
+
 
   // Fetch user profile from Firestore
   const fetchUserProfile = async (uid: string) => {
@@ -81,12 +172,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUserProfile(profile);
       } else {
         setUserProfile(null);
+        setIs2FAEnabled(false);
       }
       setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
+
+
+
 
   const signUp = async (
     email: string,
@@ -208,9 +303,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const updatedProfile = await fetchUserProfile(userId);
       setUserProfile(updatedProfile);
     }
-    return Promise.reject("Operation completed");
   };
+  
+  const updatePassword = async (
+    currentPassword: string,
+    newPassword: string
+  ) => {
+    if (!user) throw new Error("Must be logged in");
 
+    try {
+      // First verify the current password
+      const credential = EmailAuthProvider.credential(
+        user.email!,
+        currentPassword
+      );
+      await reauthenticateWithCredential(user, credential);
+
+      // Then update to the new password
+      await firebaseUpdatePassword(user, newPassword);
+    } catch (error: any) {
+      if (error.code === "auth/wrong-password") {
+        throw new Error("Current password is incorrect");
+      }
+      throw error;
+    }
+  };
+  
   const value = {
     user,
     userProfile,
@@ -223,6 +341,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     resetPassword,
     updateUserProfile,
     promoteToInstructor,
+    updatePassword,
+    enable2FA,
+    verify2FA,
+    disable2FA,
+    is2FAEnabled,
   };
 
   return (

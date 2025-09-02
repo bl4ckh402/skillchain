@@ -22,10 +22,15 @@ import { doc, getDoc } from "firebase/firestore";
 import { UserCredential } from "firebase/auth";
 
 export default function LoginPage() {
+  const { user } = useAuth();
   const router = useRouter();
   const { signIn, signInWithGoogle, signInWithGithub } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  // If user is already logged in, redirect to dashboard
+  if (user) {
+    router.push("/dashboard");
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -64,6 +69,7 @@ export default function LoginPage() {
           description: "You have been logged in successfully",
         });
         router.push("/dashboard");
+        window.location.reload();
       }
     } catch (error: any) {
       toast({
@@ -75,23 +81,6 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
-
-  //     await signIn(email, password)
-  //     toast({
-  //       title: "Success",
-  //       description: "You have been logged in successfully"
-  //     })
-  //     router.push("/dashboard")
-  //   } catch (error: any) {
-  //     toast({
-  //       title: "Error",
-  //       description: error.message,
-  //       variant: "destructive"
-  //     })
-  //   } finally {
-  //     setLoading(false)
-  //   }
-  // }
 
   const handleGoogleSignIn = async () => {
     try {

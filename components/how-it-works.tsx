@@ -37,7 +37,7 @@ export function HowItWorks() {
               How It Works
             </h2>
             <p className="max-w-[700px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-              SkillChain makes blockchain education accessible, practical, and
+              SkillChain makes Web3 & Artificial Intelligence education accessible, practical, and
               rewarding
             </p>
           </div>

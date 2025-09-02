@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { JSXElementConstructor, ReactElement, ReactNode, ReactPortal, useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -30,6 +30,8 @@ import {
 } from "lucide-react"
 import { useDashboard } from "@/context/DashboardProvider"
 import { useAuth } from "@/context/AuthProvider"
+import { Timestamp } from "firebase/firestore"
+import { UserAchievement } from "@/types/dashboard"
 
 export default function DashboardPage() {
   const { user } = useAuth()
@@ -45,9 +47,9 @@ export default function DashboardPage() {
   }
   if (loading) {
     // Helper function to safely get nested properties
-  const getSafe = (obj, path, fallback = '') => {
+  const getSafe = (obj: any, path: string, fallback = '') => {
     try {
-      return path.split('.').reduce((o, p) => (o ? o[p] : undefined), obj) || fallback;
+      return path.split('.').reduce((o: { [x: string]: any }, p: string | number) => (o ? o[p] : undefined), obj) || fallback;
     } catch (error) {
       return fallback;
     }
@@ -56,7 +58,7 @@ export default function DashboardPage() {
   return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-t-blue-500 border-b-blue-500 border-r-transparent border-l-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-16 h-16 mx-auto mb-4 border-4 rounded-full border-t-blue-500 border-b-blue-500 border-r-transparent border-l-transparent animate-spin"></div>
           <p className="text-lg text-slate-600 dark:text-slate-400">Loading your dashboard...</p>
         </div>
       </div>
@@ -66,10 +68,10 @@ export default function DashboardPage() {
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center p-8 max-w-md">
-          <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-4">Something went wrong</h2>
-          <p className="text-slate-600 dark:text-slate-400 mb-6">{error}</p>
+        <div className="max-w-md p-8 text-center">
+          <div className="mb-4 text-6xl text-red-500">⚠️</div>
+          <h2 className="mb-4 text-2xl font-bold text-slate-800 dark:text-slate-200">Something went wrong</h2>
+          <p className="mb-6 text-slate-600 dark:text-slate-400">{error}</p>
           <Button onClick={() => window.location.reload()}>Refresh Page</Button>
         </div>
       </div>
@@ -79,10 +81,10 @@ export default function DashboardPage() {
   if (!dashboardData) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center p-8 max-w-md">
-          <div className="text-blue-500 text-6xl mb-4">📊</div>
-          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-4">No dashboard data available</h2>
-          <p className="text-slate-600 dark:text-slate-400 mb-6">Looks like you're new here! Start by enrolling in a course.</p>
+        <div className="max-w-md p-8 text-center">
+          <div className="mb-4 text-6xl text-blue-500">📊</div>
+          <h2 className="mb-4 text-2xl font-bold text-slate-800 dark:text-slate-200">No dashboard data available</h2>
+          <p className="mb-6 text-slate-600 dark:text-slate-400">Looks like you're new here! Start by enrolling in a course.</p>
           <Button asChild>
             <Link href="/courses">Browse Courses</Link>
           </Button>
@@ -111,27 +113,27 @@ export default function DashboardPage() {
     {
       title: "Courses Enrolled",
       value: (stats?.coursesEnrolled ?? 0).toString(),
-      icon: <BookOpen className="h-5 w-5 text-blue-500" />,
+      icon: <BookOpen className="w-5 h-5 text-blue-500" />,
     },
     {
       title: "Hours Learned",
       value: (stats?.hoursLearned ?? 0).toString(),
-      icon: <Clock className="h-5 w-5 text-teal-500" />,
+      icon: <Clock className="w-5 h-5 text-teal-500" />,
     },
     {
       title: "Achievements", 
       value: achievements.filter(a => a.unlocked).length.toString(),
-      icon: <Award className="h-5 w-5 text-amber-500" />,
+      icon: <Award className="w-5 h-5 text-amber-500" />,
     },
     {
       title: "Certificates",
       value: certificates.length.toString(), 
-      icon: <Certificate className="h-5 w-5 text-purple-500" />,
+      icon: <Certificate className="w-5 h-5 text-purple-500" />,
     },
   ]
   
   // Helper function to format dates safely
-  const formatDate = (timestamp) => {
+  const formatDate = (timestamp: string | number | Date | Timestamp) => {
     if (!timestamp) return 'Unknown date';
     
     try {
@@ -149,7 +151,7 @@ export default function DashboardPage() {
   }
 
   // Helper function to get achievement icon component
-  const getAchievementIcon = (achievement) => {
+  const getAchievementIcon = (achievement: UserAchievement) => {
     // Use icon from data if available
     if (achievement.icon) {
       if (typeof achievement.icon === 'string' && achievement.icon.startsWith('<')) {
@@ -164,20 +166,43 @@ export default function DashboardPage() {
     // Fallback icons based on type
     switch (achievement.type) {
       case 'course':
-        return <BookOpen className="h-6 w-6 text-blue-500" />;
+        return <BookOpen className="w-6 h-6 text-blue-500" />;
       case 'project':
-        return <TrendingUp className="h-6 w-6 text-green-500" />;
+        return <TrendingUp className="w-6 h-6 text-green-500" />;
       case 'hackathon':
-        return <Zap className="h-6 w-6 text-amber-500" />;
+        return <Zap className="w-6 h-6 text-amber-500" />;
       case 'community':
-        return <Users className="h-6 w-6 text-purple-500" />;
+        return <Users className="w-6 h-6 text-purple-500" />;
       default:
-        return <Award className="h-6 w-6 text-blue-500" />;
+        return <Award className="w-6 h-6 text-blue-500" />;
     }
   }
   
+  // Define types for course and progress
+  type CourseProgress = {
+    progress?: number
+    completedLessons?: string[]
+    totalLessons?: number
+    lastAccessed?: Date | string | { toDate: () => Date }
+    nextLesson?: string
+  }
+
+  type EnrolledCourse = {
+    courseId: string
+    status: string
+    courseData: {
+      title: string
+      thumbnail?: string
+      instructor: {
+        name: string
+        avatar?: string
+      }
+    }
+    progress?: CourseProgress
+  }
+
   // Handler for resuming a course
-  const handleResumeCourse = (course) => {
+  const handleResumeCourse = (course: EnrolledCourse) => {
     // This would navigate to the course and update lastAccessed
     console.log('Resuming course:', course.courseId);
     updateCourseProgress(course.courseId, {
@@ -187,7 +212,7 @@ export default function DashboardPage() {
   }
   
   // Handler for requesting a certificate
-  const handleRequestCertificate = async (courseId) => {
+  const handleRequestCertificate = async (courseId: string) => {
     try {
       await issueCertificate(courseId);
       alert('Certificate issued successfully!');
@@ -198,26 +223,26 @@ export default function DashboardPage() {
   }
 
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined) => {
     switch (status) {
       case "applied":
-        return <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">Applied</Badge>
+        return <Badge className="text-blue-700 bg-blue-100 dark:bg-blue-900 dark:text-blue-300">Applied</Badge>
       case "under_review":
         return <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300">Under Review</Badge>
       case "interview":
         return (
-          <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">Interview</Badge>
+          <Badge className="text-purple-700 bg-purple-100 dark:bg-purple-900 dark:text-purple-300">Interview</Badge>
         )
       case "accepted":
         return (
-          <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
-            <CheckCircle2 className="mr-1 h-3 w-3" />
+          <Badge className="text-green-700 bg-green-100 dark:bg-green-900 dark:text-green-300">
+            <CheckCircle2 className="w-3 h-3 mr-1" />
             Accepted
           </Badge>
         )
       case "rejected":
         return (
-          <Badge variant="outline" className="border-red-200 text-red-700 dark:border-red-800 dark:text-red-400">
+          <Badge variant="outline" className="text-red-700 border-red-200 dark:border-red-800 dark:text-red-400">
             Rejected
           </Badge>
         )
@@ -227,20 +252,20 @@ export default function DashboardPage() {
   }
 
   // Helper function to check if application is instructor application
-  const isInstructorApplication = (application) => {
+  const isInstructorApplication = (application: { isInstructorApplication: boolean }) => {
     return application.isInstructorApplication === true
   }
 
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex-1">
-        <div className="bg-gradient-to-r from-blue-500/10 to-teal-500/10 dark:from-blue-900/20 dark:to-teal-900/20 py-8">
+        <div className="py-8 bg-gradient-to-r from-blue-500/10 to-teal-500/10 dark:from-blue-900/20 dark:to-teal-900/20">
           <div className="container px-4 md:px-6">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="flex items-center gap-4">
-                <Avatar className="h-16 w-16 border-4 border-white dark:border-slate-800">
+                <Avatar className="w-16 h-16 border-4 border-white dark:border-slate-800">
                   <AvatarImage src={user?.photoURL! } alt={user?.displayName || "User"} />
-                  {/* <AvatarFallback className="bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300 text-xl">
+                  {/* <AvatarFallback className="text-xl text-blue-600 bg-blue-100 dark:bg-blue-900 dark:text-blue-300">
                     {user?.displayName ? user.displayName.substring(0, 2).toUpperCase() : "U"}
                   </AvatarFallback> */}
                 </Avatar>
@@ -254,15 +279,15 @@ export default function DashboardPage() {
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
-                  className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                  className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
                 >
-                  <Bell className="mr-2 h-4 w-4" />
+                  <Bell className="w-4 h-4 mr-2" />
                   Notifications
-                  {/* <Badge className="ml-2 bg-blue-500 text-white">{notifications.filter((n) => !n.read).length}</Badge> */}
+                  {/* <Badge className="ml-2 text-white bg-blue-500">{notifications.filter((n) => !n.read).length}</Badge> */}
                 </Button>
-                <Button className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white" asChild>
+                <Button className="text-white bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700" asChild>
                   <Link href="/courses">
-                    <BookOpen className="mr-2 h-4 w-4" />
+                    <BookOpen className="w-4 h-4 mr-2" />
                     Browse Courses
                   </Link>
                 </Button>
@@ -282,7 +307,7 @@ export default function DashboardPage() {
                       <p className="text-sm text-muted-foreground">{stat.title}</p>
                       <p className="text-3xl font-bold text-slate-800 dark:text-slate-200">{stat.value}</p>
                     </div>
-                    <div className="rounded-full bg-blue-50 p-3 dark:bg-blue-950">{stat.icon}</div>
+                    <div className="p-3 rounded-full bg-blue-50 dark:bg-blue-950">{stat.icon}</div>
                   </div>
                 </CardContent>
               </Card>
@@ -291,7 +316,7 @@ export default function DashboardPage() {
 
           {/* Main Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8">
-            <TabsList className="mb-4 w-full justify-start bg-slate-100 dark:bg-slate-800/50 p-1 rounded-lg">
+            <TabsList className="justify-start w-full p-1 mb-4 rounded-lg bg-slate-100 dark:bg-slate-800/50">
               <TabsTrigger
                 value="overview"
                 className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-950 data-[state=active]:text-blue-600 rounded-md"
@@ -328,27 +353,29 @@ export default function DashboardPage() {
             <TabsContent value="overview" className="space-y-8">
               {/* Continue Learning Section */}
               <div>
-                <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-4">Continue Learning</h2>
+                <h2 className="mb-4 text-2xl font-bold text-slate-800 dark:text-slate-200">Continue Learning</h2>
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {enrolledCourses.length > 0 ? (
                     enrolledCourses.map((course, index) => (
                       <Link href={`/course/${course.courseId}`} key={index} className="group">
                         <Card className="overflow-hidden transition-all hover:shadow-lg border-slate-200 dark:border-slate-800">
-                          <div className="aspect-video w-full overflow-hidden relative">
+                          <div className="relative w-full overflow-hidden aspect-video">
                             <img
                               src={course.courseData.thumbnail!}
                               alt={course.courseData.title}
                               className="object-cover w-full h-full transition-transform group-hover:scale-105"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
-                              <div className="p-4 w-full">
-                                <div className="flex items-center justify-between text-white mb-2">
+                            <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/60 to-transparent">
+                              <div className="w-full p-4">
+                                <div className="flex items-center justify-between mb-2 text-white">
                                   <div className="flex items-center gap-1">
-                                    <Play className="h-4 w-4" />
+                                    <Play className="w-4 h-4" />
                                     <span className="text-sm font-medium">Continue</span>
                                   </div>
                                   <div className="text-sm">
-                                    {(course.progress?.completedLessons?.length || 0)} lessons completed
+                                    {typeof course.progress === "object" && course.progress !== null && "completedLessons" in course.progress
+                                      ? (course.progress.completedLessons?.length || 0)
+                                      : 0} lessons completed
                                   </div>
                                 </div>
                                 <Progress
@@ -360,11 +387,11 @@ export default function DashboardPage() {
                             </div>
                           </div>
                           <CardHeader className="pb-2">
-                            <CardTitle className="line-clamp-1 text-xl text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                            <CardTitle className="text-xl transition-colors line-clamp-1 text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">
                               {course.courseData.title}
                             </CardTitle>
                             <CardDescription className="flex items-center gap-1">
-                              <Avatar className="h-4 w-4">
+                              <Avatar className="w-4 h-4">
                                 <AvatarImage src={course.courseData.instructor.avatar} alt={course.courseData.instructor.name} />
                                 <AvatarFallback className="text-[8px] bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
                                   {course.courseData.instructor.name.substring(0, 2).toUpperCase()}
@@ -396,7 +423,7 @@ export default function DashboardPage() {
                           </CardContent>
                           <CardFooter className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
                             <div className="flex items-center gap-1">
-                              <Clock className="h-4 w-4 text-blue-500" />
+                              <Clock className="w-4 h-4 text-blue-500" />
                               <span>
                                 Last accessed {course.progress?.lastAccessed 
                                   ? formatDate(course.progress.lastAccessed) 
@@ -412,7 +439,7 @@ export default function DashboardPage() {
                                 handleResumeCourse(course);
                               }}
                             >
-                              <Play className="mr-1 h-4 w-4" />
+                              <Play className="w-4 h-4 mr-1" />
                               Resume
                             </Button>
                           </CardFooter>
@@ -420,12 +447,12 @@ export default function DashboardPage() {
                       </Link>
                     ))
                   ) : (
-                    <div className="col-span-full p-8 text-center">
-                      <div className="mx-auto w-16 h-16 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center mb-4">
-                        <BookOpen className="h-8 w-8 text-blue-500" />
+                    <div className="p-8 text-center col-span-full">
+                      <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full bg-blue-50 dark:bg-blue-900/30">
+                        <BookOpen className="w-8 h-8 text-blue-500" />
                       </div>
-                      <h3 className="text-lg font-medium mb-2">No courses yet</h3>
-                      <p className="text-slate-500 dark:text-slate-400 mb-4">Start your learning journey by enrolling in a course</p>
+                      <h3 className="mb-2 text-lg font-medium">No courses yet</h3>
+                      <p className="mb-4 text-slate-500 dark:text-slate-400">Start your learning journey by enrolling in a course</p>
                       <Button asChild>
                         <Link href="/courses">Browse Courses</Link>
                       </Button>
@@ -437,7 +464,7 @@ export default function DashboardPage() {
               {/* Achievements and Events Grid */}
               <div className="grid gap-6 md:grid-cols-2">
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-4">Recent Achievements</h2>
+                  <h2 className="mb-4 text-2xl font-bold text-slate-800 dark:text-slate-200">Recent Achievements</h2>
                   <Card className="border-blue-100 dark:border-blue-900">
                     <CardContent className="p-6 space-y-4">
                       {achievements.filter(a => a.unlocked).length > 0 ? (
@@ -446,24 +473,24 @@ export default function DashboardPage() {
                           .slice(0, 3)
                           .map(achievement => (
                             <div key={achievement.id} className="flex items-start gap-4">
-                              <div className="rounded-full bg-blue-50 p-3 dark:bg-blue-950">
+                              <div className="p-3 rounded-full bg-blue-50 dark:bg-blue-950">
                                 {getAchievementIcon(achievement)}
                               </div>
                               <div className="flex-1">
                                 <h3 className="font-medium text-slate-800 dark:text-slate-200">{achievement.title}</h3>
                                 <p className="text-sm text-slate-500 dark:text-slate-400">{achievement.description}</p>
-                                <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                                <p className="mt-1 text-xs text-blue-600 dark:text-blue-400">
                                   Unlocked on {formatDate(achievement.unlockedAt)}
                                 </p>
                               </div>
                             </div>
                           ))
                       ) : (
-                        <div className="text-center py-6">
-                          <div className="rounded-full bg-blue-50 p-3 dark:bg-blue-950 mx-auto w-14 h-14 flex items-center justify-center mb-3">
-                            <Trophy className="h-6 w-6 text-blue-500" />
+                        <div className="py-6 text-center">
+                          <div className="flex items-center justify-center p-3 mx-auto mb-3 rounded-full bg-blue-50 dark:bg-blue-950 w-14 h-14">
+                            <Trophy className="w-6 h-6 text-blue-500" />
                           </div>
-                          <h3 className="font-medium text-slate-800 dark:text-slate-200 mb-1">No achievements yet</h3>
+                          <h3 className="mb-1 font-medium text-slate-800 dark:text-slate-200">No achievements yet</h3>
                           <p className="text-sm text-slate-500 dark:text-slate-400">
                             Complete courses and participate in activities to earn achievements
                           </p>
@@ -473,7 +500,7 @@ export default function DashboardPage() {
                     <CardFooter>
                       <Button
                         variant="outline"
-                        className="w-full border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                        className="w-full text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
                         onClick={() => setActiveTab("achievements")}
                       >
                         View All Achievements
@@ -483,13 +510,13 @@ export default function DashboardPage() {
                 </div>
 
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-4">Upcoming Events</h2>
+                  <h2 className="mb-4 text-2xl font-bold text-slate-800 dark:text-slate-200">Upcoming Events</h2>
                   <Card className="border-blue-100 dark:border-blue-900">
                     <CardContent className="p-6 space-y-4">
                       {upcomingEvents.length > 0 ? (
                         upcomingEvents.slice(0, 3).map(event => (
                           <div key={event.id} className="flex gap-4">
-                            <div className="w-16 h-16 rounded-md overflow-hidden shrink-0">
+                            <div className="w-16 h-16 overflow-hidden rounded-md shrink-0">
                               <img
                                 src={event.cover || "/placeholder.svg"}
                                 alt={event.title}
@@ -498,32 +525,32 @@ export default function DashboardPage() {
                             </div>
                             <div className="flex-1">
                               <h3 className="font-medium text-slate-800 dark:text-slate-200">{event.title}</h3>
-                              <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mt-1">
-                                <Calendar className="h-4 w-4 text-blue-500" />
+                              <div className="flex items-center gap-2 mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                <Calendar className="w-4 h-4 text-blue-500" />
                                 <span>
                                   {formatDate(event.date)}, {event.time || '12:00 PM'}
                                 </span>
                               </div>
-                              <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mt-1">
-                                <Users className="h-4 w-4 text-teal-500" />
+                              <div className="flex items-center gap-2 mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                <Users className="w-4 h-4 text-teal-500" />
                                 <span>{event.participants || 0} participants</span>
                               </div>
                             </div>
                             <Button
                               variant="outline"
                               size="sm"
-                              className="shrink-0 self-center border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                              className="self-center text-blue-600 border-blue-200 shrink-0 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
                             >
                               Join
                             </Button>
                           </div>
                         ))
                       ) : (
-                        <div className="text-center py-6">
-                          <div className="rounded-full bg-blue-50 p-3 dark:bg-blue-950 mx-auto w-14 h-14 flex items-center justify-center mb-3">
-                            <Calendar className="h-6 w-6 text-blue-500" />
+                        <div className="py-6 text-center">
+                          <div className="flex items-center justify-center p-3 mx-auto mb-3 rounded-full bg-blue-50 dark:bg-blue-950 w-14 h-14">
+                            <Calendar className="w-6 h-6 text-blue-500" />
                           </div>
-                          <h3 className="font-medium text-slate-800 dark:text-slate-200 mb-1">No upcoming events</h3>
+                          <h3 className="mb-1 font-medium text-slate-800 dark:text-slate-200">No upcoming events</h3>
                           <p className="text-sm text-slate-500 dark:text-slate-400">
                             Check back later for new community events
                           </p>
@@ -533,7 +560,7 @@ export default function DashboardPage() {
                     <CardFooter>
                       <Button
                         variant="outline"
-                        className="w-full border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                        className="w-full text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
                         asChild
                       >
                         <Link href="/community">
@@ -553,16 +580,16 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
-                    className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                    className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
                   >
-                    <Filter className="mr-2 h-4 w-4" />
+                    <Filter className="w-4 h-4 mr-2" />
                     Filter
                   </Button>
                 </div>
               </div>
 
               <Tabs defaultValue="in-progress" className="w-full">
-                <TabsList className="mb-4 bg-slate-100 dark:bg-slate-800/50 p-1 rounded-lg">
+                <TabsList className="p-1 mb-4 rounded-lg bg-slate-100 dark:bg-slate-800/50">
                   <TabsTrigger
                     value="in-progress"
                     className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-950 data-[state=active]:text-blue-600 rounded-md"
@@ -587,7 +614,7 @@ export default function DashboardPage() {
                   <div className="space-y-4">
                     {enrolledCourses.filter(course => course.status === 'active' && (course.progress?.progress || 0) < 100).length > 0 ? (
                       enrolledCourses
-                        .filter(course => course.status === 'active' && (course.progress?.progress || 0) < 100)
+                        .filter(course => typeof course === 'object' && course !== null && course.status === 'active' && (course.progress?.progress || 0) < 100)
                         .map((course, index) => (
                           <Card
                             key={index}
@@ -595,7 +622,7 @@ export default function DashboardPage() {
                           >
                             <div className="flex flex-col md:flex-row">
                               <div className="w-full md:w-1/4 lg:w-1/5">
-                                <div className="aspect-video md:h-full w-full overflow-hidden">
+                                <div className="w-full overflow-hidden aspect-video md:h-full">
                                   <img
                                     src={course.courseData.thumbnail}
                                     alt={course.courseData.title}
@@ -604,21 +631,21 @@ export default function DashboardPage() {
                                 </div>
                               </div>
                               <div className="flex-1 p-6">
-                                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                                   <div className="space-y-1">
-                                    <h3 className="font-bold text-xl text-slate-800 dark:text-slate-200">{course.courseData.title}</h3>
+                                    <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">{course.courseData.title}</h3>
                                     <p className="text-sm text-slate-500 dark:text-slate-400">
                                       Instructor: {course.courseData.instructor.name}
                                     </p>
                                     <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
                                       <div className="flex items-center gap-1">
-                                        <BookOpen className="h-4 w-4 text-blue-500" />
+                                        <BookOpen className="w-4 h-4 text-blue-500" />
                                         <span>
                                           {(course.progress?.completedLessons?.length || 0)}/{course.progress?.totalLessons || 0} lessons
                                         </span>
                                       </div>
                                       <div className="flex items-center gap-1">
-                                        <Clock className="h-4 w-4 text-teal-500" />
+                                        <Clock className="w-4 h-4 text-teal-500" />
                                         <span>Last accessed {formatDate(course.progress?.lastAccessed)}</span>
                                       </div>
                                     </div>
@@ -635,7 +662,7 @@ export default function DashboardPage() {
                                   </div>
                                 </div>
                                 <Separator className="my-4" />
-                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                   <div>
                                     <p className="text-sm text-slate-600 dark:text-slate-400">Next Lesson:</p>
                                     <p className="font-medium text-blue-600 dark:text-blue-400">
@@ -645,7 +672,7 @@ export default function DashboardPage() {
                                   <div className="flex items-center gap-2">
                                     <Button
                                       variant="outline"
-                                      className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                                      className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
                                       asChild
                                     >
                                       <Link href={`/course/${course.courseId}`}>
@@ -653,10 +680,10 @@ export default function DashboardPage() {
                                       </Link>
                                     </Button>
                                     <Button 
-                                      className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white"
+                                      className="text-white bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
                                       onClick={() => handleResumeCourse(course)}
                                     >
-                                      <Play className="mr-2 h-4 w-4" />
+                                      <Play className="w-4 h-4 mr-2" />
                                       Continue
                                     </Button>
                                   </div>
@@ -667,13 +694,13 @@ export default function DashboardPage() {
                         ))
                     ) : (
                       <div className="flex flex-col items-center justify-center py-12 text-center">
-                        <div className="rounded-full bg-blue-100 dark:bg-blue-900/30 p-6">
-                          <BookOpen className="h-10 w-10 text-blue-500" />
+                        <div className="p-6 bg-blue-100 rounded-full dark:bg-blue-900/30">
+                          <BookOpen className="w-10 h-10 text-blue-500" />
                         </div>
                         <h3 className="mt-4 text-lg font-medium text-slate-800 dark:text-slate-200">
                           No courses in progress
                         </h3>
-                        <p className="mt-2 text-sm text-muted-foreground max-w-sm">
+                        <p className="max-w-sm mt-2 text-sm text-muted-foreground">
                           Enroll in a course to get started with your learning journey.
                         </p>
                         <Button className="mt-4" asChild>
@@ -686,9 +713,9 @@ export default function DashboardPage() {
 
                 <TabsContent value="completed" className="mt-0">
                   <div className="space-y-4">
-                    {enrolledCourses.filter(course => course.status === 'completed' || (course.progress?.progress || 0) === 100).length > 0 ? (
+                    {enrolledCourses.filter(course => typeof course === 'object' && course !== null && (course.status === "complete" || (course.progress?.progress || 0) === 100)).length > 0 ? (
                       enrolledCourses
-                        .filter(course => course.status === 'completed' || (course.progress?.progress || 0) === 100)
+                        .filter(course => typeof course === 'object' && course !== null && (course.status === "complete" || (course.progress?.progress || 0) === 100))
                         .map((course) => (
                           <Card
                             key={course.courseId}
@@ -696,7 +723,7 @@ export default function DashboardPage() {
                           >
                             <div className="flex flex-col md:flex-row">
                               <div className="w-full md:w-1/4 lg:w-1/5">
-                                <div className="aspect-video md:h-full w-full overflow-hidden">
+                                <div className="w-full overflow-hidden aspect-video md:h-full">
                                   <img
                                     src={course.courseData.thumbnail || "/placeholder.svg"}
                                     alt={course.courseData.title}
@@ -705,12 +732,12 @@ export default function DashboardPage() {
                                 </div>
                               </div>
                               <div className="flex-1 p-6">
-                                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                                   <div className="space-y-1">
                                     <div className="flex items-center gap-2">
-                                      <h3 className="font-bold text-xl text-slate-800 dark:text-slate-200">{course.courseData.title}</h3>
-                                      <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
-                                        <CheckCircle2 className="mr-1 h-3 w-3" />
+                                      <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">{course.courseData.title}</h3>
+                                      <Badge className="text-green-700 bg-green-100 dark:bg-green-900 dark:text-green-300">
+                                        <CheckCircle2 className="w-3 h-3 mr-1" />
                                         Completed
                                       </Badge>
                                     </div>
@@ -719,20 +746,20 @@ export default function DashboardPage() {
                                     </p>
                                     <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
                                       <div className="flex items-center gap-1">
-                                        <BookOpen className="h-4 w-4 text-blue-500" />
+                                        <BookOpen className="w-4 h-4 text-blue-500" />
                                         <span>
                                           {course.progress?.totalLessons || 0} lessons
                                         </span>
                                       </div>
                                       <div className="flex items-center gap-1">
-                                        <Clock className="h-4 w-4 text-teal-500" />
-                                        <span>Completed on {formatDate(course.progress?.lastAccessed)}</span>
+                                        <Clock className="w-4 h-4 text-teal-500" />
+                                        <span>Completed on {typeof course.progress === "object" && course.progress !== null && "lastAccessed" in course.progress ? formatDate(course.progress.lastAccessed) : "Unknown date"}</span>
                                       </div>
                                     </div>
                                   </div>
                                 </div>
                                 <Separator className="my-4" />
-                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                   <div>
                                     <p className="text-sm text-slate-600 dark:text-slate-400">Certificate:</p>
                                     <p className="font-medium text-blue-600 dark:text-blue-400">
@@ -744,7 +771,7 @@ export default function DashboardPage() {
                                   <div className="flex items-center gap-2">
                                     <Button
                                       variant="outline"
-                                      className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                                      className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
                                       asChild
                                     >
                                       <Link href={`/course/${course.courseId}`}>
@@ -753,10 +780,10 @@ export default function DashboardPage() {
                                     </Button>
                                     {!certificates.some(cert => cert.courseId === course.courseId) && (
                                       <Button 
-                                        className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white"
+                                        className="text-white bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
                                         onClick={() => handleRequestCertificate(course.courseId)}
                                       >
-                                        <Certificate className="mr-2 h-4 w-4" />
+                                        <Certificate className="w-4 h-4 mr-2" />
                                         Request Certificate
                                       </Button>
                                     )}
@@ -768,13 +795,13 @@ export default function DashboardPage() {
                         ))
                     ) : (
                       <div className="flex flex-col items-center justify-center py-12 text-center">
-                        <div className="rounded-full bg-blue-100 dark:bg-blue-900/30 p-6">
-                          <Trophy className="h-10 w-10 text-blue-500" />
+                        <div className="p-6 bg-blue-100 rounded-full dark:bg-blue-900/30">
+                          <Trophy className="w-10 h-10 text-blue-500" />
                         </div>
                         <h3 className="mt-4 text-lg font-medium text-slate-800 dark:text-slate-200">
                           No completed courses yet
                         </h3>
-                        <p className="mt-2 text-sm text-muted-foreground max-w-sm">
+                        <p className="max-w-sm mt-2 text-sm text-muted-foreground">
                           Keep learning and complete your courses to see them here.
                         </p>
                       </div>
@@ -784,11 +811,11 @@ export default function DashboardPage() {
 
                 <TabsContent value="archived" className="mt-0">
                   <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="rounded-full bg-blue-100 dark:bg-blue-900/30 p-6">
-                      <Bookmark className="h-10 w-10 text-blue-500" />
+                    <div className="p-6 bg-blue-100 rounded-full dark:bg-blue-900/30">
+                      <Bookmark className="w-10 h-10 text-blue-500" />
                     </div>
                     <h3 className="mt-4 text-lg font-medium text-slate-800 dark:text-slate-200">No archived courses</h3>
-                    <p className="mt-2 text-sm text-muted-foreground max-w-sm">You haven't archived any courses yet.</p>
+                    <p className="max-w-sm mt-2 text-sm text-muted-foreground">You haven't archived any courses yet.</p>
                   </div>
                 </TabsContent>
               </Tabs>
@@ -826,13 +853,13 @@ export default function DashboardPage() {
                           >
                             {getAchievementIcon(achievement)}
                           </div>
-                          <h3 className="font-bold text-lg text-slate-800 dark:text-slate-200 mb-2">
+                          <h3 className="mb-2 text-lg font-bold text-slate-800 dark:text-slate-200">
                             {achievement.title}
                           </h3>
-                          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{achievement.description}</p>
+                          <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">{achievement.description}</p>
                           {achievement.unlocked ? (
-                            <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
-                              <CheckCircle2 className="mr-1 h-3 w-3" />
+                            <Badge className="text-green-700 bg-green-100 dark:bg-green-900 dark:text-green-300">
+                              <CheckCircle2 className="w-3 h-3 mr-1" />
                               Unlocked on {formatDate(achievement.unlockedAt)}
                             </Badge>
                           ) : (
@@ -848,12 +875,12 @@ export default function DashboardPage() {
                     </Card>
                   ))
                 ) : (
-                  <div className="col-span-full text-center py-12">
-                    <div className="mx-auto rounded-full bg-blue-100 dark:bg-blue-900/30 p-6 w-20 h-20 flex items-center justify-center mb-4">
-                      <Trophy className="h-10 w-10 text-blue-500" />
+                  <div className="py-12 text-center col-span-full">
+                    <div className="flex items-center justify-center w-20 h-20 p-6 mx-auto mb-4 bg-blue-100 rounded-full dark:bg-blue-900/30">
+                      <Trophy className="w-10 h-10 text-blue-500" />
                     </div>
-                    <h3 className="text-lg font-medium text-slate-800 dark:text-slate-200 mb-2">No achievements yet</h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                    <h3 className="mb-2 text-lg font-medium text-slate-800 dark:text-slate-200">No achievements yet</h3>
+                    <p className="max-w-md mx-auto text-sm text-slate-500 dark:text-slate-400">
                       Complete courses, participate in hackathons, and build projects to earn achievements
                     </p>
                   </div>
@@ -876,7 +903,7 @@ export default function DashboardPage() {
                   certificates.map((certificate) => (
                     <Card
                       key={certificate.id}
-                      className="overflow-hidden transition-all hover:shadow-md border-blue-200 dark:border-blue-800"
+                      className="overflow-hidden transition-all border-blue-200 hover:shadow-md dark:border-blue-800"
                     >
                       <div className="flex flex-col md:flex-row">
                         <div className="w-full md:w-2/5">
@@ -891,7 +918,7 @@ export default function DashboardPage() {
                         <div className="flex-1 p-6">
                           <div className="space-y-4">
                             <div>
-                              <h3 className="font-bold text-xl text-slate-800 dark:text-slate-200">
+                              <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">
                                 {certificate.title}
                               </h3>
                               <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -900,24 +927,24 @@ export default function DashboardPage() {
                             </div>
                             <div className="space-y-2">
                               <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                                <Calendar className="h-4 w-4 text-blue-500" />
+                                <Calendar className="w-4 h-4 text-blue-500" />
                                 <span>Issued on {formatDate(certificate.issuedAt)}</span>
                               </div>
                               <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                                <Certificate className="h-4 w-4 text-teal-500" />
+                                <Certificate className="w-4 h-4 text-teal-500" />
                                 <span>Certificate ID: {certificate.tokenId}</span>
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
                               <Button
                                 variant="outline"
-                                className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                                className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
                               >
                                 View Certificate
                               </Button>
                               <Button
                                 variant="outline"
-                                className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                                className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
                               >
                                 Share
                               </Button>
@@ -928,12 +955,12 @@ export default function DashboardPage() {
                     </Card>
                   ))
                 ) : (
-                  <div className="col-span-full text-center py-12">
-                    <div className="mx-auto rounded-full bg-blue-100 dark:bg-blue-900/30 p-6 w-20 h-20 flex items-center justify-center mb-4">
-                      <Certificate className="h-10 w-10 text-blue-500" />
+                  <div className="py-12 text-center col-span-full">
+                    <div className="flex items-center justify-center w-20 h-20 p-6 mx-auto mb-4 bg-blue-100 rounded-full dark:bg-blue-900/30">
+                      <Certificate className="w-10 h-10 text-blue-500" />
                     </div>
-                    <h3 className="text-lg font-medium text-slate-800 dark:text-slate-200 mb-2">No certificates yet</h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                    <h3 className="mb-2 text-lg font-medium text-slate-800 dark:text-slate-200">No certificates yet</h3>
+                    <p className="max-w-md mx-auto text-sm text-slate-500 dark:text-slate-400">
                       Complete courses to earn certificates that demonstrate your skills
                     </p>
                   </div>

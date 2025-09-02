@@ -23,7 +23,7 @@ export function CourseAccessGuard({
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { checkAccessStatus, loading: progressLoading } = useCourseProgress();
-  
+
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
   const [isCompleted, setIsCompleted] = useState(false);
   const [certificateIssued, setCertificateIssued] = useState(false);
@@ -32,20 +32,22 @@ export function CourseAccessGuard({
   useEffect(() => {
     const checkAccess = async () => {
       if (authLoading) return;
-      
+
       setLoading(true);
-      
+
       try {
         // If user is not logged in, redirect to login
         if (!user) {
           router.push(`/login?redirect=/course/${courseId}`);
           return;
         }
-        
-        const { hasAccess: access, enrollmentStatus } = await checkAccessStatus(courseId);
-        
+
+        const { hasAccess: access, enrollmentStatus } = await checkAccessStatus(
+          courseId
+        );
+
         setHasAccess(access);
-        
+
         if (enrollmentStatus) {
           setIsCompleted(enrollmentStatus.completed);
           setCertificateIssued(enrollmentStatus.certificateIssued);
@@ -57,7 +59,7 @@ export function CourseAccessGuard({
         setLoading(false);
       }
     };
-    
+
     checkAccess();
   }, [courseId, user, authLoading, router]);
 
@@ -65,7 +67,7 @@ export function CourseAccessGuard({
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+          <Loader2 className="w-8 h-8 mx-auto mb-4 animate-spin text-primary" />
           <p>Checking access...</p>
         </div>
       </div>
@@ -76,41 +78,35 @@ export function CourseAccessGuard({
   if (isCompleted) {
     return (
       <div className="flex items-center justify-center min-h-screen p-4">
-        <Card className="max-w-md w-full p-6 text-center">
-          <div className="flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mx-auto mb-4">
-            <CheckCircle className="h-8 w-8 text-green-600" />
+        <Card className="w-full max-w-md p-6 text-center">
+          <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full">
+            <CheckCircle className="w-8 h-8 text-green-600" />
           </div>
-          <h2 className="text-2xl font-bold mb-2">Course Completed!</h2>
-          <p className="text-muted-foreground mb-6">
+          <h2 className="mb-2 text-2xl font-bold">Course Completed!</h2>
+          <p className="mb-6 text-muted-foreground">
             Congratulations! You have successfully completed this course.
           </p>
-          
+
           {certificateIssued && (
-            <div className="mb-6 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-              <p className="text-blue-800 dark:text-blue-300 font-medium">
+            <div className="p-3 mb-6 rounded-lg bg-blue-50 dark:bg-blue-900/30">
+              <p className="font-medium text-blue-800 dark:text-blue-300">
                 Your certificate has been issued
               </p>
             </div>
           )}
-          
+
           <div className="space-y-3">
             <Button asChild className="w-full">
-              <Link href={`/course/${courseId}`}>
-                View Course Details
-              </Link>
+              <Link href={`/course/${courseId}`}>View Course Details</Link>
             </Button>
-            
+
             <Button asChild variant="outline" className="w-full">
-              <Link href="/dashboard">
-                Back to My Courses
-              </Link>
+              <Link href="/dashboard">Back to My Courses</Link>
             </Button>
-            
+
             {certificateIssued && (
               <Button asChild variant="outline" className="w-full">
-                <Link href="/dashboard">
-                  View My Certificates
-                </Link>
+                <Link href="/dashboard">View My Certificates</Link>
               </Button>
             )}
           </div>
@@ -123,28 +119,33 @@ export function CourseAccessGuard({
   if (!hasAccess) {
     return (
       <div className="flex items-center justify-center min-h-screen p-4">
-        <Card className="max-w-md w-full p-6 text-center">
-          <div className="flex items-center justify-center h-16 w-16 rounded-full bg-amber-100 mx-auto mb-4">
-            <Lock className="h-8 w-8 text-amber-600" />
+        <Card className="w-full max-w-md p-6 text-center">
+          <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full bg-amber-100">
+            <Lock className="w-8 h-8 text-amber-600" />
           </div>
-          <h2 className="text-2xl font-bold mb-2">Course Access Required</h2>
-          <p className="text-muted-foreground mb-6">
+          <h2 className="mb-2 text-2xl font-bold">Course Access Required</h2>
+          <p className="mb-6 text-muted-foreground">
             To access "{courseTitle}", you need to enroll in this course first.
           </p>
-          
+
           <div className="space-y-3">
-            <Button asChild className="w-full bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700">
+            <Button
+              asChild
+              className="w-full bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
+            >
               <Link href={`/course/${courseId}`}>
-                {parseFloat(coursePrice as string) > 0 
-                  ? `Enroll for ${typeof coursePrice === 'number' ? '$' + coursePrice : coursePrice}`
-                  : 'Enroll Now (Free)'}
+                {parseFloat(coursePrice as string) > 0
+                  ? `Enroll for ${
+                      typeof coursePrice === "number"
+                        ? "$" + coursePrice
+                        : coursePrice
+                    }`
+                  : "Enroll Now (Free)"}
               </Link>
             </Button>
-            
+
             <Button asChild variant="outline" className="w-full">
-              <Link href="/courses">
-                Browse Other Courses
-              </Link>
+              <Link href="/marketplace">Browse Other Courses</Link>
             </Button>
           </div>
         </Card>

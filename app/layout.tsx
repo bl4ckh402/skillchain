@@ -16,17 +16,28 @@ import { Toaster } from "@/components/ui/toaster";
 import { MainNav } from "@/components/main-nav";
 import { UserNav } from "@/components/user-nav";
 import { ModeToggle } from "@/components/mode-toggle";
-// import { PaymentProvider } from "@/context/PaymentProvider";
-
+import Script from "next/script";
 import { StreamClientProvider } from "@/context/StreamClientProvider";
 import { PaymentProvider } from "@/context/PaymentProvider";
-
+import { Suspense } from "react";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "SkillChain - Blockchain Education Platform",
+  title:
+    "SkillChain - Blockchain, Web3 & Artificial Intelligence Education Platform",
   description: "Learn blockchain technology through interactive courses",
-  generator: "v0.dev",
+  keywords: [
+    "blockchain",
+    "education",
+    "courses",
+    "crypto",
+    "web3",
+    "smart contracts",
+    "decentralized applications",
+    "dapps",
+    "NFTs",
+    "cryptocurrency",
+  ],
 };
 
 export default function RootLayout({
@@ -36,6 +47,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Add Paystack script for payment integration */}
+        <Script
+          src="https://js.paystack.co/v1/inline.js"
+          strategy="beforeInteractive"
+        />
+      </head>
       <body className={inter.className}>
         <ThemeProvider
           attribute="class"
@@ -44,41 +62,41 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            {/* <StreamClientProvider> */}
-            <JobsProvider>
-              <InstructorApplicationProvider>
-                <HackathonProvider>
-                  <ProjectProvider>
-                    <CourseProvider>
-                      <PaymentProvider>
-                        <CourseProgressProvider>
-                          <BootcampProvider>
-                            <CommunityProvider>
-                              <DashboardProvider>
-                                <div className="flex flex-col min-h-screen">
-                                  <header className="sticky top-0 z-40 border-b bg-background">
-                                    <div className="container flex items-center justify-between h-16 py-4">
-                                      <MainNav />
-                                      <div className="flex items-center gap-4">
-                                        <UserNav />
-                                        <ModeToggle />
+            <StreamClientProvider>
+              <JobsProvider>
+                <InstructorApplicationProvider>
+                  <HackathonProvider>
+                    <ProjectProvider>
+                      <CourseProvider>
+                        <PaymentProvider>
+                          <CourseProgressProvider>
+                            <BootcampProvider>
+                              <CommunityProvider>
+                                <DashboardProvider>
+                                  <div className="flex flex-col min-h-screen">
+                                    <header className="sticky top-0 z-40 border-b bg-background">
+                                      <div className="container flex items-center justify-between h-16 py-4">
+                                        <MainNav />
+                                        <div className="flex items-center gap-4">
+                                          <UserNav />
+                                          <ModeToggle />
+                                        </div>
                                       </div>
-                                    </div>
-                                  </header>
-                                  <main className="flex-1">{children}</main>
-                                </div>
-                                <Toaster />
-                              </DashboardProvider>
-                            </CommunityProvider>
-                          </BootcampProvider>
-                        </CourseProgressProvider>
-                      </PaymentProvider>
-                    </CourseProvider>
-                  </ProjectProvider>
-                </HackathonProvider>
-              </InstructorApplicationProvider>
-            </JobsProvider>
-            {/* </StreamClientProvider> */}
+                                    </header>
+                                    <main className="flex-1">{children}</main>
+                                  </div>
+                                  <Toaster />
+                                </DashboardProvider>
+                              </CommunityProvider>
+                            </BootcampProvider>
+                          </CourseProgressProvider>
+                        </PaymentProvider>
+                      </CourseProvider>
+                    </ProjectProvider>
+                  </HackathonProvider>
+                </InstructorApplicationProvider>
+              </JobsProvider>
+            </StreamClientProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

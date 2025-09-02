@@ -57,7 +57,7 @@ export default function JobsPage() {
     tags: [],
     experience: [],
     salaryRange: undefined,
-    search: undefined,
+    search: "",
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState("newest");
@@ -235,9 +235,10 @@ export default function JobsPage() {
     if (activeFilters.search) {
       const searchLower = activeFilters.search.toLowerCase();
       const matchesSearch =
-        job.title.toLowerCase().includes(searchLower) ||
-        job.company.toLowerCase().includes(searchLower) ||
-        job.tags.some((tag) => tag.toLowerCase().includes(searchLower));
+        (job.title && job.title.toLowerCase().includes(searchLower)) ||
+        (job.company && job.company.toLowerCase().includes(searchLower)) ||
+        (Array.isArray(job.tags) &&
+          job.tags.some((tag) => tag.toLowerCase().includes(searchLower)));
 
       if (!matchesSearch) return false;
     }
@@ -260,10 +261,12 @@ export default function JobsPage() {
 
     // Filter by tags/skills
     if (activeFilters.tags.length > 0) {
-      const hasMatchingTag = activeFilters.tags.some((tag) =>
-        job.tags.some((jobTag) =>
-          jobTag.toLowerCase().includes(tag.toLowerCase())
-        )
+      const hasMatchingTag = activeFilters.tags.some(
+        (tag) =>
+          Array.isArray(job.tags) &&
+          job.tags.some((jobTag) =>
+            jobTag.toLowerCase().includes(tag.toLowerCase())
+          )
       );
       if (!hasMatchingTag) return false;
     }
@@ -298,20 +301,24 @@ export default function JobsPage() {
       case "newest":
         return new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime();
       case "salary-high":
-        // Extract the max salary for comparison
+        // Extract the max salary for comparison, handle missing salary
         const aMax = Number.parseInt(
-          a.salary.replace(/[^0-9-]/g, "").split("-")[1] || "0"
+          (a.salary ? a.salary.replace(/[^0-9-]/g, "") : "0").split("-")[1] ||
+            "0"
         );
         const bMax = Number.parseInt(
-          b.salary.replace(/[^0-9-]/g, "").split("-")[1] || "0"
+          (b.salary ? b.salary.replace(/[^0-9-]/g, "") : "0").split("-")[1] ||
+            "0"
         );
         return bMax - aMax;
       case "salary-low":
         const aMin = Number.parseInt(
-          a.salary.replace(/[^0-9-]/g, "").split("-")[0] || "0"
+          (a.salary ? a.salary.replace(/[^0-9-]/g, "") : "0").split("-")[0] ||
+            "0"
         );
         const bMin = Number.parseInt(
-          b.salary.replace(/[^0-9-]/g, "").split("-")[0] || "0"
+          (b.salary ? b.salary.replace(/[^0-9-]/g, "") : "0").split("-")[0] ||
+            "0"
         );
         return aMin - bMin;
       case "relevance":
@@ -352,29 +359,37 @@ export default function JobsPage() {
 
   // Categorize jobs by field
   const jobsByCategory = {
-    development: sortedJobs.filter((job) =>
-      job.tags.some((tag) =>
-        [
-          "Solidity",
-          "Smart Contracts",
-          "Web3.js",
-          "Ethereum",
-          "React",
-        ].includes(tag)
-      )
+    development: sortedJobs.filter(
+      (job) =>
+        Array.isArray(job.tags) &&
+        job.tags.some((tag) =>
+          [
+            "Solidity",
+            "Smart Contracts",
+            "Web3.js",
+            "Ethereum",
+            "React",
+          ].includes(tag)
+        )
     ),
-    design: sortedJobs.filter((job) =>
-      job.tags.some((tag) => ["UI", "UX", "Design", "Figma"].includes(tag))
+    design: sortedJobs.filter(
+      (job) =>
+        Array.isArray(job.tags) &&
+        job.tags.some((tag) => ["UI", "UX", "Design", "Figma"].includes(tag))
     ),
-    marketing: sortedJobs.filter((job) =>
-      job.tags.some((tag) =>
-        ["Marketing", "Content", "Social Media", "Growth"].includes(tag)
-      )
+    marketing: sortedJobs.filter(
+      (job) =>
+        Array.isArray(job.tags) &&
+        job.tags.some((tag) =>
+          ["Marketing", "Content", "Social Media", "Growth"].includes(tag)
+        )
     ),
-    business: sortedJobs.filter((job) =>
-      job.tags.some((tag) =>
-        ["Product Management", "Finance", "DeFi"].includes(tag)
-      )
+    business: sortedJobs.filter(
+      (job) =>
+        Array.isArray(job.tags) &&
+        job.tags.some((tag) =>
+          ["Product Management", "Finance", "DeFi"].includes(tag)
+        )
     ),
   };
 
@@ -407,8 +422,11 @@ export default function JobsPage() {
                         src={job.logo || "/placeholder.svg"}
                         alt={job.company}
                       />
-                      <AvatarFallback className="text-sm text-blue-600 bg-blue-100 dark:bg-blue-900 dark:text-blue-300 sm:text-base">
+                      {/* <AvatarFallback className="text-sm text-blue-600 bg-blue-100 dark:bg-blue-900 dark:text-blue-300 sm:text-base">
                         {job.company.charAt(0)}
+                      </AvatarFallback> */}
+                      <AvatarFallback className="text-sm text-blue-600 bg-blue-100 dark:bg-blue-900 dark:text-blue-300 sm:text-base">
+                        {(job.company && job.company.charAt(0)) || "?"}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex items-center gap-2 lg:hidden">
@@ -436,27 +454,48 @@ export default function JobsPage() {
                         {job.company}
                       </div>
                     </div>
-                    <div className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 lg:line-clamp-3">
+                    {/* Card for showing fful job descrption and requiremenr with bid button */}
+                    {/* <Card>
+                      <CardHeader>
+                        <CardTitle>Job Description</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <WysiwygDisplayer content={job.description} />
+                        <Button
+                          className="mt-6 text-white bg-gradient-to-r from-blue-600 to-teal-600"
+                          asChild
+                        >
+                          <Link href={`/jobs/${job.id}/bid`}>
+                            Bid for this Job
+                          </Link>
+                        </Button>
+                      </CardContent>
+                    </Card> */}
+
+                    {/* <div className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 lg:line-clamp-3">
                       <WysiwygDisplayer content={job.description} />
-                    </div>
+                    </div> */}
                     <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                      {job.tags.slice(0, isMobile ? 2 : 3).map((tag, index) => (
-                        <Badge
-                          key={index}
-                          variant="secondary"
-                          className="text-xs font-normal text-blue-700 bg-blue-100 hover:bg-blue-200 dark:text-blue-300 dark:bg-blue-900 dark:hover:bg-blue-800 sm:text-sm"
-                        >
-                          {tag}
-                        </Badge>
-                      ))}
-                      {job.tags.length > (isMobile ? 2 : 3) && (
-                        <Badge
-                          variant="outline"
-                          className="text-xs font-normal sm:text-sm"
-                        >
-                          +{job.tags.length - (isMobile ? 2 : 3)} more
-                        </Badge>
-                      )}
+                      {(Array.isArray(job.tags) ? job.tags : [])
+                        .slice(0, isMobile ? 2 : 3)
+                        .map((tag, index) => (
+                          <Badge
+                            key={index}
+                            variant="secondary"
+                            className="text-xs font-normal text-blue-700 bg-blue-100 hover:bg-blue-200 dark:text-blue-300 dark:bg-blue-900 dark:hover:bg-blue-800 sm:text-sm"
+                          >
+                            {tag}
+                          </Badge>
+                        ))}
+                      {Array.isArray(job.tags) &&
+                        job.tags.length > (isMobile ? 2 : 3) && (
+                          <Badge
+                            variant="outline"
+                            className="text-xs font-normal sm:text-sm"
+                          >
+                            +{job.tags.length - (isMobile ? 2 : 3)} more
+                          </Badge>
+                        )}
                     </div>
                   </div>
 
@@ -694,14 +733,15 @@ export default function JobsPage() {
           <div className="container px-4 sm:px-6 lg:px-8">
             <div className="max-w-2xl mx-auto md:mx-0">
               <Badge className="px-3 py-1 mb-3 text-sm text-white bg-blue-500 sm:mb-4 hover:bg-blue-600">
-                Web3 Careers
+                Freelancer's Hub
               </Badge>
               <h1 className="mb-4 text-2xl font-extrabold leading-tight tracking-tight sm:mb-6 sm:text-3xl lg:text-4xl xl:text-5xl text-slate-800 dark:text-slate-100">
-                Blockchain & Web3 Jobs
+                Bid on Projects. Showcase Your Skills.
               </h1>
-              <p className="mb-6 text-base sm:mb-8 sm:text-lg text-muted-foreground">
-                Find the best blockchain and Web3 jobs from top companies
-                worldwide
+              <p className="max-w-2xl mb-6 text-base sm:mb-8 sm:text-lg text-muted-foregroun">
+                Discover exciting freelance opportunities tailored to your
+                expertise. Connect with clients, submit your bids, and land the
+                jobs that fit you best.
               </p>
               <form
                 onSubmit={handleSearch}
@@ -1163,15 +1203,18 @@ export default function JobsPage() {
               <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
                 <div>
                   <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">
-                    Looking for blockchain talent?
+                    Looking for talent?
                   </h2>
                   <p className="text-muted-foreground">
-                    Post your job listing and reach thousands of qualified
-                    blockchain professionals
+                    Find your perfect freelancer – from code to creativity,
+                    we’ve got you covered.
                   </p>
                 </div>
-                <Button className="w-full px-6 text-white md:w-auto bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700">
-                  Post a Job
+                <Button
+                  className="w-full px-6 text-white md:w-auto bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
+                  asChild
+                >
+                  <Link href="/jobs/dashboard/client">Post a Job </Link>
                 </Button>
               </div>
             </div>

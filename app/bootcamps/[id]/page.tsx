@@ -113,7 +113,7 @@ const LiveClassRoom = ({
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
 
-  // WebRTC Setup       
+  // WebRTC Setup
   const initializeWebRTC = useCallback(async () => {
     try {
       // Get user media
@@ -159,21 +159,19 @@ const LiveClassRoom = ({
 
   const toggleVideo = () => {
     if (localStreamRef.current) {
-      const videoTrack = localStreamRef.current.getVideoTracks()[0];
-      if (videoTrack) {
-        videoTrack.enabled = !videoTrack.enabled;
-        setIsVideoOn(videoTrack.enabled);
-      }
+      localStreamRef.current.getVideoTracks().forEach((track) => {
+        track.enabled = !isVideoOn;
+      });
+      setIsVideoOn((prev) => !prev);
     }
   };
 
   const toggleAudio = () => {
     if (localStreamRef.current) {
-      const audioTrack = localStreamRef.current.getAudioTracks()[0];
-      if (audioTrack) {
-        audioTrack.enabled = !audioTrack.enabled;
-        setIsAudioOn(audioTrack.enabled);
-      }
+      localStreamRef.current.getAudioTracks().forEach((track) => {
+        track.enabled = !isAudioOn;
+      });
+      setIsAudioOn((prev) => !prev);
     }
   };
 

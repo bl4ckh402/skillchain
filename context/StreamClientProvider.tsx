@@ -320,9 +320,24 @@ export const StreamClientProvider = ({ children }: { children: ReactNode }) => {
             try {
               await callObject.get();
             } catch (getError) {
-              // If get fails and create is false, try getOrCreate as fallback
-              console.log("Call not found, attempting to create...");
-              await callObject.getOrCreate();
+              if (
+                !(
+                  getError &&
+                  typeof getError === "object" &&
+                  getError !== null &&
+                  "message" in getError &&
+                  typeof (getError as { message: unknown }).message ===
+                    "string" &&
+                  (getError as { message: string }).message.includes(
+                    "Can't find call with id"
+                  )
+                )
+              ) {
+                console.error("Unexpected error getting call:", getError);
+                throw getError;
+              } else {
+                await callObject.getOrCreate();
+              }
             }
           }
 

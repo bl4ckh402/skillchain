@@ -108,12 +108,14 @@ export default function InstructorsClient() {
     "Blockchain Architecture",
     "Cryptography",
     "dApp Development",
+    "Artificial Intelligence",
   ];
   const fetchInstructors = async (filterChanged = false) => {
     try {
       if (filterChanged) {
         setLoading(true);
         setLastVisible(null);
+         setInstructors([]); // Clear existing instructors when filter changes
       } else {
         setLoadingMore(true);
       }
@@ -126,13 +128,13 @@ export default function InstructorsClient() {
       );
 
       // Add expertise filter if selected
-      if (expertiseFilter !== "all") {
-        // Note: This might need adjustment based on your data structure
-        instructorsQuery = query(
+       if (expertiseFilter !== "all") {
+      //   // Note: This might need adjustment based on your data structure
+       instructorsQuery = query(
           instructorsQuery,
           where("expertise", "array-contains", expertiseFilter)
         );
-      }
+       }
 
       //   instructorsQuery = query(
 

@@ -106,7 +106,7 @@ const dialogStyles = `
     to { opacity: 0; }
   }
 `;
-<!-- =======
+
 // Enhanced navigation item structure for better organization and maintenance
 interface NavigationItem {
   href: string;
@@ -116,7 +116,6 @@ interface NavigationItem {
   badge?: string;
   external?: boolean;
 }
-
 
 // Mock auth hook (replace with actual auth logic)
 const useAuth = () => {
@@ -251,12 +250,24 @@ const getNavigationConfig = (
           icon: GraduationCap,
         },
         {
+          href: "/bookings",
+          title: "Bookings",
+          description: "Manage your course bookings and sessions",
+          icon: MessageSquare,
+        },
+        {
           href: "/live-session",
           title: "Live Sessions",
           description: "Join interactive live learning sessions",
           icon: Users,
         },
       ],
+    },
+    {
+      title: "Freelancer",
+      icon: Briefcase,
+      description: "Find and hire blockchain freelancers",
+      href: "/jobs",
     },
     {
       title: "Community",
@@ -276,12 +287,12 @@ const getNavigationConfig = (
           description: "Compete, build, and earn ",
           icon: Trophy,
         },
-        {
-          href: "/jobs",
-          title: "Job Board",
-          description: " Web3 and blockchain job listings",
-          icon: Briefcase,
-        },
+        // {
+        //   href: "/jobs",
+        //   title: "Job Board",
+        //   description: " Web3 and blockchain job listings",
+        //   icon: Briefcase,
+        // },
       ],
     },
   ];
@@ -310,6 +321,25 @@ const getNavigationConfig = (
           title: "Create Bootcamp",
           description: "Design intensive training programs",
           icon: GraduationCap,
+        },
+        {
+          href: "/instructor/bookings",
+          title: "Manage Bookings",
+          description: "Handle course bookings and student sessions",
+          icon: Users,
+        },
+
+        {
+          href: "/instructor/students",
+          title: "Student Management",
+          description: "Manage your students and their progress",
+          icon: Users,
+        },
+        {
+          href: "/instructor/earnings",
+          title: "Earnings & Payments",
+          description: "Track your earnings and payment history",
+          icon: Briefcase,
         },
       ],
     });
@@ -536,6 +566,36 @@ export function MainNav() {
               >
                 {navigationConfig.map((section) => {
                   const sectionActive = isSectionActive(section);
+
+                  if (section.title === "Freelancer") {
+                    return (
+                      <NavigationMenuItem key={section.title}>
+                        <Link
+                          href={section.href || "#"}
+                          legacyBehavior
+                          passHref
+                        >
+                          <NavigationMenuLink
+                            className={cn(
+                              navigationMenuTriggerStyle(),
+                              "transition-all duration-200 text-sm font-semibold bg-yellow-400/90 text-black shadow-lg hover:bg-yellow-300 px-4 py-2 rounded-full border-2 border-yellow-500",
+                              sectionActive && "ring-2 ring-yellow-500"
+                            )}
+                            style={{ fontWeight: 700, letterSpacing: 0.5 }}
+                            title="Post jobs for freelancers to apply and for freelancers to get gigs and projects."
+                          >
+                            {section.icon && (
+                              <section.icon className="flex-shrink-0 w-5 h-5 mr-2" />
+                            )}
+                            <span className="truncate">{section.title}</span>
+                            <span className="ml-2 px-2 py-0.5 rounded-full bg-yellow-500 text-xs font-bold text-white">
+                              HOT
+                            </span>
+                          </NavigationMenuLink>
+                        </Link>
+                      </NavigationMenuItem>
+                    );
+                  }
 
                   if (section.items && section.items.length > 0) {
                     return (

@@ -223,8 +223,8 @@ export default function BecomeInstructorPage() {
                   Become an Instructor
                 </h1>
                 <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
-                  Share your blockchain knowledge with our community and earn
-                  while teaching others
+                  Share your Web3 & Artificial Intelligence knowledge with our
+                  community and earn while teaching others
                 </p>
               </div>
             </div>
@@ -357,11 +357,12 @@ export default function BecomeInstructorPage() {
                         <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5" />
                         <div>
                           <p className="font-medium">
-                            Expertise in blockchain technology
+                            Expertise in Web3 & AI technology
                           </p>
                           <p className="text-sm text-muted-foreground">
                             You should have practical experience or deep
-                            knowledge in at least one blockchain area
+                            knowledge in at least one Web3, and Artificial
+                            Intelligence area
                           </p>
                         </div>
                       </div>
@@ -474,12 +475,12 @@ export default function BecomeInstructorPage() {
                           name="expertise"
                           value={formData.expertise}
                           onChange={handleInputChange}
-                          placeholder="Describe your areas of expertise in blockchain technology"
+                          placeholder="Describe your areas of expertise in AI and Web3 technology"
                           rows={4}
                           required
                         />
                         <p className="text-sm text-muted-foreground">
-                          Examples: Smart Contract Development, DeFi, NFTs,
+                          Examples: Smart Contract Development, AI, NFTs,
                           Blockchain Architecture, etc.
                         </p>
                       </div>
