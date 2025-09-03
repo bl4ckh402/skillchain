@@ -20,6 +20,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { UserCredential } from "firebase/auth";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
   const { user } = useAuth();
@@ -27,6 +28,7 @@ export default function LoginPage() {
   const { signIn, signInWithGoogle, signInWithGithub } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   // If user is already logged in, redirect to dashboard
   if (user) {
     router.push("/dashboard");
@@ -140,8 +142,28 @@ export default function LoginPage() {
                     Forgot password?
                   </Link>
                 </div>
-                <Input id="password" name="password" type="password" required />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="absolute -translate-y-1/2 right-2 top-1/2 text-muted-foreground"
+                    tabIndex={-1}
+                    onClick={() => setShowPassword((v) => !v)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
               </div>
+
               <Button className="w-full" type="submit" disabled={loading}>
                 {loading ? "Logging in..." : "Login"}
               </Button>
