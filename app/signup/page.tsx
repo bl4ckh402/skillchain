@@ -16,7 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Footer } from "@/components/footer";
-import { toast } from "@/components/ui/use-toast";
+import { toast, useToast } from "@/components/ui/use-toast";
 import { Eye, EyeOff } from "lucide-react";
 interface FormData {
   firstName: string;
@@ -43,6 +43,8 @@ export default function SignupPage() {
   }, [user, router]);
   const { signUp, signInWithGoogle, signInWithGithub } = useAuth();
   const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+
   const [formData, setFormData] = useState<FormData>({
     firstName: "",
     lastName: "",
@@ -109,31 +111,68 @@ export default function SignupPage() {
 
     setLoading(true);
     try {
-      const userCredential = await signUp(
-        formData.email,
-        formData.password,
-        formData.firstName,
-        formData.lastName
-      );
-      toast({
-        title: "Success",
-        description: "Your account has been created successfully",
-      });
+      // create the user
+    await signUp(
+      formData.email,
+      formData.password,
+      formData.firstName,
+      formData.lastName
+    );
 
-      // redirect to 2FA setup
-      //router.push("/setup-2fa");
+    toast({
+      title: "Success",
+      description: "Your account has been created successfully",
+    });
 
-      router.push("/dashboard");
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+    // Since signUp returns void, we don't have a UID here.
+    // If you need the UID, you should get it from the user context after sign up.
+    // For now, we'll just use the email for the 2FA step.
+
+    await fetch("/api/token/verify-2fa", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: formData.email,
+      }),
+    });
+
+    // Store pending user info in localStorage (without UID)
+    localStorage.setItem(
+      "pendingUser",
+      JSON.stringify({
+        email: formData.email,
+        provider: "password",
+      })
+    );
+
+    toast({
+      title: "Success",
+      description: "Account created! Please verify your email with the code sent.",
+    });
+
+    router.push(`/verify-2fa?email=${encodeURIComponent(formData.email)}`);
+  } catch (error: any) {
+    toast({
+      title: "Error",
+      description: error.message,
+      variant: "destructive",
+    });
+  } finally {
+    setLoading(false);
+  }
+};
+
+  //     router.push("/dashboard");
+  //   } catch (error: any) {
+  //     toast({
+  //       title: "Error",
+  //       description: error.message,
+  //       variant: "destructive",
+  //     });
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const handleGoogleSignIn = async () => {
     try {
