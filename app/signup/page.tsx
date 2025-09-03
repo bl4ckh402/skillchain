@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Footer } from "@/components/footer";
 import { toast } from "@/components/ui/use-toast";
-
+import { Eye, EyeOff } from "lucide-react";
 interface FormData {
   firstName: string;
   lastName: string;
@@ -54,15 +54,29 @@ export default function SignupPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [id === "first-name"
-        ? "firstName"
-        : id === "last-name"
-        ? "lastName"
-        : id]: type === "checkbox" ? checked : value,
-    }));
+    setFormData((prev) => {
+      const updated = {
+        ...prev,
+        [id === "first-name"
+          ? "firstName"
+          : id === "last-name"
+          ? "lastName"
+          : id]: type === "checkbox" ? checked : value,
+      };
+
+      if (id === "password" || id === "confirmPassword") {
+        setPasswordsMatch(
+          id === "password"
+            ? value === prev.confirmPassword
+            : prev.password === value
+        );
+      }
+      return updated;
+    });
   };
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordsMatch, setPasswordsMatch] = useState(true);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -182,38 +196,58 @@ export default function SignupPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="absolute -translate-y-1/2 right-2 top-1/2 text-muted-foreground"
+                    tabIndex={-1}
+                    onClick={() => setShowPassword((v) => !v)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+
                 <p className="text-xs text-muted-foreground">
                   Password must be at least 8 characters long
                 </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirm-password">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="absolute -translate-y-1/2 right-2 top-1/2 text-muted-foreground"
+                    tabIndex={-1}
+                    onClick={() => setShowConfirmPassword((v) => !v)}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+                {!passwordsMatch && (
+                  <p className="text-xs text-red-600">Passwords do not match</p>
+                )}
               </div>
               <div className="flex items-center space-x-2">
                 <input

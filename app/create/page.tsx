@@ -838,7 +838,12 @@ s
 
     // Initialize content object if it doesn't exist
     if (!updatedModules[moduleIndex].lessons[lessonIndex].content) {
-      updatedModules[moduleIndex].lessons[lessonIndex].content = {};
+      updatedModules[moduleIndex].lessons[lessonIndex].content = {
+        videoUrl: "",
+        description: "",
+        transcript: "",
+        attachments: [],
+      };
     }
 
     // Update attachments
@@ -2079,9 +2084,7 @@ s
                                                                   <div className="min-h-[250px] sm:min-h-[300px] border border-blue-100 dark:border-blue-900 rounded-md overflow-hidden">
                                                                     <TipTapEditor
                                                                       value={
-                                                                        lesson
-                                                                          .content
-                                                                          ?.textContent ||
+                                                                        (lesson.content as { textContent?: string })?.textContent ||
                                                                         ""
                                                                       }
                                                                       onChange={(

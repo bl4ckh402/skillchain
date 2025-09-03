@@ -920,7 +920,11 @@ export default function CommunityPage() {
                             <span>
                               {typeof event.date === "string"
                                 ? event.date
-                                : new Date(event.date).toLocaleDateString()}
+                                : (event.date instanceof Date
+                                    ? event.date.toLocaleDateString()
+                                    : typeof event.date.toDate === "function"
+                                      ? event.date.toDate().toLocaleDateString()
+                                      : "")}
                               , {event.time}
                             </span>
                           </div>
