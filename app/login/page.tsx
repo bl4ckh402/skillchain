@@ -95,7 +95,7 @@ export default function LoginPage() {
     try {
       const signInFn =
         provider === "google" ? signInWithGoogle : signInWithGithub;
-      const userCredential: UserCredential = await signInFn();
+      const userCredential = (await signInFn?.()) as UserCredential | undefined;
       if (userCredential && userCredential.user) {
         await fetch("/api/token/verify-2fa", {
           method: "POST",
