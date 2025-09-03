@@ -40,17 +40,15 @@ interface UserProfile {
 }
 
 interface AuthContextType {
-
   enable2FA: () => Promise<{ qrCodeUrl: string; secret: string }>;
   verify2FA: (code: string) => Promise<boolean>;
   disable2FA: () => Promise<void>;
   is2FAEnabled: boolean;
-
   promoteToInstructor: (userId: string) => Promise<void>;
   user: User | null;
   userProfile: UserProfile | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<UserCredential>;
   signUp: (
     email: string,
     password: string,
@@ -65,7 +63,6 @@ interface AuthContextType {
     currentPassword: string,
     newPassword: string
   ) => Promise<void>;
-
   updateUserProfile: (data: Partial<UserProfile>) => Promise<void>;
 }
 
@@ -75,46 +72,97 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-const [is2FAEnabled, setIs2FAEnabled] = useState(false);
+  const [is2FAEnabled, setIs2FAEnabled] = useState(false);
 
-const enable2FA = async () => {
-  if (!user) throw new Error("User not authenticated");
-  try {
-    const response = await fetch("/api/auth/enable-2fa", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${await getIdToken(user)}`,
-      },
-    });
-    if (!response.ok) throw new Error("Failed to enable 2FA");
+  // Fetch user profile from Firestore
+  const fetchUserProfile = async (uid: string) => {
+    const userDoc = await getDoc(doc(db, "users", uid));
+    return userDoc.data() as UserProfile | null;
+  };
 
-    const data = await response.json();
-    return {
-      qrCodeUrl: data.qrCodeUrl,
-      secret: data.secret,
-    };
-  } catch (error) {
-    console.error("Error enabling 2FA:", error);
-    throw error;
-  }
-};
-const verify2FA = async (code: string) => {
-  if (!user) throw new Error("User not authenticated");
-  try {
-    const response = await fetch("/api/auth/verify-2fa", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ 
-        userId: user.uid,
-        code,
-      }),
+  // Create or update user profile in Firestore
+  const createUserProfileDoc = async (
+    uid: string,
+    data: Partial<UserProfile>
+  ) => {
+    const userRef = doc(db, "users", uid);
+    await setDoc(userRef, { ...data, uid }, { merge: true });
+    return await fetchUserProfile(uid);
+  };
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+        const userData = userDoc.data();
+        if (userData?.emailVerified) {
+          setUser(firebaseUser); // Only set user if verified
+          setUserProfile({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+            photoURL: userData.photoURL,
+            enrolledCourses: userData.enrolledCourses,
+            createdCourses: userData.createdCourses,
+            role: userData.role,
+            is2FAEnabled: userData.is2FAEnabled,
+            twoFactorSecret: userData.twoFactorSecret,
+          });
+        } else {
+          setUser(null); // Not verified, not logged in
+          setUserProfile(null);
+        }
+      } else {
+        setUser(null);
+        setUserProfile(null);
+      }
+      setLoading(false);
     });
-    if (!response.ok) throw new Error("Invalid Verification code");
-      
- setIs2FAEnabled(true);
+
+    return () => unsubscribe();
+  }, []);
+
+  const enable2FA = async () => {
+    if (!user) throw new Error("User not authenticated");
+    try {
+      // const response = await fetch("/api/auth/enable-2fa", {
+      const response = await fetch("/api/token/generate-2fa", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${await getIdToken(user)}`,
+        },
+      });
+      if (!response.ok) throw new Error("Failed to enable 2FA");
+
+      const data = await response.json();
+      return {
+        qrCodeUrl: data.qrCodeUrl,
+        secret: data.secret,
+      };
+    } catch (error) {
+      console.error("Error enabling 2FA:", error);
+      throw error;
+    }
+  };
+
+  const verify2FA = async (code: string) => {
+    if (!user) throw new Error("User not authenticated");
+    try {
+      const response = await fetch("/api/auth/verify-2fa", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: user.uid,
+          code,
+        }),
+      });
+      if (!response.ok) throw new Error("Invalid Verification code");
+
+      setIs2FAEnabled(true);
       return true;
     } catch (error) {
       console.error("Error verifying 2FA:", error);
@@ -124,7 +172,7 @@ const verify2FA = async (code: string) => {
 
   const disable2FA = async () => {
     if (!user) throw new Error("Must be logged in");
-    
+
     try {
       const response = await fetch("/api/auth/2fa/disable", {
         method: "POST",
@@ -149,40 +197,6 @@ const verify2FA = async (code: string) => {
     }
   };
 
-
-
-  // Fetch user profile from Firestore
-  const fetchUserProfile = async (uid: string) => {
-    const userDoc = await getDoc(doc(db, "users", uid));
-    return userDoc.data() as UserProfile | null;
-  };
-
-  // Create or update user profile in Firestore
-  const createUserProfile = async (uid: string, data: Partial<UserProfile>) => {
-    const userRef = doc(db, "users", uid);
-    await setDoc(userRef, { ...data, uid }, { merge: true });
-    return await fetchUserProfile(uid);
-  };
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
-      if (user) {
-        const profile = await fetchUserProfile(user.uid);
-        setUserProfile(profile);
-      } else {
-        setUserProfile(null);
-        setIs2FAEnabled(false);
-      }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-
-
-
   const signUp = async (
     email: string,
     password: string,
@@ -194,7 +208,7 @@ const verify2FA = async (code: string) => {
       email,
       password
     );
-    await createUserProfile(user.uid, {
+    await createUserProfileDoc(user.uid, {
       email: user.email,
       firstName,
       lastName,
@@ -204,7 +218,7 @@ const verify2FA = async (code: string) => {
     });
   };
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string): Promise<UserCredential> => {
     try {
       // Sign in with Firebase Authentication
       const userCredential = await signInWithEmailAndPassword(
@@ -239,6 +253,7 @@ const verify2FA = async (code: string) => {
           }
         }
       }
+      return userCredential;
     } catch (error) {
       console.error("Error signing in:", error);
       throw error;
@@ -250,7 +265,7 @@ const verify2FA = async (code: string) => {
     const { user } = await signInWithPopup(auth, provider);
     const names = user.displayName?.split(" ") || ["", ""];
     const userDoc = await getDoc(doc(db, "users", user.uid));
-    await createUserProfile(user.uid, {
+    await createUserProfileDoc(user.uid, {
       email: user.email,
       firstName: names[0],
       lastName: names[1],
@@ -266,7 +281,7 @@ const verify2FA = async (code: string) => {
     const { user } = await signInWithPopup(auth, provider);
     const names = user.displayName?.split(" ") || ["", ""];
     const userDoc = await getDoc(doc(db, "users", user.uid));
-    await createUserProfile(user.uid, {
+    await createUserProfileDoc(user.uid, {
       email: user.email,
       firstName: names[0],
       lastName: names[1],
@@ -291,7 +306,7 @@ const verify2FA = async (code: string) => {
 
   const updateUserProfile = async (data: Partial<UserProfile>) => {
     if (!user) return;
-    await createUserProfile(user.uid, data);
+    await createUserProfileDoc(user.uid, data);
     const updatedProfile = await fetchUserProfile(user.uid);
     setUserProfile(updatedProfile);
   };
@@ -304,7 +319,7 @@ const verify2FA = async (code: string) => {
       setUserProfile(updatedProfile);
     }
   };
-  
+
   const updatePassword = async (
     currentPassword: string,
     newPassword: string
@@ -328,7 +343,7 @@ const verify2FA = async (code: string) => {
       throw error;
     }
   };
-  
+
   const value = {
     user,
     userProfile,
