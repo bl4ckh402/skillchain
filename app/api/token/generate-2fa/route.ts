@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/firebase-admin";
-import speakeasy from "speakeasy";
-import QRCode from "qrcode";
+import { db } from "@/lib/firebase-admin";
+import { sendEmail } from "@/lib/email";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,25 +19,37 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    // Generate a new secret
-    const secret = speakeasy.generateSecret({
-      length: 20,
-      name: `SkillChain:${decodedToken.email}`,
-    });
+    const email = decodedToken.email;
+    const uid = decodedToken.uid;
 
-    // Generate QR code
-    if (!secret.otpauth_url) {
-      return NextResponse.json({ message: "Failed to generate OTP URL" }, { status: 500 });
+    // Generate a 6-digit code
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+    // Store code and expiry in Firestore
+    // Store code and expiry in Firestore
+    await db.collection("users").doc(uid).set(
+      {
+        twoFactor: {
+          code,
+          expiresAt,
+        },
+      },
+      { merge: true }
+    );
+    // Send code via email
+    if (!email) {
+      return NextResponse.json({ message: "Email not found in token" }, { status: 400 });
     }
-    
-    const qrCodeUrl = await QRCode.toDataURL(secret.otpauth_url);
-
-    return NextResponse.json({
-      secret: secret.base32,
-      qrCodeUrl: qrCodeUrl,
+    await sendEmail({
+      to: email,
+      subject: "Your SkillChain Verification Code",
+      text: `Your verification code is: ${code}`,
     });
+
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error generating 2FA secret:", error);
+    console.error("Error generating 2FA code:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

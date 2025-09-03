@@ -1,35 +1,21 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { doc, getDoc } from "firebase/firestore";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from "@/lib/firebase";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 
-export default function VerifyTwoFactorPage() {
+export default function VerifyEmailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
 
-  const [verificationCode, setVerificationCode] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [verifying, setVerifying] = useState(false);
-  const [error, setError] = useState("");
+  const [code, setCode] = useState("");
+  const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
-  const [secret, setSecret] = useState("");
 
   useEffect(() => {
     const emailParam = searchParams.get("email");
@@ -37,139 +23,79 @@ export default function VerifyTwoFactorPage() {
       router.push("/login");
       return;
     }
-
     setEmail(emailParam);
-    setLoading(false);
   }, [router, searchParams]);
 
-  const verifyCode = async () => {
-    if (!verificationCode || verificationCode.length !== 6) {
-      setError("Please enter a valid 6-digit verification code");
-      return;
-    }
-
-    setVerifying(true);
-    setError("");
-
+  const handleVerify = async () => {
+    setLoading(true);
     try {
-      // Get user document from Firebase to fetch the 2FA secret
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        searchParams.get("temp") || ""
+      // Get user UID by email (use your existing API)
+      const res = await fetch(
+        `/api/user-by-email?email=${encodeURIComponent(email)}`
       );
-      const userId = userCredential.user.uid;
+      const { uid } = await res.json();
+      if (!uid) throw new Error("User not found");
 
-      const userDoc = await getDoc(doc(db, "users", userId));
-      if (!userDoc.exists()) {
-        throw new Error("User not found");
-      }
-
+      // Get code from Firestore
+      const userDoc = await getDoc(doc(db, "users", uid));
       const userData = userDoc.data();
-      const userSecret = userData.twoFactorSecret;
+      const verification = userData?.emailVerification;
 
-      if (!userSecret) {
-        throw new Error("Two-factor authentication not set up properly");
+      if (!verification || !verification.code || !verification.expiresAt) {
+        throw new Error("No verification code found.");
+      }
+      if (Date.now() > verification.expiresAt) {
+        throw new Error("Verification code expired.");
+      }
+      if (verification.code !== code) {
+        throw new Error("Invalid code.");
       }
 
-      // Verify the code
-      const response = await fetch("/api/token/verify-2fa", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${await userCredential.user.getIdToken()}`,
-        },
-        body: JSON.stringify({
-          secret: userSecret,
-          token: verificationCode,
-        }),
+      // Mark email as verified
+      await updateDoc(doc(db, "users", uid), {
+        emailVerified: true,
+        "emailVerification.code": "",
+        "emailVerification.expiresAt": 0,
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to verify code");
-      }
-
-      const data = await response.json();
-
-      if (data.valid) {
-        toast({
-          title: "Success",
-          description: "Two-factor authentication verified successfully",
-        });
-
-        // Redirect to dashboard or the intended page
-        router.push("/dashboard");
-      } else {
-        setError("Invalid verification code. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error verifying 2FA code:", error);
-      setError("Failed to verify code. Please try again.");
+      toast({ title: "Success", description: "Email verified!" });
+      router.push("/dashboard");
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive",
+      });
     } finally {
-      setVerifying(false);
+      setLoading(false);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex items-center justify-center flex-1 py-12">
         <Card className="max-w-sm mx-auto">
           <CardHeader>
-            <CardTitle>Two-Factor Verification</CardTitle>
-            <CardDescription>
-              Enter the verification code from your authenticator app
-            </CardDescription>
+            <CardTitle>Email Verification</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="w-4 h-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            <div className="space-y-2">
-              <Input
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={6}
-                placeholder="000000"
-                value={verificationCode}
-                onChange={(e) =>
-                  setVerificationCode(e.target.value.replace(/[^0-9]/g, ""))
-                }
-                className="text-lg text-center"
-              />
-              <p className="text-xs text-center text-muted-foreground">
-                Open your authenticator app to view your verification code
-              </p>
-            </div>
-          </CardContent>
-          <CardFooter>
+            <Input
+              type="text"
+              placeholder="Enter verification code"
+              value={code}
+              onChange={(e) =>
+                setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+              }
+              className="text-lg text-center"
+            />
             <Button
-              onClick={verifyCode}
-              disabled={verifying}
+              onClick={handleVerify}
+              disabled={loading}
               className="w-full"
             >
-              {verifying ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Verifying...
-                </>
-              ) : (
-                "Verify"
-              )}
+              {loading ? "Verifying..." : "Verify"}
             </Button>
-          </CardFooter>
+          </CardContent>
         </Card>
       </main>
     </div>

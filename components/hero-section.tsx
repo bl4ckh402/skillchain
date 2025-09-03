@@ -9,10 +9,19 @@ export function HeroSection() {
           <div className="flex flex-col justify-center space-y-4">
             <div className="space-y-2">
               <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
-                Master Web3 & AI Technology
+                Master {""}
+                <span className="text-transparent bg-gradient-to-r from-teal-500 to-blue-500 dark:from-green-400 dark:to-teal-400 bg-clip-text">
+                  Web3{" "}
+                </span>{" "}
+                &amp;
+                <span className="text-transparent bg-gradient-to-r from-teal-500 to-blue-500 dark:from-green-400 dark:to-teal-400 bg-clip-text">
+                  {" "}
+                  AI
+                </span>
+                <br />
               </h1>
               <p className="max-w-[600px] text-muted-foreground md:text-xl">
-                Learn Web3 development, cryptocurrency, and Artifical
+                Learn Web3 development, cryptocurrency, and Artificial
                 Intelligence from industry experts. Create, share, and monetize
                 your knowledge.
               </p>
