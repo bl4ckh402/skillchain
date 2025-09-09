@@ -146,13 +146,14 @@ export default function BlogPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen w-full bg-white dark:bg-[#0a101a]">
-      <div className="flex-1 px-4 py-10 mx-auto max-w-7xl sm:px-6 lg:px-8">
-        <h1 className="mb-6 text-3xl font-bold">SkillChain Blog</h1>
-        <p className="mb-8 text-muted-foreground">
-          Your trusted source for AI and Web3 insights, news, and
-          tutorials—simplifying the future of technology for everyone
-        </p>
+
+    <div className="w-full min-h-screen py-10 px-4 bg-white dark:bg-[#0a101a]">
+      <h1 className="mb-6 text-3xl font-bold">SkillChain Blog</h1>
+      <p className="mb-8 text-muted-foreground">
+        Your trusted source for AI and Web3 insights, news, and
+        tutorials—simplifying the future of technology for everyone
+      </p>
+
 
         {authLoading ? (
           <div>Loading...</div>
@@ -191,14 +192,56 @@ export default function BlogPage() {
     p-2
    
   "
-                >
-                  <CKEditor
-                    editor={ClassicEditor}
-                    data={form.content}
-                    onChange={(_, editor) => {
-                      const data = editor.getData();
-                      setForm((prev) => ({ ...prev, content: data }));
-                    }}
+
+              >
+                <CKEditor
+                  editor={ClassicEditor}
+                  data={form.content}
+                  onChange={(_, editor) => {
+                    const data = editor.getData();
+                    setForm((prev) => ({ ...prev, content: data }));
+                  }}
+                />
+              </div>
+              <Button type="submit" disabled={submitting || imageUploading}>
+                {submitting || imageUploading ? "Publishing..." : "Publish"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {loading ? (
+        <div>Loading blogs...</div>
+      ) : (
+        <div className="grid gap-8-cols-1 sm:grid-cols-2 lg:grid-cols-3 ">
+          {blogs.length === 0 && (
+            <div className="text-muted-foreground">No blog posts yet.</div>
+          )}
+          {blogs.map((blog) => (
+            <Card key={blog.id}>
+              <CardHeader>
+                <Link href={`/blog/${blog.id}`}>
+                  <CardTitle className="text-green-600 cursor-pointer hover:underline">
+                    {blog.title}
+                  </CardTitle>
+                </Link>
+                <div className="text-xs text-muted-foreground">
+                  By {blog.author} •{" "}
+                  {blog.date
+                    ? typeof blog.date === "object" && "toDate" in blog.date
+                      ? blog.date.toDate().toLocaleDateString()
+                      : new Date(blog.date).toLocaleDateString()
+                    : ""}
+                </div>
+              </CardHeader>
+              <CardContent>
+                {blog.imageUrl && (
+                  <img
+                    src={blog.imageUrl}
+                    alt={blog.title}
+                    className="object-cover w-full mb-4 rounded max-h-64"
+
                   />
                 </div>
                 <Button type="submit" disabled={submitting || imageUploading}>
