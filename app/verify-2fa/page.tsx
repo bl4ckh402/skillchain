@@ -29,7 +29,7 @@ export default function VerifyEmailPage() {
   const handleVerify = async () => {
     setLoading(true);
     try {
-      // Get user UID by email (use your existing API)
+      // Get user UID by email
       const res = await fetch(
         `/api/user-by-email?email=${encodeURIComponent(email)}`
       );

@@ -122,18 +122,42 @@ export default function SignupPage() {
       toast({
         title: " Registration Successful",
         description: "Your account has been created successfully",
-        variant: "success",
+        variant: "default",
       });
 
-      // Since signUp returns void, we don't have a UID here.
-      // If you need the UID, you should get it from the user context after sign up.
-      // For now, we'   just use the email for the 2FA step.
+      const res = await fetch(
+        `/api/user-by-email?email=${encodeURIComponent(formData.email)}`
+      );
+      // const { uid } = await res.json();
+      // console.log("UID from /api/user-by-email:", uid);
+
+      // if (!uid) {
+      //   throw new Error("Failed to get user UID after signup");
+      // }
+
+      let uid: string | null = null;
+      for (let i = 0; i < 5; i++) {
+        const res = await fetch(
+          `/api/user-by-email?email=${encodeURIComponent(formData.email)}`
+        );
+        const data = await res.json();
+        uid = data.uid;
+        if (uid) break;
+        // Wait 300ms before retrying
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      }
+      console.log("UID from /api/user-by-email:", uid);
+
+      if (!uid) {
+        throw new Error("Failed to get user UID after signup");
+      }
 
       await fetch("/api/token/verify-2fa", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: formData.email,
+          uid,
         }),
       });
 
