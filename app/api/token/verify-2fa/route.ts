@@ -6,6 +6,13 @@ import { doc, setDoc } from "firebase/firestore";
 export async function POST(req: NextRequest) {
   try {
     const { email, uid } = await req.json();
+    // Validate input
+    if (!email || !uid) {
+      return NextResponse.json(
+        { error: "Missing email or uid" },
+        { status: 400 }
+      );
+    }
 
     // Generate a 6-digit code
     const code = Math.floor(100000 + Math.random() * 900000).toString();

@@ -25,8 +25,7 @@ export async function POST(request: NextRequest) {
     // Generate a 6-digit code
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
-
-    // Store code and expiry in Firestore
+    console.log("Sending 2FA code to:", email, uid);
     // Store code and expiry in Firestore
     await db.collection("users").doc(uid).set(
       {
@@ -39,7 +38,10 @@ export async function POST(request: NextRequest) {
     );
     // Send code via email
     if (!email) {
-      return NextResponse.json({ message: "Email not found in token" }, { status: 400 });
+      return NextResponse.json(
+        { message: "Email not found in token" },
+        { status: 400 }
+      );
     }
     await sendEmail({
       to: email,
