@@ -74,7 +74,6 @@ export default function FreelancerDashboard() {
         estimatedDuration: duration, // Now an object!
         createdAt: new Date().toISOString(),
       }),
-      
     });
 
     setSubmitting(false);
@@ -103,7 +102,6 @@ export default function FreelancerDashboard() {
         description: "Failed to place bid. Please try again.",
         variant: "destructive",
       });
-      
     }
   };
 
@@ -120,11 +118,11 @@ export default function FreelancerDashboard() {
           </p>
         </CardHeader>
         <CardContent>
-          <h2 className="mb-4 text-lg font-semibold">Available Jobs</h2>
+          <h2 className="mb-4 text-lg font-semibold">Available Gigs</h2>
           <div className="space-y-6">
             {jobs.length === 0 && (
               <div className="text-muted-foreground">
-                No jobs available at the moment.
+                No Gigs available at the moment.
               </div>
             )}
             {jobs.map((job) => (

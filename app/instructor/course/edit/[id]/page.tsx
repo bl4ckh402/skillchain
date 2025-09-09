@@ -31,13 +31,15 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Footer } from "@/components/footer";
-import {
+import React, {
   JSXElementConstructor,
   Key,
   ReactElement,
   ReactNode,
   ReactPortal,
   use,
+  useEffect,
+  useState,
 } from "react";
 import {
   ArrowLeft,
@@ -58,13 +60,17 @@ import {
   Info,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useEffect, useState } from "react";
+
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
-export default function CourseEditPage({ params }: { params: { id: string } }) {
-  const resolvedParams = params;
-  const [course, setCourse] = useState<any>(null); // Add proper type
+export default function CourseEditPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const resolvedParams = use(params);
+  const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("basic");
   const [saveStatus, setSaveStatus] = useState<
