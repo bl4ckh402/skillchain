@@ -120,8 +120,9 @@ export default function SignupPage() {
       );
 
       toast({
-        title: "Success",
+        title: " Registration Successful",
         description: "Your account has been created successfully",
+        variant: "success",
       });
 
       // Since signUp returns void, we don't have a UID here.
@@ -224,6 +225,16 @@ export default function SignupPage() {
                 </div>
               </div>
               <div className="space-y-2">
+                {/* / <div className="relative"> */}
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                />
+                <Label htmlFor="password">Password</Label>
                 <div className="relative">
                   <Input
                     id="password"

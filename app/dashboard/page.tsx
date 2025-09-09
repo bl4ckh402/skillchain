@@ -45,13 +45,30 @@ import { useDashboard } from "@/context/DashboardProvider";
 import { useAuth } from "@/context/AuthProvider";
 import { Timestamp } from "firebase/firestore";
 import { UserAchievement } from "@/types/dashboard";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/login");
+    }
+  }, [user, loading, router]);
+
+  if (loading || !user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p>Loading...</p>
+      </div>
+    );
+  }
   const [activeTab, setActiveTab] = useState("overview");
   const {
     dashboardData,
-    loading,
+    loading: dashboardLoading,
     error,
     updateCourseProgress,
     issueCertificate,
@@ -64,7 +81,7 @@ export default function DashboardPage() {
       [jobId]: !prev[jobId],
     }));
   };
-  if (loading) {
+  if (dashboardLoading) {
     // Helper function to safely get nested properties
     const getSafe = (obj: any, path: string, fallback = "") => {
       try {
@@ -218,7 +235,7 @@ export default function DashboardPage() {
     progress?: number;
     completedLessons?: string[];
     totalLessons?: number;
-    lastAccessed?: Date | string | { toDate: () => Date };
+    lastAccessed?: Date | string | Timestamp;
     nextLesson?: string;
   };
 
@@ -446,117 +463,143 @@ export default function DashboardPage() {
                 </h2>
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {enrolledCourses.length > 0 ? (
-                    enrolledCourses.map((course, index) => (
-                      <Link
-                        href={`/course/${course.courseId}`}
-                        key={index}
-                        className="group"
-                      >
-                        <Card className="overflow-hidden transition-all hover:shadow-lg border-slate-200 dark:border-slate-800">
-                          <div className="relative w-full overflow-hidden aspect-video">
-                            <img
-                              src={course.courseData.thumbnail!}
-                              alt={course.courseData.title}
-                              className="object-cover w-full h-full transition-transform group-hover:scale-105"
-                            />
-                            <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/60 to-transparent">
-                              <div className="w-full p-4">
-                                <div className="flex items-center justify-between mb-2 text-white">
-                                  <div className="flex items-center gap-1">
-                                    <Play className="w-4 h-4" />
-                                    <span className="text-sm font-medium">
-                                      Continue
-                                    </span>
+                    enrolledCourses
+                      .filter(
+                        (course) =>
+                          typeof course.progress === "object" &&
+                          course.progress !== null
+                      )
+                      .map((course, index) => (
+                        <Link
+                          href={`/course/${course.courseId}`}
+                          key={index}
+                          className="group"
+                        >
+                          <Card className="overflow-hidden transition-all hover:shadow-lg border-slate-200 dark:border-slate-800">
+                            <div className="relative w-full overflow-hidden aspect-video">
+                              <img
+                                src={course.courseData.thumbnail!}
+                                alt={course.courseData.title}
+                                className="object-cover w-full h-full transition-transform group-hover:scale-105"
+                              />
+                              <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/60 to-transparent">
+                                <div className="w-full p-4">
+                                  <div className="flex items-center justify-between mb-2 text-white">
+                                    <div className="flex items-center gap-1">
+                                      <Play className="w-4 h-4" />
+                                      <span className="text-sm font-medium">
+                                        Continue
+                                      </span>
+                                    </div>
+                                    <div className="text-sm">
+                                      {typeof course.progress === "object" &&
+                                      course.progress !== null &&
+                                      "completedLessons" in course.progress
+                                        ? typeof course.progress === "object" &&
+                                          course.progress !== null &&
+                                          "completedLessons" in course.progress
+                                          ? (course.progress as CourseProgress).completedLessons
+                                              ?.length || 0
+                                          : 0
+                                        : 0}{" "}
+                                      lessons completed
+                                    </div>
                                   </div>
-                                  <div className="text-sm">
+                                  <Progress
+                                    value={
+                                      typeof course.progress === "object" &&
+                                      course.progress !== null &&
+                                      "progress" in course.progress
+                                        ? (course.progress as CourseProgress)
+                                            .progress || 0
+                                        : typeof course.progress === "number"
+                                        ? course.progress
+                                        : 0
+                                    }
+                                    className="h-1.5 bg-white/30"
+                                    indicatorClassName="bg-blue-500"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                            <CardHeader className="pb-2">
+                              <CardTitle className="text-xl transition-colors line-clamp-1 text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                                {course.courseData.title}
+                              </CardTitle>
+                              <CardDescription className="flex items-center gap-1">
+                                <Avatar className="w-4 h-4">
+                                  <AvatarImage
+                                    src={course.courseData.instructor.avatar}
+                                    alt={course.courseData.instructor.name}
+                                  />
+                                  <AvatarFallback className="text-[8px] bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
+                                    {course.courseData.instructor.name
+                                      .substring(0, 2)
+                                      .toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="text-xs">
+                                  {course.courseData.instructor.name}
+                                </span>
+                              </CardDescription>
+                            </CardHeader>
+                            <CardContent className="pb-2">
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between text-sm">
+                                  <span>Progress</span>
+                                  <span className="font-medium">
                                     {typeof course.progress === "object" &&
                                     course.progress !== null &&
-                                    "completedLessons" in course.progress
-                                      ? course.progress.completedLessons
-                                          ?.length || 0
-                                      : 0}{" "}
-                                    lessons completed
-                                  </div>
+                                    "progress" in course.progress
+                                      ? (course.progress as CourseProgress).progress || 0
+                                      : typeof course.progress === "number"
+                                      ? course.progress
+                                      : 0}
+                                    %
+                                  </span>
                                 </div>
                                 <Progress
-                                  value={course.progress || 0}
-                                  className="h-1.5 bg-white/30"
-                                  indicatorClassName="bg-blue-500"
+                                  value={course.progress?.progress || 0}
+                                  className="h-2 bg-slate-100 dark:bg-slate-800"
+                                  indicatorClassName="bg-gradient-to-r from-blue-500 to-teal-500"
                                 />
                               </div>
-                            </div>
-                          </div>
-                          <CardHeader className="pb-2">
-                            <CardTitle className="text-xl transition-colors line-clamp-1 text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">
-                              {course.courseData.title}
-                            </CardTitle>
-                            <CardDescription className="flex items-center gap-1">
-                              <Avatar className="w-4 h-4">
-                                <AvatarImage
-                                  src={course.courseData.instructor.avatar}
-                                  alt={course.courseData.instructor.name}
-                                />
-                                <AvatarFallback className="text-[8px] bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
-                                  {course.courseData.instructor.name
-                                    .substring(0, 2)
-                                    .toUpperCase()}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="text-xs">
-                                {course.courseData.instructor.name}
-                              </span>
-                            </CardDescription>
-                          </CardHeader>
-                          <CardContent className="pb-2">
-                            <div className="space-y-2">
-                              <div className="flex items-center justify-between text-sm">
-                                <span>Progress</span>
-                                <span className="font-medium">
-                                  {course.progress?.progress || 0}%
+                              <div className="mt-3 text-sm text-slate-600 dark:text-slate-400">
+                                <p>
+                                  Next:{" "}
+                                  <span className="font-medium text-blue-600 dark:text-blue-400">
+                                    {course.progress?.nextLesson ||
+                                      "Start the course"}
+                                  </span>
+                                </p>
+                              </div>
+                            </CardContent>
+                            <CardFooter className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
+                              <div className="flex items-center gap-1">
+                                <Clock className="w-4 h-4 text-blue-500" />
+                                <span>
+                                  Last accessed{" "}
+                                  {course.progress?.lastAccessed
+                                    ? formatDate(course.progress.lastAccessed)
+                                    : "Never"}
                                 </span>
                               </div>
-                              <Progress
-                                value={course.progress?.progress || 0}
-                                className="h-2 bg-slate-100 dark:bg-slate-800"
-                                indicatorClassName="bg-gradient-to-r from-blue-500 to-teal-500"
-                              />
-                            </div>
-                            <div className="mt-3 text-sm text-slate-600 dark:text-slate-400">
-                              <p>
-                                Next:{" "}
-                                <span className="font-medium text-blue-600 dark:text-blue-400">
-                                  {course.progress?.nextLesson ||
-                                    "Start the course"}
-                                </span>
-                              </p>
-                            </div>
-                          </CardContent>
-                          <CardFooter className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
-                            <div className="flex items-center gap-1">
-                              <Clock className="w-4 h-4 text-blue-500" />
-                              <span>
-                                Last accessed{" "}
-                                {course.progress?.lastAccessed
-                                  ? formatDate(course.progress.lastAccessed)
-                                  : "Never"}
-                              </span>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-950/50"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                handleResumeCourse(course);
-                              }}
-                            >
-                              <Play className="w-4 h-4 mr-1" />
-                              Resume
-                            </Button>
-                          </CardFooter>
-                        </Card>
-                      </Link>
-                    ))
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-950/50"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handleResumeCourse(course);
+                                }}
+                              >
+                                <Play className="w-4 h-4 mr-1" />
+                                Resume
+                              </Button>
+                            </CardFooter>
+                          </Card>
+                        </Link>
+                      ))
                   ) : (
                     <div className="p-8 text-center col-span-full">
                       <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full bg-blue-50 dark:bg-blue-900/30">
@@ -762,6 +805,18 @@ export default function DashboardPage() {
                             course.status === "active" &&
                             (course.progress?.progress || 0) < 100
                         )
+                        // Only map courses where progress is an object (CourseProgress)
+                        // .filter(
+                        //   (course) =>
+                        //     typeof course.progress === "object" &&
+                        //     course.progress !== null
+                        // )
+                        // Only map courses where progress is an object (CourseProgress)
+                        .filter(
+                          (course) =>
+                            typeof course.progress === "object" &&
+                            course.progress !== null
+                        )
                         .map((course, index) => (
                           <Card
                             key={index}
@@ -802,7 +857,11 @@ export default function DashboardPage() {
                                         <span>
                                           Last accessed{" "}
                                           {formatDate(
-                                            course.progress?.lastAccessed
+                                            course.progress?.lastAccessed as
+                                              | string
+                                              | number
+                                              | Date
+                                              | Timestamp
                                           )}
                                         </span>
                                       </div>
@@ -875,19 +934,21 @@ export default function DashboardPage() {
 
                 <TabsContent value="completed" className="mt-0">
                   <div className="space-y-4">
-                    {enrolledCourses.filter(
+                    {(enrolledCourses as EnrolledCourse[]).filter(
                       (course) =>
                         typeof course === "object" &&
                         course !== null &&
-                        (course.status === "complete" ||
-                          (course.progress?.progress || 0) === 100)
+                        (course.status === "completed" ||
+                          (typeof course.progress === "object" &&
+                            course.progress !== null &&
+                            (course.progress.progress || 0) === 100))
                     ).length > 0 ? (
-                      enrolledCourses
+                      (enrolledCourses as EnrolledCourse[])
                         .filter(
                           (course) =>
                             typeof course === "object" &&
                             course !== null &&
-                            (course.status === "complete" ||
+                            (course.status === "completed" ||
                               (course.progress?.progress || 0) === 100)
                         )
                         .map((course) => (
@@ -936,12 +997,13 @@ export default function DashboardPage() {
                                         <Clock className="w-4 h-4 text-teal-500" />
                                         <span>
                                           Completed on{" "}
-                                          {typeof course.progress ===
-                                            "object" &&
-                                          course.progress !== null &&
+                                          {course.progress &&
+                                          typeof course.progress === "object" &&
                                           "lastAccessed" in course.progress
                                             ? formatDate(
-                                                course.progress.lastAccessed
+                                                (
+                                                  course.progress as CourseProgress
+                                                ).lastAccessed ?? ""
                                               )
                                             : "Unknown date"}
                                         </span>
