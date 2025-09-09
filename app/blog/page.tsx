@@ -19,7 +19,7 @@ import { toast } from "@/components/ui/use-toast";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
-
+import { Footer } from "@/components/footer";
 interface Blog {
   id: string;
   title: string;
@@ -146,11 +146,11 @@ export default function BlogPage() {
   };
 
   return (
-    <div className="container max-w-3xl py-10 mx-auto">
+    <div className="w-full min-h-screen py-10 px-4 bg-white dark:bg-[#0a101a]">
       <h1 className="mb-6 text-3xl font-bold">SkillChain Blog</h1>
       <p className="mb-8 text-muted-foreground">
-        Insights, news, and tutorials about AI and Web3 from the SkillChain
-        team.
+        Your trusted source for AI and Web3 insights, news, and
+        tutorials—simplifying the future of technology for everyone
       </p>
 
       {authLoading ? (
@@ -211,7 +211,7 @@ export default function BlogPage() {
       {loading ? (
         <div>Loading blogs...</div>
       ) : (
-        <div className="space-y-8">
+        <div className="grid gap-8-cols-1 sm:grid-cols-2 lg:grid-cols-3 ">
           {blogs.length === 0 && (
             <div className="text-muted-foreground">No blog posts yet.</div>
           )}
@@ -263,6 +263,7 @@ export default function BlogPage() {
           ))}
         </div>
       )}
+      <Footer />
     </div>
   );
 }

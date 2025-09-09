@@ -73,10 +73,10 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="/tutorials"
+                  href="/marketplace"
                   className="text-muted-foreground hover:text-foreground"
                 >
-                  Tutorials
+                  Marketplace
                 </Link>
               </li>
               <li>
@@ -172,5 +172,5 @@ export function Footer() {
         </div>
       </div>
     </footer>
-  );  
+  );
 }
