@@ -338,11 +338,13 @@ export default function LiveSessionPage() {
       console.log("Leaving session...");
 
       if (callInstance && hasJoinedRef.current) {
-        hasJoinedRef.current = false;
+        if (hasJoinedRef.current) {
+          hasJoinedRef.current = false;
 
-        // Clean leave
-        await callInstance.leave();
-        console.log("Left call successfully");
+          // Clean leave
+          await callInstance.leave();
+          console.log("Left call successfully");
+        }
 
         // Update session status if user is instructor
         if (user?.uid) {
@@ -368,7 +370,17 @@ export default function LiveSessionPage() {
       }
 
       router.push("/live-session");
-    } catch (err) {
+    } catch (err: any) {
+      //Suppress specific errors
+      if (
+        err.message &&
+        err.message.includes("Cannot leave call that has already been left")
+      ) {
+        console.warn("Call was already left, ignoring.");
+        router.push("/live-session");
+        return;
+      }
+
       console.error("Error leaving session:", err);
       setError("Failed to leave session. Please try again.");
     }

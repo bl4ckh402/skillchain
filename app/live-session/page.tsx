@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import { SessionCreatedDialog } from "@/components/session-created-dialog";
 import { ScheduleSessionDialog } from "@/components/schedule-session-dialog";
+import { useAuth } from "@/context/AuthProvider";
 
 interface Session {
   id: string;
@@ -52,7 +53,7 @@ export default function LiveSessionPage() {
     title: string;
   } | null>(null);
   const [isFetchingSessions, setIsFetchingSessions] = useState(false);
-
+  const { user, userProfile } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   const totalStudents = 0; // TODO: Fetch from backend
@@ -65,6 +66,16 @@ export default function LiveSessionPage() {
     fetchSessions,
     isClientReady,
   } = useVideo();
+
+  // Show loader if client is not ready
+  if (!isClientReady) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#1A1D2D]">
+        <Loader className="w-8 h-8 mr-2 text-gray-400 animate-spin" />
+        <span className="text-gray-400">Initializing video service...</span>
+      </div>
+    );
+  }
 
   // Update time every second
   useEffect(() => {
@@ -315,7 +326,11 @@ export default function LiveSessionPage() {
           title="New Session"
           description="Start a live class session"
           bgColor="bg-emerald-600"
-          onClick={() => setShowCreateDialog(true)}
+          onClick={() =>
+            (userProfile?.role === "instructor" ||
+              userProfile?.role === "admin") &&
+            setShowCreateDialog(true)
+          }
         />
         <ActionCard
           icon={<Users className="w-6 h-6 text-white" />}
@@ -426,7 +441,7 @@ export default function LiveSessionPage() {
             <Button
               onClick={handleCreateSession}
               className="text-white bg-emerald-600 hover:bg-emerald-700"
-              disabled={isCreatingSession}
+              disabled={isCreatingSession || !isClientReady}
             >
               {isCreatingSession ? (
                 <>
