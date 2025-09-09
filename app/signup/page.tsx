@@ -122,12 +122,12 @@ export default function SignupPage() {
       toast({
         title: " Registration Successful",
         description: "Your account has been created successfully",
-        variant: "success",
+        variant: "default",
       });
 
       // Since signUp returns void, we don't have a UID here.
       // If you need the UID, you should get it from the user context after sign up.
-      // For now, we'll just use the email for the 2FA step.
+      // For now, we will just use the email for the 2FA step.
 
       await fetch("/api/token/verify-2fa", {
         method: "POST",
