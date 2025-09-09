@@ -1559,7 +1559,7 @@ export default function CourseEditPage({ params }: { params: { id: string } }) {
                     <p className="text-sm text-muted-foreground">
                       Draft: Only you can see the course
                       <br />
-                      Review: Submit for approval by the BlockLearn team
+                      Review: Submit for approval by the BlockChain team
                       <br />
                       Published: Available to all students
                     </p>

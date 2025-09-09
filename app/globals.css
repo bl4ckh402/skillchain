@@ -212,3 +212,50 @@
   --str-video__icon-color1: #ffffff;
   --str-video__icon-color2: #adff2f;
 }
+
+/* Editor area */
+.ck.ck-editor__main > .ck-editor__editable {
+  background: #fff;
+  color: #181f2a;
+  min-height: 200px;
+  padding: 1.25rem 1rem;
+  font-size: 1.1rem;
+  border-radius: 0.5rem;
+  line-height: 1.7;
+}
+
+/* Toolbar */
+.ck.ck-toolbar {
+  background: #f8fafc;
+  border-radius: 0.5rem 0.5rem 0 0;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 0.5rem;
+}
+
+/* Toolbar buttons */
+.ck.ck-toolbar .ck-button.ck-on,
+.ck.ck-toolbar .ck-button:hover {
+  background: #10b981 !important; /* Brand green */
+  color: #fff !important;
+}
+
+.ck.ck-toolbar .ck-button {
+  border-radius: 0.375rem;
+}
+
+/* Dark mode overrides */
+.dark .ck.ck-editor__main > .ck-editor__editable {
+  background: #181f2a;
+  color: #e5e7eb;
+}
+
+.dark .ck.ck-toolbar {
+  background: #232b3a;
+  border: 1px solid #334155;
+}
+
+.dark .ck.ck-toolbar .ck-button.ck-on,
+.dark .ck.ck-toolbar .ck-button:hover {
+  background: #10b981 !important;
+  color: #fff !important;
+}

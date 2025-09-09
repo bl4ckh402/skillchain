@@ -37,6 +37,10 @@ export const metadata = {
     "dapps",
     "NFTs",
     "cryptocurrency",
+    "Solidity",
+    "Artificial Intelligence",
+    "AI",
+    "machine learning",
   ],
 };
 

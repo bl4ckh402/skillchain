@@ -85,10 +85,10 @@ export default function CreateCoursePage() {
     useCourses();
   const { toast } = useToast();
   const router = useRouter();
-  const { user, userProfile } = useAuth();
-s
-  // RESPONSIVE ENHANCEMENT: Added mobile detection
-  useEffect(() => {
+const { user, userProfile } = useAuth();
+
+// RESPONSIVE ENHANCEMENT: Added mobile detection
+useEffect(() => {
     const checkIfMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
@@ -251,12 +251,21 @@ s
           })),
         })),
         status: CourseStatus.DRAFT,
-        instructor: { id: user?.uid || "" }, // Create instructor object with user ID
+        instructor: {
+          id: user?.uid || "",
+          name: userProfile?.displayName || "",
+          photoURL: userProfile?.photoURL || "",
+          about: userProfile?.about || "",
+        }, // Create instructor object with user ID and required fields
         totalLessons: modules.reduce(
           (acc, module) => acc + module.lessons.length,
           0
         ),
         duration: calculateTotalDuration(),
+        courseId: undefined,
+        nextLesson: null,
+        courseData: undefined,
+        lessons: undefined
       });
 
       setSaveStatus("saved");
@@ -300,6 +309,7 @@ s
             status: LessonStatus.UNLOCKED,
             progress: 0,
             completedAt: null,
+            completed: false,
           })),
         })),
         status: CourseStatus.PUBLISHED,
@@ -2866,7 +2876,7 @@ s
                     </Select>
                     <div className="text-sm text-muted-foreground">
                       <p>Draft: Only you can see the course</p>
-                      <p>Review: Submit for approval by the BlockLearn team</p>
+                      <p>Review: Submit for approval by the BlockChain team</p>
                       <p>Published: Available to all students</p>
                     </div>
                   </div>

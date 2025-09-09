@@ -1,7 +1,12 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { User, UserCredential, getIdToken, onAuthStateChanged } from "firebase/auth";
+import {
+  User,
+  UserCredential,
+  getIdToken,
+  onAuthStateChanged,
+} from "firebase/auth";
 import {
   collection,
   doc,
@@ -126,7 +131,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const enable2FA = async () => {
     if (!user) throw new Error("User not authenticated");
     try {
-      // const response = await fetch("/api/auth/enable-2fa", {
       const response = await fetch("/api/token/generate-2fa", {
         method: "POST",
         headers: {
@@ -202,7 +206,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     password: string,
     firstName: string,
     lastName: string
-  ) => {
+  ): Promise<void> => {
     const { user } = await createUserWithEmailAndPassword(
       auth,
       email,
@@ -216,9 +220,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       createdCourses: [],
       role: "student",
     });
+    // No return value needed for Promise<void>
   };
 
-  const signIn = async (email: string, password: string): Promise<UserCredential> => {
+  const signIn = async (
+    email: string,
+    password: string
+  ): Promise<UserCredential> => {
     try {
       // Sign in with Firebase Authentication
       const userCredential = await signInWithEmailAndPassword(

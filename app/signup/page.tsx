@@ -112,67 +112,56 @@ export default function SignupPage() {
     setLoading(true);
     try {
       // create the user
-    await signUp(
-      formData.email,
-      formData.password,
-      formData.firstName,
-      formData.lastName
-    );
+      await signUp(
+        formData.email,
+        formData.password,
+        formData.firstName,
+        formData.lastName
+      );
 
-    toast({
-      title: "Success",
-      description: "Your account has been created successfully",
-    });
+      toast({
+        title: "Success",
+        description: "Your account has been created successfully",
+      });
 
-    // Since signUp returns void, we don't have a UID here.
-    // If you need the UID, you should get it from the user context after sign up.
-    // For now, we'll just use the email for the 2FA step.
+      // Since signUp returns void, we don't have a UID here.
+      // If you need the UID, you should get it from the user context after sign up.
+      // For now, we'll just use the email for the 2FA step.
 
-    await fetch("/api/token/verify-2fa", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: formData.email,
-      }),
-    });
+      await fetch("/api/token/verify-2fa", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: formData.email,
+        }),
+      });
 
-    // Store pending user info in localStorage (without UID)
-    localStorage.setItem(
-      "pendingUser",
-      JSON.stringify({
-        email: formData.email,
-        provider: "password",
-      })
-    );
+      // Store pending user info in localStorage (without UID)
+      localStorage.setItem(
+        "pendingUser",
+        JSON.stringify({
+          email: formData.email,
+          provider: "password",
+        })
+      );
 
-    toast({
-      title: "Success",
-      description: "Account created! Please verify your email with the code sent.",
-    });
+      toast({
+        title: "Success",
+        description:
+          "Account created! Please verify your email with the code sent.",
+      });
 
-    router.push(`/verify-2fa?email=${encodeURIComponent(formData.email)}`);
-  } catch (error: any) {
-    toast({
-      title: "Error",
-      description: error.message,
-      variant: "destructive",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
-  //     router.push("/dashboard");
-  //   } catch (error: any) {
-  //     toast({
-  //       title: "Error",
-  //       description: error.message,
-  //       variant: "destructive",
-  //     });
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+      router.push(`/verify-2fa?email=${encodeURIComponent(formData.email)}`);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleGoogleSignIn = async () => {
     try {

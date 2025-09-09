@@ -111,7 +111,7 @@ export default function CourseCompletionPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+          <Loader2 className="w-8 h-8 mx-auto mb-4 animate-spin text-primary" />
           <p>Loading completion data...</p>
         </div>
       </div>
@@ -121,9 +121,9 @@ export default function CourseCompletionPage() {
   if (error || !course) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Card className="max-w-md w-full p-6 text-center">
-          <h2 className="text-2xl font-bold mb-2 text-red-500">Error</h2>
-          <p className="text-muted-foreground mb-6">{error || "Failed to load course data"}</p>
+        <Card className="w-full max-w-md p-6 text-center">
+          <h2 className="mb-2 text-2xl font-bold text-red-500">Error</h2>
+          <p className="mb-6 text-muted-foreground">{error || "Failed to load course data"}</p>
           <Button asChild className="w-full">
             <Link href="/dashboard">Back to My Courses</Link>
           </Button>
@@ -134,24 +134,24 @@ export default function CourseCompletionPage() {
 
   // User has completed the course
   return (
-    <div className="container max-w-4xl py-8 px-4">
-      <div className="text-center mb-10">
-        <div className="inline-flex items-center justify-center h-20 w-20 rounded-full bg-green-100 mb-6">
-          <Trophy className="h-10 w-10 text-green-600" />
+    <div className="container max-w-4xl px-4 py-8">
+      <div className="mb-10 text-center">
+        <div className="inline-flex items-center justify-center w-20 h-20 mb-6 bg-green-100 rounded-full">
+          <Trophy className="w-10 h-10 text-green-600" />
         </div>
-        <h1 className="text-3xl md:text-4xl font-bold mb-4">Congratulations!</h1>
+        <h1 className="mb-4 text-3xl font-bold md:text-4xl">Congratulations!</h1>
         <p className="text-xl text-muted-foreground">
           You've successfully completed the course
         </p>
-        <h2 className="text-2xl font-bold mt-2 text-blue-600">{course.title}</h2>
+        <h2 className="mt-2 text-2xl font-bold text-blue-600">{course.title}</h2>
       </div>
       
       <Card className="mb-8 overflow-hidden">
         <div className="p-6 bg-gradient-to-r from-blue-600/10 to-teal-600/10">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold text-xl">Course Progress</h3>
-            <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium flex items-center">
-              <CheckCircle className="h-4 w-4 mr-1" />
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-semibold">Course Progress</h3>
+            <div className="flex items-center px-3 py-1 text-sm font-medium text-green-800 bg-green-100 rounded-full">
+              <CheckCircle className="w-4 h-4 mr-1" />
               Completed
             </div>
           </div>
@@ -167,18 +167,18 @@ export default function CourseCompletionPage() {
         <Separator />
         
         <div className="p-6">
-          <h3 className="font-semibold text-xl mb-4">Your Achievement</h3>
+          <h3 className="mb-4 text-xl font-semibold">Your Achievement</h3>
           
-          <div className="flex flex-col md:flex-row gap-6">
+          <div className="flex flex-col gap-6 md:flex-row">
             <div className="flex-1">
-              <div className="text-muted-foreground mb-4 space-y-2">
+              <div className="mb-4 space-y-2 text-muted-foreground">
                 {course.whatYouWillLearn && course.whatYouWillLearn.length > 0 && (
                   <div>
                     <h4 className="font-medium text-foreground">Skills Acquired</h4>
                     <ul className="mt-2 space-y-1">
                       {course.whatYouWillLearn.slice(0, 3).map((skill, index) => (
                         <li key={index} className="flex items-start">
-                          <CheckCircle className="h-4 w-4 text-green-600 mt-1 mr-2 flex-shrink-0" />
+                          <CheckCircle className="flex-shrink-0 w-4 h-4 mt-1 mr-2 text-green-600" />
                           <span>{skill}</span>
                         </li>
                       ))}
@@ -199,15 +199,15 @@ export default function CourseCompletionPage() {
             </div>
             
             {enrollmentStatus.certificateIssued && (
-              <div className="flex-1 flex flex-col">
-                <div className="border border-blue-100 dark:border-blue-900 rounded-lg p-4 text-center flex-1 flex flex-col justify-center items-center bg-blue-50 dark:bg-blue-900/20">
-                  <h4 className="font-semibold mb-2">Certificate of Completion</h4>
-                  <p className="text-sm text-muted-foreground mb-4">
+              <div className="flex flex-col flex-1">
+                <div className="flex flex-col items-center justify-center flex-1 p-4 text-center border border-blue-100 rounded-lg dark:border-blue-900 bg-blue-50 dark:bg-blue-900/20">
+                  <h4 className="mb-2 font-semibold">Certificate of Completion</h4>
+                  <p className="mb-4 text-sm text-muted-foreground">
                     Your certificate has been issued for this course.
                   </p>
                   <Button asChild variant="outline" className="gap-2">
                     <Link href={`/dashboard?courseId=${courseId}`}>
-                      <Download className="h-4 w-4" />
+                      <Download className="w-4 h-4" />
                       View Certificate
                     </Link>
                   </Button>
@@ -219,29 +219,29 @@ export default function CourseCompletionPage() {
       </Card>
       
       <div className="space-y-6">
-        <h3 className="font-semibold text-xl">What's Next?</h3>
+        <h3 className="text-xl font-semibold">What's Next?</h3>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className="p-5 hover:shadow-md transition-shadow">
-            <h4 className="font-medium text-lg mb-2">Share Your Achievement</h4>
-            <p className="text-muted-foreground text-sm mb-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <Card className="p-5 transition-shadow hover:shadow-md">
+            <h4 className="mb-2 text-lg font-medium">Share Your Achievement</h4>
+            <p className="mb-4 text-sm text-muted-foreground">
               Let your network know about your accomplishment.
             </p>
-            <Button variant="outline" className="gap-2 w-full">
-              <Share2 className="h-4 w-4" />
+            <Button variant="outline" className="w-full gap-2">
+              <Share2 className="w-4 h-4" />
               Share on Social Media
             </Button>
           </Card>
           
-          <Card className="p-5 hover:shadow-md transition-shadow">
-            <h4 className="font-medium text-lg mb-2">Explore More Courses</h4>
-            <p className="text-muted-foreground text-sm mb-4">
+          <Card className="p-5 transition-shadow hover:shadow-md">
+            <h4 className="mb-2 text-lg font-medium">Explore More Courses</h4>
+            <p className="mb-4 text-sm text-muted-foreground">
               Continue your learning journey with more courses.
             </p>
             <Button asChild className="w-full gap-2 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700">
-              <Link href="/courses">
+              <Link href="/marketplace">
                 Browse Courses
-                <ArrowRight className="h-4 w-4 ml-1" />
+                <ArrowRight className="w-4 h-4 ml-1" />
               </Link>
             </Button>
           </Card>
@@ -249,27 +249,27 @@ export default function CourseCompletionPage() {
         
         {course.relatedCourses && course.relatedCourses.length > 0 && (
           <div className="mt-8">
-            <h3 className="font-semibold text-xl mb-4">Recommended Courses</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <h3 className="mb-4 text-xl font-semibold">Recommended Courses</h3>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               {course.relatedCourses.slice(0, 3).map((relatedCourse) => (
                 <Card key={relatedCourse.id} className="overflow-hidden">
-                  <div className="aspect-video bg-slate-100 dark:bg-slate-800 relative">
+                  <div className="relative aspect-video bg-slate-100 dark:bg-slate-800">
                     {relatedCourse.image ? (
                       <img 
                         src={relatedCourse.image} 
                         alt={relatedCourse.title} 
-                        className="w-full h-full object-cover"
+                        className="object-cover w-full h-full"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-400">
+                      <div className="flex items-center justify-center w-full h-full text-slate-400">
                         No image
                       </div>
                     )}
                   </div>
                   <div className="p-4">
                     <h4 className="font-medium line-clamp-1">{relatedCourse.title}</h4>
-                    <p className="text-sm text-muted-foreground mt-1">By {relatedCourse.instructor}</p>
-                    <div className="mt-3 flex justify-between items-center">
+                    <p className="mt-1 text-sm text-muted-foreground">By {relatedCourse.instructor}</p>
+                    <div className="flex items-center justify-between mt-3">
                       <span className="font-medium text-blue-600">${relatedCourse.price}</span>
                       <Button asChild variant="outline" size="sm">
                         <Link href={`/course/${relatedCourse.id}`}>
@@ -294,8 +294,8 @@ export default function CourseCompletionPage() {
       </div>
       
       {course.congratulationsMessage && (
-        <Card className="mt-10 p-6 bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-900">
-          <h3 className="font-semibold text-xl mb-2">Message from the Instructor</h3>
+        <Card className="p-6 mt-10 border-blue-100 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-900">
+          <h3 className="mb-2 text-xl font-semibold">Message from the Instructor</h3>
           <p className="italic text-slate-700 dark:text-slate-300">"{course.congratulationsMessage}"</p>
         </Card>
       )}
