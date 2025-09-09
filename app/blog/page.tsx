@@ -146,7 +146,6 @@ export default function BlogPage() {
   };
 
   return (
-
     <div className="w-full min-h-screen py-10 px-4 bg-white dark:bg-[#0a101a]">
       <h1 className="mb-6 text-3xl font-bold">SkillChain Blog</h1>
       <p className="mb-8 text-muted-foreground">
@@ -154,45 +153,43 @@ export default function BlogPage() {
         tutorials—simplifying the future of technology for everyone
       </p>
 
-
-        {authLoading ? (
-          <div>Loading...</div>
-        ) : isAdmin ? (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>New Blog Post</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <Input
-                  name="title"
-                  placeholder="Blog Title"
-                  value={form.title}
-                  onChange={handleChange}
-                  required
+      {authLoading ? (
+        <div>Loading...</div>
+      ) : isAdmin ? (
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>New Blog Post</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <Input
+                name="title"
+                placeholder="Blog Title"
+                value={form.title}
+                onChange={handleChange}
+                required
+              />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="block w-full text-sm text-gray-500"
+              />
+              {image && (
+                <img
+                  src={URL.createObjectURL(image)}
+                  alt="Preview"
+                  className="object-cover w-full mb-2 rounded max-h-48"
                 />
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="block w-full text-sm text-gray-500"
-                />
-                {image && (
-                  <img
-                    src={URL.createObjectURL(image)}
-                    alt="Preview"
-                    className="object-cover w-full mb-2 rounded max-h-48"
-                  />
-                )}
-                <div
-                  className="
+              )}
+              <div
+                className="
     rounded-lg border border-gray-200 dark:border-gray-700
     bg-white dark:bg-[#181f2a]
     text-gray-900 dark:text-gray-100
     p-2
    
   "
-
               >
                 <CKEditor
                   editor={ClassicEditor}
@@ -214,7 +211,7 @@ export default function BlogPage() {
       {loading ? (
         <div>Loading blogs...</div>
       ) : (
-        <div className="grid gap-8-cols-1 sm:grid-cols-2 lg:grid-cols-3 ">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {blogs.length === 0 && (
             <div className="text-muted-foreground">No blog posts yet.</div>
           )}
@@ -241,73 +238,31 @@ export default function BlogPage() {
                     src={blog.imageUrl}
                     alt={blog.title}
                     className="object-cover w-full mb-4 rounded max-h-64"
-
                   />
+                )}
+                <div className="mb-2 prose max-w-none">
+                  {
+                    // Show a preview of the content: first 30 words, plain text
+                    blog.content
+                      .replace(/(<([^>]+)>)/gi, "") // strip HTML tags
+                      .split(" ")
+                      .slice(0, 30)
+                      .join(" ")
+                  }
+                  ...
                 </div>
-                <Button type="submit" disabled={submitting || imageUploading}>
-                  {submitting || imageUploading ? "Publishing..." : "Publish"}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        ) : null}
-
-        {loading ? (
-          <div>Loading blogs...</div>
-        ) : (
-          <div className="grid grid-cols-1 gap-8- sm:grid-cols-2 lg:grid-cols-3 ">
-            {blogs.length === 0 && (
-              <div className="text-muted-foreground">No blog posts yet.</div>
-            )}
-            {blogs.map((blog) => (
-              <Card key={blog.id}>
-                <CardHeader>
-                  <Link href={`/blog/${blog.id}`}>
-                    <CardTitle className="text-green-600 cursor-pointer hover:underline">
-                      {blog.title}
-                    </CardTitle>
-                  </Link>
-                  <div className="text-xs text-muted-foreground">
-                    By {blog.author} •{" "}
-                    {blog.date
-                      ? typeof blog.date === "object" && "toDate" in blog.date
-                        ? blog.date.toDate().toLocaleDateString()
-                        : new Date(blog.date).toLocaleDateString()
-                      : ""}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {blog.imageUrl && (
-                    <img
-                      src={blog.imageUrl}
-                      alt={blog.title}
-                      className="object-cover w-full mb-4 rounded max-h-64"
-                    />
-                  )}
-                  <div className="mb-2 prose max-w-none">
-                    {
-                      // Show a preview of the content: first 30 words, plain text
-                      blog.content
-                        .replace(/(<([^>]+)>)/gi, "") // strip HTML tags
-                        .split(" ")
-                        .slice(0, 30)
-                        .join(" ")
-                    }
-                    ...
-                  </div>
-                  <Link
-                    href={`/blog/${blog.id}`}
-                    className="text-sm font-medium text-green-600 hover:underline"
-                  >
-                    Continue Reading &rarr;
-                  </Link>
-                  {/* </Card>  dangerouslySetInnerHTML={{ __html: blog.content }} */}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
+                <Link
+                  href={`/blog/${blog.id}`}
+                  className="text-sm font-medium text-green-600 hover:underline"
+                >
+                  Continue Reading &rarr;
+                </Link>
+                {/* </Card>  dangerouslySetInnerHTML={{ __html: blog.content }} */}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
       <Footer />
     </div>
   );
