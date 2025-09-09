@@ -72,7 +72,15 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 export default function CreateCoursePage() {
   const [activeTab, setActiveTab] = useState("basic");
   const [showContentEditor, setShowContentEditor] = useState(false);
-  const [selectedLesson, setSelectedLesson] = useState(null);
+  type SelectedLesson = {
+    moduleId: string;
+    lessonId: string;
+    [key: string]: any;
+  };
+  const [selectedLesson, setSelectedLesson] = useState<SelectedLesson | null>(null);
+  const { user, loading, userProfile } = useAuth();
+  const router = useRouter();
+
   const [saveStatus, setSaveStatus] = useState<
     "saving" | "saved" | "error" | null
   >(null);
@@ -84,11 +92,9 @@ export default function CreateCoursePage() {
   const { createCourse, updateCourse, publishCourse, uploadCourseImage } =
     useCourses();
   const { toast } = useToast();
-  const router = useRouter();
-const { user, userProfile } = useAuth();
 
-// RESPONSIVE ENHANCEMENT: Added mobile detection
-useEffect(() => {
+  // RESPONSIVE ENHANCEMENT: Added mobile detection
+  useEffect(() => {
     const checkIfMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
@@ -265,7 +271,7 @@ useEffect(() => {
         courseId: undefined,
         nextLesson: null,
         courseData: undefined,
-        lessons: undefined
+        lessons: undefined,
       });
 
       setSaveStatus("saved");
@@ -319,7 +325,12 @@ useEffect(() => {
           0
         ),
         duration: calculateTotalDuration(),
-        instructor: undefined,
+        instructor: {
+          id: user?.uid || "",
+          name: userProfile?.displayName || "",
+          photoURL: userProfile?.photoURL || "",
+          about: userProfile?.about || "",
+        },
       });
 
       setSaveStatus("saved");
@@ -857,8 +868,11 @@ useEffect(() => {
     }
 
     // Update attachments
-    (updatedModules[moduleIndex].lessons[lessonIndex].content as { attachments: any[] }).attachments =
-      attachments;
+    (
+      updatedModules[moduleIndex].lessons[lessonIndex].content as {
+        attachments: any[];
+      }
+    ).attachments = attachments;
     setModules(updatedModules);
   };
 
@@ -953,12 +967,16 @@ useEffect(() => {
   };
 
   useEffect(() => {
+    // Redirect to login if not authenticated
+    if (!loading && !user) {
+      router.replace("/login");
+    }
     // Update the courseData.modules whenever modules state changes
     setCourseData((prev) => ({
       ...prev,
       modules: modules,
     }));
-  }, [modules]);
+  }, [user, loading, router, modules]);
 
   if (!user || !userProfile) {
     return (
@@ -2094,7 +2112,12 @@ useEffect(() => {
                                                                   <div className="min-h-[250px] sm:min-h-[300px] border border-blue-100 dark:border-blue-900 rounded-md overflow-hidden">
                                                                     <TipTapEditor
                                                                       value={
-                                                                        (lesson.content as { textContent?: string })?.textContent ||
+                                                                        (
+                                                                          lesson.content as {
+                                                                            textContent?: string;
+                                                                          }
+                                                                        )
+                                                                          ?.textContent ||
                                                                         ""
                                                                       }
                                                                       onChange={(

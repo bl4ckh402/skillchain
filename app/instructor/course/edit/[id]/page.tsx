@@ -63,7 +63,7 @@ import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export default function CourseEditPage({ params }: { params: { id: string } }) {
-  const resolvedParams = use(params);
+  const resolvedParams = params;
   const [course, setCourse] = useState<any>(null); // Add proper type
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("basic");
@@ -100,7 +100,7 @@ export default function CourseEditPage({ params }: { params: { id: string } }) {
       const courseRef = doc(db, "courses", resolvedParams.id);
 
       // Create an object with only defined values
-      const updateData = {
+      const updateData: { [key: string]: any } = {
         updatedAt: serverTimestamp(),
       };
 
@@ -679,7 +679,9 @@ export default function CourseEditPage({ params }: { params: { id: string } }) {
                               variant="outline"
                               size="icon"
                               className="text-red-600 border-red-200 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400 dark:border-red-800"
-                              onClick={() => handleDeleteModule(module.id)}
+                              onClick={() =>
+                                handleDeleteModule(String(module.id))
+                              }
                             >
                               <Trash2 className="w-4 h-4" />
                               <span className="sr-only">Delete module</span>
@@ -951,7 +953,10 @@ export default function CourseEditPage({ params }: { params: { id: string } }) {
                                                           <div className="flex-1">
                                                             <Label className="block mb-2">
                                                               Question{" "}
-                                                              {qIndex + 1}
+                                                              {typeof qIndex ===
+                                                              "number"
+                                                                ? qIndex + 1
+                                                                : ""}
                                                             </Label>
                                                             <Input
                                                               placeholder="Enter question"
@@ -1004,7 +1009,11 @@ export default function CourseEditPage({ params }: { params: { id: string } }) {
                                                                 </div>
                                                                 <Input
                                                                   placeholder={`Option ${
-                                                                    oIndex + 1
+                                                                    typeof oIndex ===
+                                                                    "number"
+                                                                      ? oIndex +
+                                                                        1
+                                                                      : ""
                                                                   }`}
                                                                   defaultValue={
                                                                     option
@@ -1163,7 +1172,10 @@ export default function CourseEditPage({ params }: { params: { id: string } }) {
                                   size="icon"
                                   className="text-red-600 border-red-200 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400 dark:border-red-800"
                                   onClick={() =>
-                                    handleDeleteLesson(module.id, lesson.id)
+                                    handleDeleteLesson(
+                                      String(module.id),
+                                      String(lesson.id)
+                                    )
                                   }
                                 >
                                   <Trash2 className="w-4 h-4" />
@@ -1175,7 +1187,7 @@ export default function CourseEditPage({ params }: { params: { id: string } }) {
                           <Button
                             variant="outline"
                             className="w-full text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
-                            onClick={() => handleAddLesson(module.id)}
+                            onClick={() => handleAddLesson(String(module.id))}
                           >
                             <Plus className="w-4 h-4 mr-2" />
                             Add Lesson
@@ -1223,7 +1235,7 @@ export default function CourseEditPage({ params }: { params: { id: string } }) {
                         ) => (
                           <div key={index} className="flex items-center gap-2">
                             <Input
-                              placeholder={`Requirement ${index + 1}`}
+                              placeholder={`Requirement ${Number(index) + 1}`}
                               defaultValue={requirement}
                               className="flex-1 border-blue-100 dark:border-blue-900"
                             />
@@ -1270,7 +1282,7 @@ export default function CourseEditPage({ params }: { params: { id: string } }) {
                       {course.whatYouWillLearn.map(
                         (
                           item: string | number | readonly string[] | undefined,
-                          index: Key | null | undefined
+                          index: number
                         ) => (
                           <div key={index} className="flex items-center gap-2">
                             <Input
