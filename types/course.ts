@@ -94,6 +94,7 @@ export interface RelatedCourse {
 }
 
 export interface Course {
+  image: string;
   courseId: any;
   courseData: any;
   nextLesson: null;

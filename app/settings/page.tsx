@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -64,6 +65,7 @@ export default function SettingsPage() {
   const [twoFASecret, setTwoFASecret] = useState("");
   const [twoFAVerificationCode, setTwoFAVerificationCode] = useState("");
   const [twoFAVerificationError, setTwoFAVerificationError] = useState("");
+  const router = useRouter();
   const [twoFALoading, setTwoFALoading] = useState(false);
   const [twoFACopied, setTwoFACopied] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -158,6 +160,18 @@ export default function SettingsPage() {
       });
     } finally {
       setUploading(false);
+    }
+  };
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      router.push("/"); // Redirect to landing page
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -525,6 +539,16 @@ export default function SettingsPage() {
                         Save changes
                       </>
                     )}
+                  </Button>
+                </CardFooter>
+                <CardFooter className="flex flex-col gap-3 sm:flex-row sm:justify-between">
+                  <Button
+                    variant="destructive"
+                    onClick={handleSignOut} // <-- Use the handler here
+                    className="w-full text-sm sm:text-base sm:w-auto"
+                  >
+                    <LogOut className="w-4 h-4 mr-1 sm:w-5 sm:h-5 sm:mr-2" />
+                    Sign out
                   </Button>
                 </CardFooter>
               </Card>

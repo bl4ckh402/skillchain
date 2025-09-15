@@ -179,8 +179,8 @@ export function FeaturedCourses() {
               Featured Courses
             </h2>
             <p className="max-w-[700px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-              Discover our most popular Web3 & Artificial Intelligence courses and start your
-              learning journey today
+              Discover our most popular Web3 & Artificial Intelligence courses
+              and start your learning journey today
             </p>
           </div>
         </div>
@@ -194,7 +194,8 @@ export function FeaturedCourses() {
               <Card className="overflow-hidden transition-all hover:shadow-lg">
                 <div className="w-full overflow-hidden aspect-video">
                   <img
-                    src={course.thumbnail!}
+                    src={course.thumbnail || "/placeholder.svg"}
+                    loading="lazy"
                     alt={course.title}
                     className="object-cover w-full h-full transition-transform group-hover:scale-105"
                   />

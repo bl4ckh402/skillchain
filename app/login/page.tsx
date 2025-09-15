@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Footer } from "@/components/footer";
 import { useAuth } from "@/context/AuthProvider";
-import { useToast } from "@/components/ui/use-toast";
+import { toast, useToast } from "@/components/ui/use-toast";
 import { db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { UserCredential } from "firebase/auth";
@@ -32,16 +32,24 @@ export default function LoginPage() {
 
   useEffect(() => {
     const checkVerification = async () => {
-      if (user) {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        const userData = userDoc.data();
-        if (userData?.emailVerified) {
-          router.push("/dashboard");
+      if (!user) return;
+
+      // Example: fetch userData from Firestore if needed
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      const userData = userDoc.exists() ? userDoc.data() : null;
+
+      if (userData && userData.role) {
+        if (userData.role === "admin") {
+          router.push("/admin");
+        } else if (userData.role === "instructor") {
+          router.push("/instructor/dashboard");
         } else {
-          router.push(
-            `/verify-2fa?email=${encodeURIComponent(user.email ?? "")}`
-          );
+          router.push("/dashboard");
         }
+      } else {
+        router.push(
+          `/verify-2fa?email=${encodeURIComponent(user.email ?? "")}`
+        );
       }
     };
     checkVerification();
@@ -233,4 +241,18 @@ export default function LoginPage() {
       <Footer />
     </div>
   );
+}
+function setLoading(arg0: boolean) {
+  throw new Error("Function not implemented.");
+}
+
+function checkVerification() {
+  throw new Error("Function not implemented.");
+}
+
+function signIn(
+  email: string,
+  password: string
+): UserCredential | PromiseLike<UserCredential> {
+  throw new Error("Function not implemented.");
 }
