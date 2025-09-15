@@ -42,8 +42,14 @@ import { Course, CourseFilters, CourseLevel } from "@/types/course";
 import { EmptyState } from "@/components/empty-state";
 
 export default function MarketplacePage() {
-  const { courses, loading, filters, setFilters, getFeaturedCourses, getPublishedCourses } =
-    useCourses();
+  const {
+    courses,
+    loading,
+    filters,
+    setFilters,
+    getFeaturedCourses,
+    getPublishedCourses,
+  } = useCourses();
   const [featuredCourses, setFeaturedCourses] = useState<Course[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("popular");
@@ -51,7 +57,7 @@ export default function MarketplacePage() {
   const [activeFilters, setActiveFilters] = useState<CourseFilters>({
     level: [],
     duration: [],
-    price: undefined,
+    price: [],
     rating: undefined,
     search: "",
   });
@@ -64,14 +70,14 @@ export default function MarketplacePage() {
   >([]);
 
   const fetchFeaturedCourses = async () => {
-      const featured = await getFeaturedCourses();
-      setFeaturedCourses(featured);
-    };
+    const featured = await getFeaturedCourses();
+    setFeaturedCourses(featured);
+  };
 
-    const fetchPublishedCourses = async () => {
-      const publishedCourses = await getPublishedCourses();
-      setAllCourses(courses);
-    }
+  const fetchPublishedCourses = async () => {
+    const publishedCourses = await getPublishedCourses();
+    setAllCourses(courses);
+  };
 
   useEffect(() => {
     if (!courses.length) return;
@@ -282,7 +288,7 @@ export default function MarketplacePage() {
       switch (value) {
         case "newest":
           return (
-            (b.createdAt instanceof Date ? b.createdAt.getTime() : 0) - 
+            (b.createdAt instanceof Date ? b.createdAt.getTime() : 0) -
             (a.createdAt instanceof Date ? a.createdAt.getTime() : 0)
           );
         case "price-low":
@@ -740,7 +746,13 @@ export default function MarketplacePage() {
                         >
                           <div className="relative w-full overflow-hidden aspect-video">
                             <img
-                              src={course.thumbnail!}
+                              src={
+                                course.thumbnail &&
+                                course.thumbnail.trim() !== ""
+                                  ? course.thumbnail
+                                  : "/course-placeholder.jpg"
+                              }
+                              loading="lazy"
                               alt={course.title}
                               className="object-cover w-full h-full transition-transform group-hover:scale-105"
                             />
@@ -825,15 +837,17 @@ export default function MarketplacePage() {
                           </CardContent>
                           <CardFooter className="flex items-center justify-between">
                             <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                              {course.price === "0" ? "Free" : `$${course.price}`}
+                              {course.price === "0"
+                                ? "Free"
+                                : `$${course.price}`}
                             </div>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
-                              >
-                                View Course
-                              </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                            >
+                              View Course
+                            </Button>
                           </CardFooter>
                         </Card>
                       </Link>

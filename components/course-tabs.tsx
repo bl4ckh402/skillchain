@@ -20,13 +20,21 @@ import { Course } from "@/types/course";
 /**
  * CourseTabs component for displaying courses across different categories
  */
+interface CourseTabsProps {
+  loading: boolean;
+  allCourses: Course[];
+  featuredCourses: Course[];
+  defaultTab?: string;
+  filterCoursesByTag?: (tag: string) => void;
+}
+
 const CourseTabs = ({
   loading,
   allCourses,
   featuredCourses,
   defaultTab = "all",
   filterCoursesByTag,
-}) => {
+}: CourseTabsProps) => {
   // Define tab configurations with their tags for filtering
   const tabs = [
     { value: "all", label: "All", filter: null },
@@ -37,21 +45,17 @@ const CourseTabs = ({
   ];
 
   // Function to filter courses by tag if needed
-  const getFilteredCourses = (courses, tagFilter) => {
+  const getFilteredCourses = (courses: any[], tagFilter: string | null) => {
     if (!tagFilter) return courses;
-    
+
     return courses.filter((course) =>
-      course.tags.some((tag) => tag.toLowerCase().includes(tagFilter))
+      course.tags.some((tag: string) => tag.toLowerCase().includes(tagFilter))
     );
   };
 
   // Component to render a single course card
   const CourseCard = ({ course }) => (
-    <Link
-      href={`/course/${course.id}`}
-      key={course.id}
-      className="group"
-    >
+    <Link href={`/course/${course.id}`} key={course.id} className="group">
       <Card
         className={`overflow-hidden transition-all hover:shadow-lg ${
           course.featured
@@ -59,20 +63,25 @@ const CourseTabs = ({
             : "border-slate-200 dark:border-slate-800"
         }`}
       >
-        <div className="aspect-video w-full overflow-hidden relative">
+        <div className="relative w-full overflow-hidden aspect-video">
           <img
-            src={course.thumbnail!}
+            src={
+              course.thumbnail && course.thumbnail.trim() !== ""
+                ? course.thumbnail
+                : "/course-placeholder.jpg"
+            }
+            loading="lazy"
             alt={course.title}
             className="object-cover w-full h-full transition-transform group-hover:scale-105"
           />
-          <div className="absolute top-2 right-2 flex gap-2">
+          <div className="absolute flex gap-2 top-2 right-2">
             {course.bestseller && (
-              <Badge className="bg-amber-500 hover:bg-amber-600 text-white">
+              <Badge className="text-white bg-amber-500 hover:bg-amber-600">
                 Bestseller
               </Badge>
             )}
             {course.new && (
-              <Badge className="bg-green-500 hover:bg-green-600 text-white">
+              <Badge className="text-white bg-green-500 hover:bg-green-600">
                 New
               </Badge>
             )}
@@ -92,7 +101,7 @@ const CourseTabs = ({
               {course.level}
             </Badge>
             <div className="flex items-center gap-1">
-              <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
+              <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
               <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
                 {course.rating}
               </span>
@@ -101,59 +110,88 @@ const CourseTabs = ({
               </span>
             </div>
           </div>
-          <CardTitle className="line-clamp-1 text-xl text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+          <CardTitle className="text-xl transition-colors line-clamp-1 text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">
             {course.title}
           </CardTitle>
           <CardDescription className="flex items-center gap-1">
-            <Avatar className="h-4 w-4">
+            <Avatar className="w-4 h-4">
               <AvatarImage
                 src={course.instructor.avatar}
                 alt={course.instructor.name}
               />
               <AvatarFallback className="text-[8px] bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
-                {course.instructor.name
-                  .substring(0, 2)
-                  .toUpperCase()}
+                {course.instructor.name.substring(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <span className="text-xs">
-              {course.instructor.name}
-            </span>
+            <span className="text-xs">{course.instructor.name}</span>
           </CardDescription>
         </CardHeader>
         <CardContent className="pb-2">
           <div className="flex flex-wrap gap-2 mb-3">
-            {course.tags.map((tag, index) => (
-              <Badge
-                key={index}
-                variant="secondary"
-                className="font-normal text-blue-700 bg-blue-100 hover:bg-blue-200 dark:text-blue-300 dark:bg-blue-900 dark:hover:bg-blue-800"
-              >
-                {tag}
-              </Badge>
-            ))}
+            {course.tags.map(
+              (
+                tag:
+                  | string
+                  | number
+                  | bigint
+                  | boolean
+                  | React.ReactElement<
+                      unknown,
+                      string | React.JSXElementConstructor<any>
+                    >
+                  | Iterable<React.ReactNode>
+                  | React.ReactPortal
+                  | Promise<
+                      | string
+                      | number
+                      | bigint
+                      | boolean
+                      | React.ReactPortal
+                      | React.ReactElement<
+                          unknown,
+                          string | React.JSXElementConstructor<any>
+                        >
+                      | Iterable<React.ReactNode>
+                      | null
+                      | undefined
+                    >
+                  | null
+                  | undefined,
+                index: React.Key | null | undefined
+              ) => (
+                <Badge
+                  key={index}
+                  variant="secondary"
+                  className="font-normal text-blue-700 bg-blue-100 hover:bg-blue-200 dark:text-blue-300 dark:bg-blue-900 dark:hover:bg-blue-800"
+                >
+                  {tag}
+                </Badge>
+              )
+            )}
           </div>
           <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
             <div className="flex items-center gap-1">
-              <Users className="h-4 w-4 text-blue-500" />
+              <Users className="w-4 h-4 text-blue-500" />
               <span>{course.students} students</span>
             </div>
             <div className="flex items-center gap-1">
-              <Clock className="h-4 w-4 text-teal-500" />
+              <Clock className="w-4 h-4 text-teal-500" />
               <span>{course.duration}</span>
             </div>
           </div>
         </CardContent>
         <CardFooter className="flex items-center justify-between">
           <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
-            {typeof course.price === 'number' 
-              ? (course.price === 0 ? "Free" : `$${course.price}`) 
+            {typeof course.price === "number"
+              ? course.price === 0
+                ? "Free"
+                : `$${course.price}`
               : `$${course.price}`}
           </div>
           <Button
             variant="outline"
             size="sm"
-            className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+            className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
           >
             View Course
           </Button>
@@ -165,7 +203,7 @@ const CourseTabs = ({
   // Render loading spinner
   const LoadingSpinner = () => (
     <div className="flex items-center justify-center h-64">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="w-8 h-8 border-b-2 border-blue-600 rounded-full animate-spin"></div>
     </div>
   );
 
@@ -174,16 +212,14 @@ const CourseTabs = ({
     <EmptyState
       title="No Courses Available"
       description="Be the first to create a course and share your blockchain knowledge with the community."
-      icon={
-        <BookOpen className="h-12 w-12 text-blue-500 dark:text-blue-300" />
-      }
+      icon={<BookOpen className="w-12 h-12 text-blue-500 dark:text-blue-300" />}
     />
   );
 
   // Render course grid
   const CourseGrid = ({ courses }) => (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {courses.map((course) => (
+      {courses.map((course: unknown) => (
         <CourseCard key={course.id} course={course} />
       ))}
     </div>
@@ -191,7 +227,7 @@ const CourseTabs = ({
 
   return (
     <Tabs defaultValue={defaultTab} className="w-full">
-      <TabsList className="mb-4 bg-slate-100 dark:bg-slate-800/50 p-1 rounded-lg">
+      <TabsList className="p-1 mb-4 rounded-lg bg-slate-100 dark:bg-slate-800/50">
         {tabs.map((tab) => (
           <TabsTrigger
             key={tab.value}
@@ -210,9 +246,7 @@ const CourseTabs = ({
           ) : !allCourses.length ? (
             <CourseEmptyState />
           ) : (
-            <CourseGrid 
-              courses={getFilteredCourses(allCourses, tab.filter)} 
-            />
+            <CourseGrid courses={getFilteredCourses(allCourses, tab.filter)} />
           )}
         </TabsContent>
       ))}

@@ -190,24 +190,26 @@ export default function CoursePage() {
                   size="lg"
                   courseId={courseId}
                   price={course.price || 0}
-                  nextLessonId={
-                    currentLesson || course.modules?.[0]?.lessons?.[0]?.id
-                  }
                   className="text-white bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
                 />
               </div>
             </div>
             <CourseAccessGuard
-              courseId={params.id}
+              courseId={courseId}
               courseTitle={course.title}
               coursePrice={course.price || 0}
             >
               <div className="flex items-center justify-center lg:justify-end">
                 <div className="relative aspect-video w-full max-w-[600px] overflow-hidden rounded-xl border shadow-xl">
                   <img
-                    src={course.thumbnail!}
+                    src={
+                      course.thumbnail && course.thumbnail.trim() !== ""
+                        ? course.thumbnail
+                        : "/course-placeholder.jpg"
+                    }
+                    loading="lazy"
                     alt={course.title}
-                    className="object-cover w-full h-full"
+                    className="object-cover w-full h-full transition-transform group-hover:scale-105"
                   />
                   <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                     <Button
@@ -248,9 +250,8 @@ export default function CoursePage() {
               <div className="flex items-center gap-4 w-52">
                 <PurchaseButton
                   size="sm"
-                  courseId={params.id}
+                  courseId={courseId}
                   price={course.price || 0}
-                  nextLessonId={currentLesson || nextLesson}
                   className="w-full text-white bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
                 />
               </div>
@@ -536,7 +537,9 @@ export default function CoursePage() {
                                         </span>
                                       </Button>
                                     ) : moduleIndex === 0 ||
-                                      (moduleIndex === 1 && typeof lessonIndex === "number" && lessonIndex < 1) ? (
+                                      (moduleIndex === 1 &&
+                                        typeof lessonIndex === "number" &&
+                                        lessonIndex < 1) ? (
                                       <Button
                                         variant="ghost"
                                         size="sm"
@@ -601,44 +604,39 @@ export default function CoursePage() {
                 </div>
                 <PurchaseButton
                   size="lg"
-                  courseId={params.id}
+                  courseId={courseId}
                   price={course.price || 0}
-                  nextLessonId={
-                    currentLesson || course.modules?.[0]?.lessons?.[0]?.id
-                  }
                   className="w-full text-white bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
                 />
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-teal-500" />
-                    <span className="text-slate-700 dark:text-slate-300">
-                      {course.duration || "Self-paced"} of content
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-teal-500" />
-                    <span className="text-slate-700 dark:text-slate-300">
-                      {totalLessons} lessons
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Code2 className="w-4 h-4 text-teal-500" />
-                    <span className="text-slate-700 dark:text-slate-300">
-                      Practical exercises
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Award className="w-4 h-4 text-amber-500" />
-                    <span className="text-slate-700 dark:text-slate-300">
-                      Certificate of completion
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MessageSquare className="w-4 h-4 text-blue-500" />
-                    <span className="text-slate-700 dark:text-slate-300">
-                      Forum access
-                    </span>
-                  </div>
+                <div className="flex items-center gap-2 mt-4">
+                  <Clock className="w-4 h-4 text-teal-500" />
+                  <span className="text-slate-700 dark:text-slate-300">
+                    {course.duration || "Self-paced"} of content
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-teal-500" />
+                  <span className="text-slate-700 dark:text-slate-300">
+                    {totalLessons} lessons
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Code2 className="w-4 h-4 text-teal-500" />
+                  <span className="text-slate-700 dark:text-slate-300">
+                    Practical exercises
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Award className="w-4 h-4 text-amber-500" />
+                  <span className="text-slate-700 dark:text-slate-300">
+                    Certificate of completion
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-blue-500" />
+                  <span className="text-slate-700 dark:text-slate-300">
+                    Forum access
+                  </span>
                 </div>
               </CardContent>
             </Card>
@@ -802,7 +800,11 @@ export default function CoursePage() {
                                   src={
                                     relatedCourse.image || "/placeholder.svg"
                                   }
-                                  alt={relatedCourse.title}
+                                  alt={
+                                    typeof relatedCourse.title === "string"
+                                      ? relatedCourse.title
+                                      : "Related course"
+                                  }
                                   className="object-cover w-full h-full transition-transform group-hover:scale-105"
                                 />
                               </div>

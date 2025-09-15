@@ -77,7 +77,9 @@ export default function CreateCoursePage() {
     lessonId: string;
     [key: string]: any;
   };
-  const [selectedLesson, setSelectedLesson] = useState<SelectedLesson | null>(null);
+  const [selectedLesson, setSelectedLesson] = useState<SelectedLesson | null>(
+    null
+  );
   const { user, loading, userProfile } = useAuth();
   const router = useRouter();
 
@@ -308,6 +310,8 @@ export default function CreateCoursePage() {
 
       const courseId = await createCourse({
         ...courseData,
+        requirements: courseData.requirements,
+
         modules: modules.map((module) => ({
           ...module,
           lessons: module.lessons.map((lesson) => ({

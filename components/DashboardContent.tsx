@@ -133,6 +133,9 @@ export default function InstructorDashboardPage() {
         const coursesData = coursesSnapshot.docs.map((doc) => {
           const data = doc.data();
           return {
+            // Add courseId and courseData to match the Course type
+            courseId: doc.id,
+            courseData: data,
             id: doc.id,
             title: data.title || "Untitled Course",
             description: data.description || "No description available",
@@ -174,7 +177,7 @@ export default function InstructorDashboardPage() {
             nextLesson: data.nextLesson || null,
           };
         });
-        setCourses(coursesData);
+        setCourses(coursesData as Course[]);
 
         // Calculate current month's stats
         const now = new Date();
@@ -613,11 +616,14 @@ export default function InstructorDashboardPage() {
                           <div className="w-full overflow-hidden aspect-video md:h-full">
                             <img
                               src={
-                                course.thumbnail ||
-                                "/placeholder.svg?height=200&width=300"
+                                course.thumbnail &&
+                                course.thumbnail.trim() !== ""
+                                  ? course.thumbnail
+                                  : "/course-placeholder.jpg"
                               }
+                              loading="lazy"
                               alt={course.title}
-                              className="object-cover w-full h-full"
+                              className="object-cover w-full h-full transition-transform group-hover:scale-105"
                             />
                           </div>
                         </div>
