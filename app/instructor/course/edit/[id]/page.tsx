@@ -63,14 +63,16 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-
-export default function CourseEditPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const resolvedParams = use(params);
-  const [course, setCourse] = useState<any>(null);
+import {
+  getStorage,
+  ref,
+  StorageReference,
+  uploadBytes,
+} from "firebase/storage";
+// Removed duplicate import for React types
+export default function CourseEditPage({ params }: { params: { id: string } }) {
+  const resolvedParams = params;
+  const [course, setCourse] = useState<any>(null); // Add proper type
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("basic");
   const [saveStatus, setSaveStatus] = useState<
@@ -78,6 +80,32 @@ export default function CourseEditPage({
   >(null);
 
   const [previewMode, setPreviewMode] = useState(false);
+  const storage = getStorage();
+  const [uploading, setUploading] = useState(false);
+
+  // Add a ref for the file input
+  const thumbnailInputRef = React.useRef<HTMLInputElement>(null);
+  const videoInputRef = React.useRef<HTMLInputElement>(null);
+  // Handle file selection and upload
+  const handleThumbnailUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const storageRef = ref(
+        storage,
+        `course-thumbnails/${course.id}/${file.name}`
+      );
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      setCourse((prev: any) => ({ ...prev, thumbnail: url }));
+    } catch (err) {
+      console.error("Upload failed", err);
+    }
+    setUploading(false);
+  };
 
   useEffect(() => {
     const fetchCourse = async () => {
@@ -135,6 +163,8 @@ export default function CourseEditPage({
         "seoTitle",
         "seoDescription",
         "seoKeywords",
+        "isPublished",
+        "instructor",
       ];
 
       fieldsToUpdate.forEach((field) => {
@@ -152,6 +182,21 @@ export default function CourseEditPage({
     }
   };
 
+  // Add a new requirement
+  const handleAddRequirement = () => {
+    setCourse((prev: any) => ({
+      ...prev,
+      requirements: [...(prev.requirements || []), ""],
+    }));
+  };
+
+  // Add a new learning objective
+  const handleAddLearningObjective = () => {
+    setCourse((prev: any) => ({
+      ...prev,
+      whatYouWillLearn: [...(prev.whatYouWillLearn || []), ""],
+    }));
+  };
   const handleInputChange = (field: string, value: any) => {
     setCourse((prev: any) => ({
       ...prev,
@@ -412,6 +457,9 @@ export default function CourseEditPage({
                           <SelectItem value="defi">DeFi</SelectItem>
                           <SelectItem value="nft">NFTs</SelectItem>
                           <SelectItem value="web3">Web3</SelectItem>
+                          <SelectItem value="ai">
+                            Artificial Intelligence
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -431,6 +479,9 @@ export default function CourseEditPage({
                           <SelectItem value="security">Security</SelectItem>
                           <SelectItem value="trading">Trading</SelectItem>
                           <SelectItem value="investing">Investing</SelectItem>
+                          <SelectItem value="Automation">
+                            AI automation
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -517,10 +568,20 @@ export default function CourseEditPage({
                           <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
                             Recommended size: 1280x720px (16:9 ratio)
                           </p>
-                          <Button>
+                          <Button
+                            onClick={() => thumbnailInputRef.current?.click()}
+                            disabled={uploading}
+                          >
                             <Upload className="w-4 h-4 mr-2" />
-                            Upload Image
+                            {uploading ? "Uploading..." : "Upload Image"}
                           </Button>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            ref={thumbnailInputRef}
+                            style={{ display: "none" }}
+                            onChange={handleThumbnailUpload}
+                          />
                         </div>
                       )}
                     </div>
@@ -590,7 +651,10 @@ export default function CourseEditPage({
                     <Textarea
                       id="welcome-message"
                       placeholder="Message students will see when they first enroll"
-                      defaultValue={course.welcomeMessage}
+                      value={course.welcomeMessage ?? ""}
+                      onChange={(e) =>
+                        handleInputChange("welcomeMessage", e.target.value)
+                      }
                       className="border-blue-100 min-h-24 dark:border-blue-900"
                     />
                     <p className="text-xs text-muted-foreground">
@@ -606,7 +670,13 @@ export default function CourseEditPage({
                     <Textarea
                       id="congratulations-message"
                       placeholder="Message students will see when they complete the course"
-                      defaultValue={course.congratulationsMessage}
+                      value={course.congratulationsMessage ?? ""}
+                      onChange={(e) =>
+                        handleInputChange(
+                          "congratulationsMessage",
+                          e.target.value
+                        )
+                      }
                       className="border-blue-100 min-h-24 dark:border-blue-900"
                     />
                     <p className="text-xs text-muted-foreground">
@@ -747,6 +817,7 @@ export default function CourseEditPage({
                                             <span>Video</span>
                                           </div>
                                         </SelectItem>
+
                                         <SelectItem value="quiz">
                                           <div className="flex items-center">
                                             <FileText className="w-4 h-4 mr-2" />
@@ -1261,6 +1332,7 @@ export default function CourseEditPage({
                       <Button
                         variant="outline"
                         className="w-full text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                        onClick={handleAddRequirement}
                       >
                         <Plus className="w-4 h-4 mr-2" />
                         Add Requirement
@@ -1312,6 +1384,7 @@ export default function CourseEditPage({
                       <Button
                         variant="outline"
                         className="w-full text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                        onClick={handleAddLearningObjective}
                       >
                         <Plus className="w-4 h-4 mr-2" />
                         Add Learning Objective
@@ -1420,7 +1493,10 @@ export default function CourseEditPage({
                           id="price"
                           type="number"
                           placeholder="49.99"
-                          defaultValue={course.price}
+                          value={course.price ?? ""}
+                          onChange={(e) =>
+                            handleInputChange("price", e.target.value)
+                          }
                           className="border-blue-100 pl-9 dark:border-blue-900"
                         />
                       </div>
@@ -1433,7 +1509,10 @@ export default function CourseEditPage({
                           id="discount-price"
                           type="number"
                           placeholder="39.99"
-                          defaultValue={course.discountPrice || ""}
+                          value={course.discountPrice ?? ""}
+                          onChange={(e) =>
+                            handleInputChange("discountPrice", e.target.value)
+                          }
                           className="border-blue-100 pl-9 dark:border-blue-900"
                         />
                       </div>
@@ -1582,6 +1661,29 @@ export default function CourseEditPage({
                       Published: Available to all students
                     </p>
                   </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="instructor-title">Instructor Title</Label>
+                    <Select
+                      value={course.instructor?.title ?? ""}
+                      onValueChange={(value) =>
+                        setCourse((prev: { instructor: any }) => ({
+                          ...prev,
+                          instructor: { ...prev.instructor, title: value },
+                        }))
+                      }
+                    >
+                      <SelectTrigger className="border-blue-100 dark:border-blue-900">
+                        <SelectValue placeholder="Select instructor title" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Blockchain Educator">
+                          Blockchain Educator
+                        </SelectItem>
+                        <SelectItem value="AI Educator">AI Educator</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between px-6 py-4 border-t border-blue-100 dark:border-blue-900">
@@ -1607,4 +1709,7 @@ export default function CourseEditPage({
       <Footer />
     </div>
   );
+}
+function getDownloadURL(storageRef: StorageReference) {
+  throw new Error("Function not implemented.");
 }

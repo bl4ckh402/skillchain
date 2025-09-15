@@ -29,7 +29,7 @@ export function UserNav() {
   const handleSignOut = async () => {
     try {
       await signOut();
-      router.push("/dashboard");
+      router.push("/");
       toast({
         title: "Success",
         description: "You have been signed out successfully",

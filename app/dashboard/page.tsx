@@ -498,8 +498,8 @@ export default function DashboardPage() {
                                         ? typeof course.progress === "object" &&
                                           course.progress !== null &&
                                           "completedLessons" in course.progress
-                                          ? (course.progress as CourseProgress).completedLessons
-                                              ?.length || 0
+                                          ? (course.progress as CourseProgress)
+                                              .completedLessons?.length || 0
                                           : 0
                                         : 0}{" "}
                                       lessons completed
@@ -551,7 +551,8 @@ export default function DashboardPage() {
                                     {typeof course.progress === "object" &&
                                     course.progress !== null &&
                                     "progress" in course.progress
-                                      ? (course.progress as CourseProgress).progress || 0
+                                      ? (course.progress as CourseProgress)
+                                          .progress || 0
                                       : typeof course.progress === "number"
                                       ? course.progress
                                       : 0}

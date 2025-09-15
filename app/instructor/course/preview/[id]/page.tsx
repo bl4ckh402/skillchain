@@ -113,17 +113,18 @@ export default function CoursePreviewPage() {
     progress: course.progress || 0,
     nextLesson: course.nextLesson || null,
     relatedCourses: course.relatedCourses || [],
+    image: course.image || "",
   };
 
   return (
     <div className="flex flex-col">
-      <div className="sticky top-0 z-10 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800">
+      <div className="sticky top-0 z-10 bg-white border-b dark:bg-slate-950 border-slate-200 dark:border-slate-800">
         <div className="container px-4 py-3 md:px-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link href="/instructor/dashboard">
                 <Button variant="ghost" size="icon">
-                  <ArrowLeft className="h-5 w-5" />
+                  <ArrowLeft className="w-5 h-5" />
                   <span className="sr-only">Back to dashboard</span>
                 </Button>
               </Link>
@@ -138,8 +139,8 @@ export default function CoursePreviewPage() {
             </div>
             <div className="flex items-center gap-2">
               <Link href={`/instructor/course/edit/${courseData.id}`}>
-                <Button className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white">
-                  <Edit className="mr-2 h-4 w-4" />
+                <Button className="text-white bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700">
+                  <Edit className="w-4 h-4 mr-2" />
                   Edit Course
                 </Button>
               </Link>
@@ -148,8 +149,8 @@ export default function CoursePreviewPage() {
         </div>
       </div>
 
-      <Alert className="mx-auto max-w-6xl mt-4 border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-300">
-        <AlertTriangle className="h-4 w-4" />
+      <Alert className="max-w-6xl mx-auto mt-4 border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-300">
+        <AlertTriangle className="w-4 h-4" />
         <AlertTitle>Preview Mode</AlertTitle>
         <AlertDescription>
           You are viewing your course in preview mode. This is how it will
@@ -157,13 +158,13 @@ export default function CoursePreviewPage() {
         </AlertDescription>
       </Alert>
 
-      <div className="w-full bg-gradient-to-r from-blue-500/10 to-teal-500/10 dark:from-blue-900/20 dark:to-teal-900/20 py-8 md:py-12">
+      <div className="w-full py-8 bg-gradient-to-r from-blue-500/10 to-teal-500/10 dark:from-blue-900/20 dark:to-teal-900/20 md:py-12">
         <div className="container px-4 md:px-6">
           <div className="grid gap-6 lg:grid-cols-2 lg:gap-12">
             <div className="flex flex-col justify-center space-y-4">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Badge className="bg-blue-500 hover:bg-blue-600 text-white">
+                  <Badge className="text-white bg-blue-500 hover:bg-blue-600">
                     {courseData.level}
                   </Badge>
                   {courseData.status === "draft" && (
@@ -171,7 +172,7 @@ export default function CoursePreviewPage() {
                       variant="outline"
                       className="border-slate-200 text-slate-600 dark:border-slate-700 dark:text-slate-400"
                     >
-                      <FileText className="mr-1 h-3 w-3" />
+                      <FileText className="w-3 h-3 mr-1" />
                       Draft
                     </Badge>
                   )}
@@ -180,16 +181,16 @@ export default function CoursePreviewPage() {
                       variant="outline"
                       className="border-amber-200 text-amber-600 dark:border-amber-700 dark:text-amber-400"
                     >
-                      <Clock className="mr-1 h-3 w-3" />
+                      <Clock className="w-3 h-3 mr-1" />
                       In Review
                     </Badge>
                   )}
                   {courseData.status === "published" && (
                     <Badge
                       variant="outline"
-                      className="border-green-200 text-green-600 dark:border-green-700 dark:text-green-400"
+                      className="text-green-600 border-green-200 dark:border-green-700 dark:text-green-400"
                     >
-                      <CheckCircle2 className="mr-1 h-3 w-3" />
+                      <CheckCircle2 className="w-3 h-3 mr-1" />
                       Published
                     </Badge>
                   )}
@@ -203,16 +204,16 @@ export default function CoursePreviewPage() {
               </div>
               <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
-                  <Clock className="h-4 w-4 text-teal-500" />
+                  <Clock className="w-4 h-4 text-teal-500" />
                   <span>{courseData.duration}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Avatar className="h-8 w-8 border-2 border-white dark:border-slate-800">
+                  <Avatar className="w-8 h-8 border-2 border-white dark:border-slate-800">
                     <AvatarImage
                       src={courseData.instructor.avatar}
                       alt={courseData.instructor.name}
                     />
-                    <AvatarFallback className="bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
+                    <AvatarFallback className="text-blue-600 bg-blue-100 dark:bg-blue-900 dark:text-blue-300">
                       {courseData.instructor.name.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
@@ -227,14 +228,14 @@ export default function CoursePreviewPage() {
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Button
                   size="lg"
-                  className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white"
+                  className="text-white bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
                 >
                   Enroll Now - {courseData.price}
                 </Button>
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                  className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
                 >
                   Try Free Preview
                 </Button>
@@ -252,9 +253,9 @@ export default function CoursePreviewPage() {
                 <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                   <Button
                     size="icon"
-                    className="h-16 w-16 rounded-full bg-white/90 hover:bg-white shadow-lg"
+                    className="w-16 h-16 rounded-full shadow-lg bg-white/90 hover:bg-white"
                   >
-                    <Play className="h-8 w-8 fill-blue-600 text-blue-600" />
+                    <Play className="w-8 h-8 text-blue-600 fill-blue-600" />
                     <span className="sr-only">Play preview</span>
                   </Button>
                 </div>
@@ -268,7 +269,7 @@ export default function CoursePreviewPage() {
         <div className="grid gap-8 lg:grid-cols-3 lg:gap-12">
           <div className="lg:col-span-2">
             <Tabs defaultValue="curriculum" className="w-full">
-              <TabsList className="mb-4 w-full justify-start bg-slate-100 dark:bg-slate-800/50 p-1 rounded-lg">
+              <TabsList className="justify-start w-full p-1 mb-4 rounded-lg bg-slate-100 dark:bg-slate-800/50">
                 <TabsTrigger
                   value="curriculum"
                   className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-950 data-[state=active]:text-blue-600 rounded-md"
@@ -294,7 +295,7 @@ export default function CoursePreviewPage() {
                   <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200">
                     Course Content
                   </h2>
-                  <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
                     <span>{courseData.modules.length} modules</span>
                     <span>•</span>
                     <span>
@@ -324,8 +325,8 @@ export default function CoursePreviewPage() {
                                 {module.title}
                               </h3>
                               {module.completed && (
-                                <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
-                                  <CheckCircle2 className="mr-1 h-3 w-3" />
+                                <Badge className="text-green-700 bg-green-100 dark:bg-green-900 dark:text-green-300">
+                                  <CheckCircle2 className="w-3 h-3 mr-1" />
                                   Completed
                                 </Badge>
                               )}
@@ -413,7 +414,7 @@ export default function CoursePreviewPage() {
                                     size="sm"
                                     className="text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
                                   >
-                                    <CheckCircle2 className="h-4 w-4" />
+                                    <CheckCircle2 className="w-4 h-4" />
                                     <span className="sr-only">Completed</span>
                                   </Button>
                                 ) : moduleIndex === 0 ||
@@ -423,7 +424,7 @@ export default function CoursePreviewPage() {
                                     size="sm"
                                     className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                                   >
-                                    <Play className="h-4 w-4" />
+                                    <Play className="w-4 h-4" />
                                     <span className="sr-only">Play</span>
                                   </Button>
                                 ) : (
@@ -433,7 +434,7 @@ export default function CoursePreviewPage() {
                                     className="text-slate-400 dark:text-slate-600"
                                     disabled
                                   >
-                                    <LockKeyhole className="h-4 w-4" />
+                                    <LockKeyhole className="w-4 h-4" />
                                     <span className="sr-only">Locked</span>
                                   </Button>
                                 )}
@@ -452,10 +453,10 @@ export default function CoursePreviewPage() {
                   <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200">
                     What You'll Learn
                   </h2>
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <div className="grid gap-3 mt-4 sm:grid-cols-2">
                     {courseData.whatYouWillLearn.map((item, index) => (
                       <div key={index} className="flex items-start gap-2">
-                        <ChevronRight className="h-5 w-5 text-teal-500 shrink-0" />
+                        <ChevronRight className="w-5 h-5 text-teal-500 shrink-0" />
                         <span className="text-slate-700 dark:text-slate-300">
                           {item}
                         </span>
@@ -467,7 +468,7 @@ export default function CoursePreviewPage() {
                   <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200">
                     Requirements
                   </h2>
-                  <ul className="mt-4 space-y-2 list-disc pl-5 text-slate-700 dark:text-slate-300">
+                  <ul className="pl-5 mt-4 space-y-2 list-disc text-slate-700 dark:text-slate-300">
                     {courseData.requirements.map((item, index) => (
                       <li key={index}>{item}</li>
                     ))}
@@ -506,13 +507,13 @@ export default function CoursePreviewPage() {
               </TabsContent>
 
               <TabsContent value="instructor" className="space-y-6">
-                <div className="flex flex-col md:flex-row gap-6 items-start">
-                  <Avatar className="h-24 w-24 border-4 border-blue-100 dark:border-blue-900">
+                <div className="flex flex-col items-start gap-6 md:flex-row">
+                  <Avatar className="w-24 h-24 border-4 border-blue-100 dark:border-blue-900">
                     <AvatarImage
                       src={courseData.instructor.avatar}
                       alt={courseData.instructor.name}
                     />
-                    <AvatarFallback className="bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300 text-xl">
+                    <AvatarFallback className="text-xl text-blue-600 bg-blue-100 dark:bg-blue-900 dark:text-blue-300">
                       {courseData.instructor.name.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
@@ -541,53 +542,53 @@ export default function CoursePreviewPage() {
             </Tabs>
           </div>
           <div>
-            <Card className="sticky top-20 border-blue-200 dark:border-blue-900">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50 rounded-t-lg">
+            <Card className="sticky border-blue-200 top-20 dark:border-blue-900">
+              <CardHeader className="rounded-t-lg bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50">
                 <CardTitle className="text-slate-800 dark:text-slate-200">
                   Course Information
                 </CardTitle>
                 <CardDescription>Enroll to get full access</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4 pt-6">
+              <CardContent className="pt-6 space-y-4">
                 <div className="text-3xl font-bold text-slate-800 dark:text-slate-200">
                   {courseData.price}
                 </div>
                 <Button
-                  className="w-full bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white"
+                  className="w-full text-white bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
                   onClick={handleStartCourse}
                 >
                   Enroll Now
                 </Button>
-                {/* <div className="text-center text-sm text-blue-600 dark:text-blue-400 font-medium">
+                {/* <div className="text-sm font-medium text-center text-blue-600 dark:text-blue-400">
                   30-Day Money-Back Guarantee
                 </div> */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-teal-500" />
+                    <Clock className="w-4 h-4 text-teal-500" />
                     <span className="text-slate-700 dark:text-slate-300">
                       {courseData.duration} of content
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-teal-500" />
+                    <FileText className="w-4 h-4 text-teal-500" />
                     <span className="text-slate-700 dark:text-slate-300">
                       3 quizzes
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Code2 className="h-4 w-4 text-teal-500" />
+                    <Code2 className="w-4 h-4 text-teal-500" />
                     <span className="text-slate-700 dark:text-slate-300">
                       5 coding exercises
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Award className="h-4 w-4 text-amber-500" />
+                    <Award className="w-4 h-4 text-amber-500" />
                     <span className="text-slate-700 dark:text-slate-300">
                       Certificate of completion
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4 text-blue-500" />
+                    <MessageSquare className="w-4 h-4 text-blue-500" />
                     <span className="text-slate-700 dark:text-slate-300">
                       Forum access
                     </span>
@@ -597,7 +598,7 @@ export default function CoursePreviewPage() {
               <CardFooter>
                 <Button
                   variant="outline"
-                  className="w-full border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+                  className="w-full text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
                 >
                   Gift This Course
                 </Button>
