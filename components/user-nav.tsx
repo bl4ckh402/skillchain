@@ -28,16 +28,12 @@ export function UserNav() {
 
   const handleSignOut = async () => {
     try {
-      await signOut();
-<<<<<<< HEAD
-      router.push("/");
-=======
-      router.push("/dashboard");
->>>>>>> 23599c7 (fix: resolve code issue)
-      toast({
-        title: "Success",
-        description: "You have been signed out successfully",
-      });
+await signOut();
+router.push("/");
+toast({
+  title: "Success",
+  description: "You have been signed out successfully",
+});
     } catch (error: any) {
       toast({
         title: "Error",

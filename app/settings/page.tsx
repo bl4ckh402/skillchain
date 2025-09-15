@@ -550,12 +550,6 @@ export default function SettingsPage() {
                     <LogOut className="w-4 h-4 mr-1 sm:w-5 sm:h-5 sm:mr-2" />
                     Sign out
                   </Button>
-<<<<<<< HEAD
-=======
-                  <Button className="w-full text-sm sm:text-base sm:w-auto">
-                    Save changes
-                  </Button>
->>>>>>> 23599c7 (fix: resolve code issue)
                 </CardFooter>
               </Card>
             </TabsContent>
