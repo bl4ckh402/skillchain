@@ -44,76 +44,75 @@ export function UserNav() {
   };
 
   // Mobile navigation
-  const MobileNav = () => (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button variant="outline" size="icon" className="md:hidden">
-          <Menu className="w-5 h-5" />
-          <span className="sr-only">Toggle menu</span>
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="left" className="w-[300px] sm:w-[400px]">
-        <nav className="flex flex-col gap-4 mt-8">
-          <Link href="/" className="flex items-center gap-2 mb-6">
-            <Code2 className="w-6 h-6 text-primary" />
-            <span className="text-lg font-bold">SkillChain</span>
-          </Link>
-          <Link href="/marketplace" className="text-lg font-medium">
-            Marketplace
-          </Link>
-          <Link href="/jobs" className="text-lg font-medium">
-            Jobs
-          </Link>
-          <Link href="/hackathons" className="text-lg font-medium">
-            Hackathons
-          </Link>
-          <Link href="/community" className="text-lg font-medium">
-            Community
-          </Link>
-          {user && (
-            <Link href="/create" className="text-lg font-medium">
-              Dashboard
-            </Link>
-          )}
+  // const MobileNav = () => (
+  //   <Sheet>
+  //     <SheetTrigger asChild>
+  //       <Button variant="outline" size="icon" className="md:hidden">
+  //         <Menu className="w-5 h-5" />
+  //         <span className="sr-only">Toggle menu</span>
+  //       </Button>
+  //     </SheetTrigger>
+  //     <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+  //       <nav className="flex flex-col gap-4 mt-8">
+  //         <Link href="/" className="flex items-center gap-2 mb-6">
+  //           <Code2 className="w-6 h-6 text-primary" />
+  //           <span className="text-lg font-bold">SkillChain</span>
+  //         </Link>
+  //         <Link href="/marketplace" className="text-lg font-medium">
+  //           Marketplace
+  //         </Link>
+  //         <Link href="/jobs" className="text-lg font-medium">
+  //           Jobs
+  //         </Link>
+  //         <Link href="/hackathons" className="text-lg font-medium">
+  //           Hackathons
+  //         </Link>
+  //         <Link href="/community" className="text-lg font-medium">
+  //           Community
+  //         </Link>
+  //         {user && (
+  //           <Link href="/create" className="text-lg font-medium">
+  //             Dashboard
+  //           </Link>
+  //         )}
 
-          {isInstructor ||
-            (isAdmin && (
-              <Link
-                href="/create"
-                className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:border-gray-300 hover:text-gray-700"
-              >
-                Create Course
-              </Link>
-            ))}
+  //         {isInstructor ||
+  //           (isAdmin && (
+  //             <Link
+  //               href="/create"
+  //               className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:border-gray-300 hover:text-gray-700"
+  //             >
+  //               Create Course
+  //             </Link>
+  //           ))}
 
-          {/* Instructor-only navigation */}
-          {isInstructor && (
-            <Link
-              href="/instructor/dashboard"
-              className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:border-gray-300 hover:text-gray-700"
-            >
-              Instructor Dashboard
-            </Link>
-          )}
+  //         {/* Instructor-only navigation */}
+  //         {isInstructor && (
+  //           <Link
+  //             href="/instructor/dashboard"
+  //             className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:border-gray-300 hover:text-gray-700"
+  //           >
+  //             Instructor Dashboard
+  //           </Link>
+  //         )}
 
-          {/* Admin-only navigation */}
-          {isAdmin && (
-            <Link
-              href="/admin"
-              className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:border-gray-300 hover:text-gray-700"
-            >
-              Admin Panel
-            </Link>
-          )}
-        </nav>
-      </SheetContent>
-    </Sheet>
-  );
+  //         {/* Admin-only navigation */}
+  //         {isAdmin && (
+  //           <Link
+  //             href="/admin"
+  //             className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:border-gray-300 hover:text-gray-700"
+  //           >
+  //             Admin Panel
+  //           </Link>
+  //         )}
+  //       </nav>
+  //     </SheetContent>
+  //   </Sheet>
+  // );
 
   if (!user) {
     return (
       <>
-        <MobileNav />
         <div className="items-center hidden gap-4 md:flex">
           <Link href="/login">
             <Button variant="ghost">Login</Button>
