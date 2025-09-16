@@ -28,12 +28,12 @@ export function UserNav() {
 
   const handleSignOut = async () => {
     try {
-await signOut();
-router.push("/");
-toast({
-  title: "Success",
-  description: "You have been signed out successfully",
-});
+      await signOut();
+      router.push("/");
+      toast({
+        title: "Success",
+        description: "You have been signed out successfully",
+      });
     } catch (error: any) {
       toast({
         title: "Error",
@@ -128,7 +128,6 @@ toast({
 
   return (
     <>
-      <MobileNav />
       <DropdownMenu>
         <DropdownMenuTrigger asChild className="hidden md:flex">
           <Button variant="ghost" className="relative w-8 h-8 rounded-full">

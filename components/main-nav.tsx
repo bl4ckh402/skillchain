@@ -29,6 +29,7 @@ import {
   UserCheck,
   Plus,
   GraduationCap,
+  Icon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,6 +46,8 @@ import {
 } from "@radix-ui/react-dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import UserManagement from "@/components/admin/UserManagement";
+import icon from "react-syntax-highlighter/dist/esm/languages/prism/icon";
+import { string } from "zod";
 
 // CSS for slide-in animation with explicit colors
 const dialogStyles = `
@@ -124,14 +127,6 @@ const useAuth = () => {
 };
 
 // Interface for navigation items
-interface NavigationItem {
-  href: string;
-  title: string;
-  description?: string;
-  icon?: React.ComponentType<{ className?: string }>;
-  badge?: string;
-  external?: boolean;
-}
 
 interface NavigationSection {
   title: string;
@@ -437,7 +432,7 @@ export function MainNav() {
   return (
     <>
       <style>{dialogStyles}</style>
-      <div className="items-center hidden mr-6 xl:flex">
+      <div className="flex items-center mr-6">
         <Link href="/" className="flex items-center gap-2">
           <Code2 className="w-6 h-6 text-primary" />
           <span className="font-bold">SkillChain</span>
@@ -518,68 +513,67 @@ export function MainNav() {
 
       {/* Mobile navigation */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogTrigger asChild className="xl:hidden">
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Toggle navigation menu"
-            className="relative w-10 h-10 sm:h-12 sm:w-12"
-          >
-            <MenuIcon className="w-5 h-5 transition-all duration-300 ease-in-out sm:w-6 sm:h-6" />
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="flex flex-col p-0 overflow-hidden dialog-content">
-          <VisuallyHidden>
-            <DialogTitle>SkillChain Navigation Menu</DialogTitle>
-          </VisuallyHidden>
-          <div className="flex items-center justify-between flex-shrink-0 px-4 py-3 border-b sm:px-6 sm:py-4 bg-gray-50 dark:bg-gray-900">
-            <Link
-              href="/"
-              onClick={() => setIsOpen(false)}
-              className="flex items-center gap-2 text-sm font-bold transition-colors duration-300 sm:gap-3 sm:text-base lg:text-lg hover:text-primary"
-            >
-              <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 flex-shrink-0">
-                <Code2 className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-              </div>
-              <span className="truncate">SkillChain</span>
-            </Link>
+        <div className="flex items-center ml-auto xl:hidden">
+          <DialogTrigger asChild>
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Close navigation"
-              className="w-10 h-10 sm:h-12 sm:w-12"
-              onClick={() => setIsOpen(false)}
+              aria-label="Toggle navigation menu"
+              className="w-10 h-10"
+              onClick={() => setIsOpen(true)}
             >
-              <X className="w-5 h-5 transition-all duration-300 sm:w-6 sm:h-6" />
+              <MenuIcon className="w-6 h-6" />
             </Button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto bg-white overscroll-contain dark:bg-gray-800">
-            <div className="p-3 sm:p-4">
-              <Accordion
-                type="single"
-                collapsible
-                className="space-y-2"
-                defaultValue={navigationConfig
-                  .find((section) => isSectionActive(section))
-                  ?.title.toLowerCase()}
+          </DialogTrigger>
+          <DialogContent className="flex flex-col p-0 overflow-hidden dialog-content">
+            <VisuallyHidden>
+              <DialogTitle>SkillChain Navigation Menu</DialogTitle>
+            </VisuallyHidden>
+            <div className="flex items-center justify-between flex-shrink-0 px-4 py-3 border-b sm:px-6 sm:py-4 bg-gray-50 dark:bg-gray-900">
+              <Link
+                href="/"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-2 text-sm font-bold transition-colors duration-300 sm:gap-3 sm:text-base lg:text-lg hover:text-primary"
+                style={{ minWidth: 0 }}
               >
-                {navigationConfig.map((section) => {
-                  const sectionActive = isSectionActive(section);
+                <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 flex-shrink-0">
+                  <Code2 className="w-6 h-6 sm:w-7 sm:h-7 text-primary" />
+                </div>
+                <span className="truncate">SkillChain</span>
+              </Link>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Close navigation"
+                className="w-10 h-10 sm:h-12 sm:w-12"
+                onClick={() => setIsOpen(false)}
+              >
+                <X className="w-5 h-5 transition-all duration-300 sm:w-6 sm:h-6" />
+              </Button>
+            </div>
 
-                  if (section.title === "Freelancer") {
-                    return (
-                      <NavigationMenuItem key={section.title}>
-                        <Link
-                          href={section.href || "#"}
-                          legacyBehavior
-                          passHref
-                        >
-                          <NavigationMenuLink
+            <div className="flex-1 overflow-y-auto bg-white overscroll-contain dark:bg-gray-800">
+              <div className="p-3 sm:p-4">
+                <Accordion
+                  type="single"
+                  collapsible
+                  className="space-y-2"
+                  defaultValue={navigationConfig
+                    .find((section) => isSectionActive(section))
+                    ?.title.toLowerCase()}
+                >
+                  {navigationConfig.map((section) => {
+                    const sectionActive = isSectionActive(section);
+
+                    if (section.title === "Freelancer") {
+                      return (
+                        <div key={section.title} className="my-2">
+                          <Link
+                            href={section.href || "#"}
+                            onClick={() => setIsOpen(false)}
                             className={cn(
-                              navigationMenuTriggerStyle(),
-                              "transition-all duration-200 text-sm font-semibold bg-yellow-400/90 text-black shadow-lg hover:bg-yellow-300 px-4 py-2 rounded-full border-2 border-yellow-500",
-                              sectionActive && "ring-2 ring-yellow-500"
+                              "flex items-center gap-2 px-4 py-2 rounded-full font-semibold bg-blue-400/90 text-black shadow-lg hover:bg-yellow-300 border-2 border-yellow-500 transition-all duration-200",
+                              sectionActive && "ring-2 ring-blue-500"
                             )}
                             style={{ fontWeight: 700, letterSpacing: 0.5 }}
                             title="Post jobs for freelancers to apply and for freelancers to get gigs and projects."
@@ -588,97 +582,108 @@ export function MainNav() {
                               <section.icon className="flex-shrink-0 w-5 h-5 mr-2" />
                             )}
                             <span className="truncate">{section.title}</span>
-                            <span className="ml-2 px-2 py-0.5 rounded-full bg-yellow-500 text-xs font-bold text-white">
+                            <span className="ml-2 px-2 py-0.5 rounded-full bg-blue-500 text-xs font-bold text-white">
                               HOT
                             </span>
-                          </NavigationMenuLink>
-                        </Link>
-                      </NavigationMenuItem>
-                    );
-                  }
+                          </Link>
+                        </div>
+                      );
+                    }
 
-                  if (section.items && section.items.length > 0) {
+                    if (section.items && section.items.length > 0) {
+                      return (
+                        <AccordionItem
+                          key={section.title}
+                          value={section.title.toLowerCase()}
+                          className="overflow-hidden transition-all duration-300 border border-gray-200 rounded-lg dark:border-gray-700"
+                        >
+                          <AccordionTrigger
+                            className={cn(
+                              "px-4 sm:px-5 py-3 sm:py-3.5 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-300 [&[data-state=open]]:bg-gray-100 dark:[&[data-state=open]]:bg-gray-700 [&>svg]:h-4 [&>svg]:w-4 sm:[&>svg]:h-5 sm:[&>svg]:w-5",
+                              sectionActive &&
+                                "bg-gray-100 dark:bg-gray-700 text-accent-foreground"
+                            )}
+                          >
+                            <Link
+                              href={section.href || "#"}
+                              onClick={() => setIsOpen(false)}
+                              className="flex items-center min-w-0 gap-2 sm:gap-3"
+                            >
+                              {section.icon && (
+                                <section.icon className="flex-shrink-0 w-5 h-5 text-gray-500 transition-colors duration-300 dark:text-gray-400" />
+                              )}
+                              <span className="text-left truncate">
+                                {section.title}
+                              </span>
+                            </Link>
+                          </AccordionTrigger>
+                          <AccordionContent className="px-4 pb-3 space-y-1 bg-white sm:px-5 dark:bg-gray-800">
+                            {section.items.map((item) => (
+                              <MobileNavLink
+                                key={item.href}
+                                href={item.href}
+                                active={isActive(item.href)}
+                                icon={item.icon}
+                                badge={item.badge}
+                                onSelect={() => setIsOpen(false)}
+                              >
+                                {item.title}
+                              </MobileNavLink>
+                            ))}
+                          </AccordionContent>
+                        </AccordionItem>
+                      );
+                    }
+
                     return (
-                      <AccordionItem
+                      <div
                         key={section.title}
-                        value={section.title.toLowerCase()}
-                        className="overflow-hidden transition-all duration-300 border border-gray-200 rounded-lg dark:border-gray-700"
+                        className="overflow-hidden border border-gray-200 rounded-lg dark:border-gray-700"
                       >
-                        <AccordionTrigger
+                        <Link
+                          href={section.href || "#"}
+                          onClick={() => setIsOpen(false)}
                           className={cn(
-                            "px-4 sm:px-5 py-3 sm:py-3.5 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-300 [&[data-state=open]]:bg-gray-100 dark:[&[data-state=open]]:bg-gray-700 [&>svg]:h-4 [&>svg]:w-4 sm:[&>svg]:h-5 sm:[&>svg]:w-5",
+                            "flex items-center gap-2 sm:gap-3 px-4 sm:px-5 py-3 sm:py-3.5 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-300 min-w-0 focus:ring-2 focus:ring-primary/20",
                             sectionActive &&
                               "bg-gray-100 dark:bg-gray-700 text-accent-foreground"
                           )}
                         >
-                          <Link
-                            href={section.href || "#"}
-                            onClick={() => setIsOpen(false)}
-                            className="flex items-center min-w-0 gap-2 sm:gap-3"
-                          >
-                            {section.icon && (
-                              <section.icon className="flex-shrink-0 w-5 h-5 text-gray-500 transition-colors duration-300 dark:text-gray-400" />
-                            )}
-                            <span className="text-left truncate">
-                              {section.title}
-                            </span>
-                          </Link>
-                        </AccordionTrigger>
-                        <AccordionContent className="px-4 pb-3 space-y-1 bg-white sm:px-5 dark:bg-gray-800">
-                          {section.items.map((item) => (
-                            <MobileNavLink
-                              key={item.href}
-                              href={item.href}
-                              active={isActive(item.href)}
-                              icon={item.icon}
-                              badge={item.badge}
-                              onSelect={() => setIsOpen(false)}
-                            >
-                              {item.title}
-                            </MobileNavLink>
-                          ))}
-                        </AccordionContent>
-                      </AccordionItem>
+                          {section.icon && (
+                            <section.icon className="flex-shrink-0 w-5 h-5 text-gray-500 transition-colors duration-300 dark:text-gray-400" />
+                          )}
+                          <span className="truncate">{section.title}</span>
+                        </Link>
+                      </div>
                     );
-                  }
-
-                  return (
-                    <div
-                      key={section.title}
-                      className="overflow-hidden border border-gray-200 rounded-lg dark:border-gray-700"
-                    >
-                      <Link
-                        href={section.href || "#"}
-                        onClick={() => setIsOpen(false)}
-                        className={cn(
-                          "flex items-center gap-2 sm:gap-3 px-4 sm:px-5 py-3 sm:py-3.5 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-300 min-w-0 focus:ring-2 focus:ring-primary/20",
-                          sectionActive &&
-                            "bg-gray-100 dark:bg-gray-700 text-accent-foreground"
-                        )}
-                      >
-                        {section.icon && (
-                          <section.icon className="flex-shrink-0 w-5 h-5 text-gray-500 transition-colors duration-300 dark:text-gray-400" />
-                        )}
-                        <span className="truncate">{section.title}</span>
-                      </Link>
-                    </div>
-                  );
-                })}
-              </Accordion>
+                  })}
+                </Accordion>
+              </div>
             </div>
-          </div>
+            <div className="flex-shrink-0 p-3 border-t border-gray-200 sm:p-4 bg-gray-50 dark:bg-gray-900 dark:border-gray-700">
+              <div className="flex flex-col gap-2 mb-2">
+                <Link href="/login">
+                  <Button className="w-full text-base font-semibold text-white bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700">
+                    Login
+                  </Button>
+                </Link>
+                <Link href="/signup">
+                  <Button className="w-full text-base font-semibold text-blue-600 bg-white border border-blue-600 hover:bg-blue-50 dark:bg-gray-800 dark:text-blue-400 dark:border-blue-400">
+                    Sign Up
+                  </Button>
+                </Link>
+              </div>
 
-          <div className="flex-shrink-0 p-3 border-t border-gray-200 sm:p-4 bg-gray-50 dark:bg-gray-900 dark:border-gray-700">
-            <div className="text-xs text-center text-gray-500 dark:text-gray-400">
-              © 2025 SkillChain. All rights reserved.
+              <div className="text-xs text-center text-gray-500 dark:text-gray-400">
+                © 2025 SkillChain. All rights reserved.
+              </div>
             </div>
-          </div>
-        </DialogContent>
+          </DialogContent>
+        </div>
       </Dialog>
     </>
   );
 }
-
 // MobileNavLink component
 interface MobileNavLinkProps {
   href: string;
@@ -689,13 +694,13 @@ interface MobileNavLinkProps {
   onSelect?: () => void;
 }
 
-function MobileNavLink({
+export function MobileNavLink({
   href,
-  children,
   active,
   icon: Icon,
   badge,
   onSelect,
+  children,
 }: MobileNavLinkProps) {
   return (
     <Link
