@@ -35,9 +35,7 @@ export async function POST(req: NextRequest) {
     await sendEmail({
       to: email,
       subject: "Welcome to SkillChain! Verify your account",
-
       text: `Hi ${firstName ? " " + firstName : ""},
-
       
 Welcome to SkillChain! We are excited to have you join our community.
 

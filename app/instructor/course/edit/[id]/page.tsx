@@ -63,14 +63,16 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-export default function CourseEditPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const resolvedParams = use(params);
-  const [course, setCourse] = useState<any>(null);
+import {
+  getStorage,
+  ref,
+  StorageReference,
+  uploadBytes,
+} from "firebase/storage";
+// Removed duplicate import for React types
+export default function CourseEditPage({ params }: { params: { id: string } }) {
+  const resolvedParams = params;
+  const [course, setCourse] = useState<any>(null); // Add proper type
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("basic");
   const [saveStatus, setSaveStatus] = useState<
@@ -1707,4 +1709,7 @@ export default function CourseEditPage({
       <Footer />
     </div>
   );
+}
+function getDownloadURL(storageRef: StorageReference) {
+  throw new Error("Function not implemented.");
 }

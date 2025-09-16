@@ -128,7 +128,6 @@ export function UserNav() {
 
   return (
     <>
-      <MobileNav />
       <DropdownMenu>
         <DropdownMenuTrigger asChild className="hidden md:flex">
           <Button variant="ghost" className="relative w-8 h-8 rounded-full">
