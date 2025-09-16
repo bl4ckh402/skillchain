@@ -113,7 +113,6 @@ export function UserNav() {
   if (!user) {
     return (
       <>
-        <MobileNav />
         <div className="items-center hidden gap-4 md:flex">
           <Link href="/login">
             <Button variant="ghost">Login</Button>
