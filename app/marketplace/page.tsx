@@ -10,9 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import CourseTabs from "@/components/course-tabs";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Select,
@@ -40,6 +38,14 @@ import { JSX, useEffect, useState } from "react";
 import { useCourses } from "@/context/CourseContext";
 import { Course, CourseFilters, CourseLevel } from "@/types/course";
 import { EmptyState } from "@/components/empty-state";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 export default function MarketplacePage() {
   const {
@@ -57,9 +63,10 @@ export default function MarketplacePage() {
   const [activeFilters, setActiveFilters] = useState<CourseFilters>({
     level: [],
     duration: [],
-    price: [],
+    price: ["free", "paid", "subscription"] as string[],
     rating: undefined,
     search: "",
+    category: undefined,
   });
   const [categories, setCategories] = useState<
     {
@@ -68,6 +75,7 @@ export default function MarketplacePage() {
       count: number;
     }[]
   >([]);
+  const [categorySearch, setCategorySearch] = useState("");
 
   const fetchFeaturedCourses = async () => {
     const featured = await getFeaturedCourses();
@@ -110,14 +118,26 @@ export default function MarketplacePage() {
           case "nfts":
             icon = <Sparkles className="w-4 h-4 text-amber-500" />;
             break;
-          case "web3":
-            icon = <Globe className="w-4 h-4 text-teal-500" />;
-            break;
+          // case "web3":
+          //   icon = <Globe className="w-4 h-4 text-teal-500" />;
+          //   break;
           case "cryptocurrency":
             icon = <Wallet className="w-4 h-4 text-red-500" />;
             break;
           case "security":
             icon = <Award className="w-4 h-4 text-indigo-500" />;
+            break;
+          case "dapps":
+            icon = <Zap className="w-4 h-4 text-pink-500" />;
+            break;
+          case "ethereum":
+            icon = <Wallet className="w-4 h-4 text-indigo-500" />;
+            break;
+          case "blockchain apps":
+            icon = <BookOpen className="w-4 h-4 text-cyan-500" />;
+            break;
+          case "ai":
+            icon = <Sparkles className="w-4 h-4 text-fuchsia-500" />;
             break;
           default:
             icon = <BookOpen className="w-4 h-4 text-slate-500" />;
@@ -148,6 +168,19 @@ export default function MarketplacePage() {
           course.description.toLowerCase().includes(search) ||
           course.tags.some((tag) => tag.toLowerCase().includes(search))
       );
+    }
+
+    // Apply category filter
+    if (activeFilters.category) {
+      if (Array.isArray(activeFilters.category)) {
+        filtered = filtered.filter((course) =>
+          activeFilters.category!.some((cat) => course.tags.includes(cat))
+        );
+      } else {
+        filtered = filtered.filter((course) =>
+          course.tags.includes(activeFilters.category!)
+        );
+      }
     }
 
     // Apply level filter
@@ -187,12 +220,15 @@ export default function MarketplacePage() {
     if (activeFilters.price?.length) {
       filtered = filtered.filter((course) => {
         const price = parseFloat(course.price.replace("$", ""));
+        const isSubscription = course.price.toLowerCase() === "subscription"; // Assuming price can be "Subscription"
         return activeFilters.price!.some((type: any) => {
           switch (type) {
             case "free":
-              return price === 0;
+              return price === 0 && !isSubscription;
             case "paid":
-              return price > 0;
+              return price > 0 && !isSubscription;
+            case "subscription":
+              return isSubscription;
             default:
               return false;
           }
@@ -204,7 +240,10 @@ export default function MarketplacePage() {
     filtered.sort((a, b) => {
       switch (sortBy) {
         case "newest":
-          return b.createdAt.getTime() - a.createdAt.getTime();
+          return (
+            (b.createdAt ? b.createdAt.getTime() : 0) -
+            (a.createdAt ? a.createdAt.getTime() : 0)
+          );
         case "price-low":
           return (
             parseFloat(a.price.replace("$", "")) -
@@ -247,16 +286,18 @@ export default function MarketplacePage() {
 
       switch (filterType) {
         case "level":
-          current.level = current.level || [];
+          current.level = Array.isArray(current.level) ? current.level : [];
           if (current.level.includes(value)) {
             current.level = current.level.filter((v) => v !== value);
           } else {
-            current.level = [...current.level, value];
+            current.level = [...current.level, value as CourseLevel];
           }
           break;
 
         case "duration":
-          current.duration = current.duration || [];
+          current.duration = Array.isArray(current.duration)
+            ? current.duration
+            : [];
           if (current.duration.includes(value)) {
             current.duration = current.duration.filter((v) => v !== value);
           } else {
@@ -265,13 +306,20 @@ export default function MarketplacePage() {
           break;
 
         case "rating":
-          current.rating = parseFloat(value);
+          current.rating =
+            current.rating === parseFloat(value)
+              ? undefined
+              : parseFloat(value);
           break;
 
         case "price":
-          current.price = current.price || [];
+          current.price = Array.isArray(current.price)
+            ? current.price
+            : typeof current.price === "object" && current.price !== null
+            ? []
+            : ([] as string[]);
           if (current.price.includes(value)) {
-            current.price = current.price.filter((v) => v !== value);
+            current.price = current.price.filter((v: string) => v !== value);
           } else {
             current.price = [...current.price, value];
           }
@@ -284,7 +332,7 @@ export default function MarketplacePage() {
 
   const handleSort = (value: string) => {
     setSortBy(value);
-    const sortedCourses = [...courses].sort((a, b) => {
+    const sortedCourses = [...allCourses].sort((a, b) => {
       switch (value) {
         case "newest":
           return (
@@ -302,19 +350,131 @@ export default function MarketplacePage() {
             parseFloat(a.price.replace("$", ""))
           );
         case "rating":
-          return b.rating! - a.rating!;
+          return (b.rating || 0) - (a.rating || 0);
         default: // popular
-          return b.students! - a.students!;
+          return (b.students || 0) - (a.students || 0);
       }
     });
+    setAllCourses(sortedCourses);
     setFilters({
       ...filters,
       sort: value,
     });
   };
 
+  const filteredCategories = categories.filter((cat) =>
+    cat.name.toLowerCase().includes(categorySearch.toLowerCase())
+  );
+
+  const CourseCard = ({ course }: { course: Course }) => (
+    <Link href={`/course/${course.id}`} className="h-full group">
+      <Card
+        className={`overflow-hidden transition-all hover:shadow-xl hover:scale-105 flex flex-col h-full rounded-xl ${
+          course.featured
+            ? "border-2 border-blue-300 dark:border-blue-700"
+            : "border-slate-200 dark:border-slate-800"
+        }`}
+      >
+        <div className="relative flex-shrink-0 w-full overflow-hidden aspect-video rounded-t-xl">
+          <img
+            src={
+              course.thumbnail && course.thumbnail.trim() !== ""
+                ? course.thumbnail
+                : "/course-placeholder.jpg"
+            }
+            loading="lazy"
+            alt={course.title}
+            className="object-cover w-full h-full transition-transform group-hover:scale-110"
+          />
+          <div className="absolute flex gap-2 top-2 right-2">
+            {course.bestseller && (
+              <Badge className="text-white bg-amber-500 hover:bg-amber-600">
+                Bestseller
+              </Badge>
+            )}
+            {course.new && (
+              <Badge className="text-white bg-green-500 hover:bg-green-600">
+                New
+              </Badge>
+            )}
+          </div>
+        </div>
+        <CardHeader className="px-4 pt-4 pb-2">
+          <div className="flex items-center justify-between mb-2">
+            <Badge
+              className={`text-sm ${
+                course.level === CourseLevel.BEGINNER
+                  ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+                  : course.level === CourseLevel.INTERMEDIATE
+                  ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                  : "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
+              }`}
+            >
+              {course.level}
+            </Badge>
+            <div className="flex items-center gap-1">
+              <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
+              <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
+                {course.rating}
+              </span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                ({course.reviews})
+              </span>
+            </div>
+          </div>
+          <CardTitle className="text-xl font-bold transition-colors line-clamp-2 text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+            {course.title}
+          </CardTitle>
+          <CardDescription className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+            <Avatar className="w-5 h-5">
+              <AvatarImage
+                src={course.instructor.avatar}
+                alt={course.instructor.name}
+              />
+              <AvatarFallback className="text-[10px] bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
+                {course.instructor.name.substring(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <span>{course.instructor.name}</span>
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex-1 px-4 pb-2">
+          <CardDescription className="mb-3 text-sm text-slate-600 dark:text-slate-400 line-clamp-3">
+            {course.description}
+          </CardDescription>
+          <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
+            <div className="flex items-center gap-1">
+              <Users className="w-4 h-4 text-blue-500" />
+              <span>{course.students} students</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Clock className="w-4 h-4 text-teal-500" />
+              <span>{course.duration}</span>
+            </div>
+          </div>
+        </CardContent>
+        <CardFooter className="flex items-center justify-between px-4 pb-4 mt-auto">
+          <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
+            {course.price === "0"
+              ? "Free"
+              : course.price.toLowerCase() === "subscription"
+              ? "Subscription"
+              : `$${course.price}`}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
+          >
+            View Course
+          </Button>
+        </CardFooter>
+      </Card>
+    </Link>
+  );
+
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col min-h-screen">
       <main className="flex-1">
         <div className="py-12 bg-gradient-to-r from-blue-500/10 to-teal-500/10 dark:from-blue-900/20 dark:to-teal-900/20">
           <div className="container px-4 md:px-6">
@@ -357,339 +517,760 @@ export default function MarketplacePage() {
         <div className="container py-8">
           <div className="flex flex-col gap-8">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-[250px_1fr]">
-              <div className="space-y-6">
-                <Card className="border-blue-100 dark:border-blue-900">
-                  <CardHeader className="rounded-t-lg bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50">
-                    <CardTitle className="text-lg text-slate-800 dark:text-slate-200">
+              <div className="space-y-6 md:space-y-6">
+                {/* Mobile: Accordion for Categories and Filters */}
+                <Accordion type="multiple" className="md:hidden">
+                  <AccordionItem value="categories">
+                    <AccordionTrigger className="text-base font-medium text-slate-800 dark:text-slate-200">
                       Categories
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-6">
-                    <div className="space-y-2">
-                      {categories.length > 0 ? (
-                        categories.map((category, index) => (
-                          <Link
-                            key={index}
-                            href="#"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setActiveFilters((prev) => ({
-                                ...prev,
-                                search: category.name,
-                              }));
-                            }}
-                            className="flex items-center justify-between p-2 transition-colors rounded-md text-slate-700 dark:text-slate-300 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950/50 dark:hover:text-blue-300"
-                          >
-                            <div className="flex items-center gap-2">
-                              {category.icon}
-                              <span>{category.name}</span>
-                            </div>
-                            <Badge
-                              variant="secondary"
-                              className="text-blue-700 bg-blue-100 dark:bg-blue-900 dark:text-blue-300"
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <Input
+                        placeholder="Search categories..."
+                        value={categorySearch}
+                        onChange={(e) => setCategorySearch(e.target.value)}
+                        className="mb-4 border-blue-100 dark:border-blue-900"
+                      />
+                      <div className="space-y-2">
+                        <Link
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setActiveFilters((prev) => ({
+                              ...prev,
+                              category: undefined,
+                            }));
+                          }}
+                          className={`flex items-center justify-between p-2 transition-colors rounded-md text-slate-700 dark:text-slate-300 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950/50 dark:hover:text-blue-300
+                            ${
+                              !activeFilters.category
+                                ? "bg-blue-100 dark:bg-blue-900 font-bold"
+                                : ""
+                            }
+                          `}
+                        >
+                          <div className="flex items-center gap-2">
+                            <BookOpen className="w-4 h-4 text-slate-500" />
+                            <span>All Categories</span>
+                          </div>
+                        </Link>
+                        {filteredCategories.length > 0 ? (
+                          filteredCategories.map((category, index) => (
+                            <Link
+                              key={index}
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setActiveFilters((prev) => ({
+                                  ...prev,
+                                  category: [category.name],
+                                }));
+                              }}
+                              className={`flex items-center justify-between p-2 transition-colors rounded-md text-slate-700 dark:text-slate-300 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950/50 dark:hover:text-blue-300
+                                ${
+                                  activeFilters.category === category.name
+                                    ? "bg-blue-100 dark:bg-blue-900 font-bold"
+                                    : ""
+                                }
+                              `}
                             >
-                              {category.count}
-                            </Badge>
-                          </Link>
-                        ))
-                      ) : (
-                        <EmptyState
-                          icon={
-                            <BookOpen className="w-10 h-10 text-blue-500" />
-                          }
-                          title="No Categories"
-                          description="Categories will appear once courses are added."
-                        />
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-blue-100 dark:border-blue-900">
-                  <CardHeader className="rounded-t-lg bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50">
-                    <CardTitle className="text-lg text-slate-800 dark:text-slate-200">
+                              <div className="flex items-center gap-2">
+                                {category.icon}
+                                <span>{category.name}</span>
+                              </div>
+                              <Badge
+                                variant="secondary"
+                                className="text-blue-700 bg-blue-100 dark:bg-blue-900 dark:text-blue-300"
+                              >
+                                {category.count}
+                              </Badge>
+                            </Link>
+                          ))
+                        ) : (
+                          <EmptyState
+                            icon={
+                              <BookOpen className="w-10 h-10 text-blue-500" />
+                            }
+                            title="No Categories Found"
+                            description="Try a different search or add more courses."
+                          />
+                        )}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="filters">
+                    <AccordionTrigger className="text-base font-medium text-slate-800 dark:text-slate-200">
                       Filters
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-6">
-                    <div className="space-y-6">
-                      <div>
-                        <h3 className="mb-2 font-medium text-slate-800 dark:text-slate-200">
-                          Level
-                        </h3>
-                        <div className="space-y-1">
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="beginner"
-                              checked={activeFilters.level?.includes(
-                                CourseLevel.BEGINNER
-                              )}
-                              onChange={() =>
-                                handleFilterChange(
-                                  "level",
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="space-y-6">
+                        <div>
+                          <h3 className="mb-2 font-medium text-slate-800 dark:text-slate-200">
+                            Level
+                          </h3>
+                          <div className="space-y-1">
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="beginner-mobile"
+                                checked={activeFilters.level?.includes(
                                   CourseLevel.BEGINNER
-                                )
-                              }
-                              className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
-                            />
-                            <label
-                              htmlFor="beginner"
-                              className="text-sm text-slate-700 dark:text-slate-300"
-                            >
-                              Beginner
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="intermediate"
-                              className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
-                            />
-                            <label
-                              htmlFor="intermediate"
-                              className="text-sm text-slate-700 dark:text-slate-300"
-                            >
-                              Intermediate
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="advanced"
-                              className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
-                            />
-                            <label
-                              htmlFor="advanced"
-                              className="text-sm text-slate-700 dark:text-slate-300"
-                            >
-                              Advanced
-                            </label>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <h3 className="mb-2 font-medium text-slate-800 dark:text-slate-200">
-                          Duration
-                        </h3>
-                        <div className="space-y-1">
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="short"
-                              checked={activeFilters.duration?.includes("0-5")}
-                              onChange={() =>
-                                handleFilterChange("duration", "0-5")
-                              }
-                              className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
-                            />
-                            <label
-                              htmlFor="short"
-                              className="text-sm text-slate-700 dark:text-slate-300"
-                            >
-                              0-5 hours
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="medium"
-                              checked={activeFilters.duration?.includes("5-10")}
-                              onChange={() =>
-                                handleFilterChange("duration", "5-10")
-                              }
-                              className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
-                            />
-                            <label
-                              htmlFor="medium"
-                              className="text-sm text-slate-700 dark:text-slate-300"
-                            >
-                              5-10 hours
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="long"
-                              checked={activeFilters.duration?.includes("10+")}
-                              onChange={() =>
-                                handleFilterChange("duration", "10+")
-                              }
-                              className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
-                            />
-                            <label
-                              htmlFor="long"
-                              className="text-sm text-slate-700 dark:text-slate-300"
-                            >
-                              10+ hours
-                            </label>
+                                )}
+                                onChange={() =>
+                                  handleFilterChange(
+                                    "level",
+                                    CourseLevel.BEGINNER
+                                  )
+                                }
+                                className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
+                              />
+                              <label
+                                htmlFor="beginner-mobile"
+                                className="text-sm text-slate-700 dark:text-slate-300"
+                              >
+                                Beginner
+                              </label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="intermediate-mobile"
+                                checked={activeFilters.level?.includes(
+                                  CourseLevel.INTERMEDIATE
+                                )}
+                                onChange={() =>
+                                  handleFilterChange(
+                                    "level",
+                                    CourseLevel.INTERMEDIATE
+                                  )
+                                }
+                                className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
+                              />
+                              <label
+                                htmlFor="intermediate-mobile"
+                                className="text-sm text-slate-700 dark:text-slate-300"
+                              >
+                                Intermediate
+                              </label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="advanced-mobile"
+                                checked={activeFilters.level?.includes(
+                                  CourseLevel.ADVANCED
+                                )}
+                                onChange={() =>
+                                  handleFilterChange(
+                                    "level",
+                                    CourseLevel.ADVANCED
+                                  )
+                                }
+                                className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
+                              />
+                              <label
+                                htmlFor="advanced-mobile"
+                                className="text-sm text-slate-700 dark:text-slate-300"
+                              >
+                                Advanced
+                              </label>
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      <div>
-                        <h3 className="mb-2 font-medium text-slate-800 dark:text-slate-200">
-                          Rating
-                        </h3>
-                        <div className="space-y-1">
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="rating-4.5"
-                              checked={activeFilters.rating === 4.5}
-                              onChange={() =>
-                                handleFilterChange("rating", "4.5")
-                              }
-                              className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
-                            />
-                            <label
-                              htmlFor="rating-4.5"
-                              className="flex items-center text-sm text-slate-700 dark:text-slate-300"
+                        <div>
+                          <h3 className="mb-2 font-medium text-slate-800 dark:text-slate-200">
+                            Duration
+                          </h3>
+                          <div className="space-y-1">
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="short-mobile"
+                                checked={activeFilters.duration?.includes(
+                                  "0-5"
+                                )}
+                                onChange={() =>
+                                  handleFilterChange("duration", "0-5")
+                                }
+                                className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
+                              />
+                              <label
+                                htmlFor="short-mobile"
+                                className="text-sm text-slate-700 dark:text-slate-300"
+                              >
+                                0-5 hours
+                              </label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="medium-mobile"
+                                checked={activeFilters.duration?.includes(
+                                  "5-10"
+                                )}
+                                onChange={() =>
+                                  handleFilterChange("duration", "5-10")
+                                }
+                                className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
+                              />
+                              <label
+                                htmlFor="medium-mobile"
+                                className="text-sm text-slate-700 dark:text-slate-300"
+                              >
+                                5-10 hours
+                              </label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="long-mobile"
+                                checked={activeFilters.duration?.includes(
+                                  "10+"
+                                )}
+                                onChange={() =>
+                                  handleFilterChange("duration", "10+")
+                                }
+                                className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
+                              />
+                              <label
+                                htmlFor="long-mobile"
+                                className="text-sm text-slate-700 dark:text-slate-300"
+                              >
+                                10+ hours
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <h3 className="mb-2 font-medium text-slate-800 dark:text-slate-200">
+                            Rating
+                          </h3>
+                          <RadioGroup
+                            value={activeFilters.rating?.toString() || ""}
+                            onValueChange={(value) =>
+                              handleFilterChange("rating", value)
+                            }
+                          >
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem
+                                value="4.5"
+                                id="rating-4.5-mobile"
+                              />
+                              <Label
+                                htmlFor="rating-4.5-mobile"
+                                className="flex items-center text-sm text-slate-700 dark:text-slate-300"
+                              >
+                                4.5 & up
+                                <div className="flex ml-1">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star
+                                      key={i}
+                                      className={`h-3 w-3 ${
+                                        i < 4.5
+                                          ? "fill-amber-500 text-amber-500"
+                                          : "text-slate-300 dark:text-slate-600"
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
+                              </Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem
+                                value="4.0"
+                                id="rating-4.0-mobile"
+                              />
+                              <Label
+                                htmlFor="rating-4.0-mobile"
+                                className="flex items-center text-sm text-slate-700 dark:text-slate-300"
+                              >
+                                4.0 & up
+                                <div className="flex ml-1">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star
+                                      key={i}
+                                      className={`h-3 w-3 ${
+                                        i < 4
+                                          ? "fill-amber-500 text-amber-500"
+                                          : "text-slate-300 dark:text-slate-600"
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
+                              </Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem
+                                value="3.5"
+                                id="rating-3.5-mobile"
+                              />
+                              <Label
+                                htmlFor="rating-3.5-mobile"
+                                className="flex items-center text-sm text-slate-700 dark:text-slate-300"
+                              >
+                                3.5 & up
+                                <div className="flex ml-1">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star
+                                      key={i}
+                                      className={`h-3 w-3 ${
+                                        i < 3.5
+                                          ? "fill-amber-500 text-amber-500"
+                                          : "text-slate-300 dark:text-slate-600"
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
+                              </Label>
+                            </div>
+                          </RadioGroup>
+                        </div>
+
+                        <div>
+                          <h3 className="mb-2 font-medium text-slate-800 dark:text-slate-200">
+                            Price
+                          </h3>
+                          <div className="space-y-1">
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="free-mobile"
+                                checked={activeFilters.price?.includes("free")}
+                                onChange={() =>
+                                  handleFilterChange("price", "free")
+                                }
+                                className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
+                              />
+                              <label
+                                htmlFor="free-mobile"
+                                className="text-sm text-slate-700 dark:text-slate-300"
+                              >
+                                Free
+                              </label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="paid-mobile"
+                                checked={activeFilters.price?.includes("paid")}
+                                onChange={() =>
+                                  handleFilterChange("price", "paid")
+                                }
+                                className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
+                              />
+                              <label
+                                htmlFor="paid-mobile"
+                                className="text-sm text-slate-700 dark:text-slate-300"
+                              >
+                                Paid
+                              </label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="subscription-mobile"
+                                checked={activeFilters.price?.includes(
+                                  "subscription"
+                                )}
+                                onChange={() =>
+                                  handleFilterChange("price", "subscription")
+                                }
+                                className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
+                              />
+                              <label
+                                htmlFor="subscription-mobile"
+                                className="text-sm text-slate-700 dark:text-slate-300"
+                              >
+                                Subscription
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+
+                        <Button className="w-full text-white bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700">
+                          Apply Filters
+                        </Button>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+
+                {/* Desktop: Regular Sidebar */}
+                <div className="hidden space-y-6 md:block">
+                  <Card className="border-blue-100 dark:border-blue-900">
+                    <CardHeader className="rounded-t-lg bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50">
+                      <CardTitle className="text-lg text-slate-800 dark:text-slate-200">
+                        Categories
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-6">
+                      <Input
+                        placeholder="Search categories..."
+                        value={categorySearch}
+                        onChange={(e) => setCategorySearch(e.target.value)}
+                        className="mb-4 border-blue-100 dark:border-blue-900"
+                      />
+                      <div className="space-y-2">
+                        <Link
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setActiveFilters((prev) => ({
+                              ...prev,
+                              category: undefined,
+                            }));
+                          }}
+                          className={`flex items-center justify-between p-2 transition-colors rounded-md text-slate-700 dark:text-slate-300 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950/50 dark:hover:text-blue-300
+                            ${
+                              !activeFilters.category
+                                ? "bg-blue-100 dark:bg-blue-900 font-bold"
+                                : ""
+                            }
+                          `}
+                        >
+                          <div className="flex items-center gap-2">
+                            <BookOpen className="w-4 h-4 text-slate-500" />
+                            <span>All Categories</span>
+                          </div>
+                        </Link>
+                        {filteredCategories.length > 0 ? (
+                          filteredCategories.map((category, index) => (
+                            <Link
+                              key={index}
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setActiveFilters((prev) => ({
+                                  ...prev,
+                                  category: category.name,
+                                }));
+                              }}
+                              className={`flex items-center justify-between p-2 transition-colors rounded-md text-slate-700 dark:text-slate-300 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950/50 dark:hover:text-blue-300
+                                ${
+                                  activeFilters.category === category.name
+                                    ? "bg-blue-100 dark:bg-blue-900 font-bold"
+                                    : ""
+                                }
+                              `}
                             >
-                              4.5 & up
-                              <div className="flex ml-1">
-                                {[...Array(5)].map((_, i) => (
-                                  <Star
-                                    key={i}
-                                    className={`h-3 w-3 ${
-                                      i < 4.5
-                                        ? "fill-amber-500 text-amber-500"
-                                        : "text-slate-300 dark:text-slate-600"
-                                    }`}
-                                  />
-                                ))}
+                              <div className="flex items-center gap-2">
+                                {category.icon}
+                                <span>{category.name}</span>
                               </div>
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="rating-4.0"
-                              className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
-                              checked={activeFilters.rating === 4.0}
-                              onChange={() =>
-                                handleFilterChange("rating", "4.0")
-                              }
-                            />
-                            <label
-                              htmlFor="rating-4.0"
-                              className="flex items-center text-sm text-slate-700 dark:text-slate-300"
-                            >
-                              4.0 & up
-                              <div className="flex ml-1">
-                                {[...Array(5)].map((_, i) => (
-                                  <Star
-                                    key={i}
-                                    className={`h-3 w-3 ${
-                                      i < 4
-                                        ? "fill-amber-500 text-amber-500"
-                                        : "text-slate-300 dark:text-slate-600"
-                                    }`}
-                                  />
-                                ))}
-                              </div>
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="rating-3.5"
-                              className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
-                              checked={activeFilters.rating === 3.5}
-                              onChange={() =>
-                                handleFilterChange("rating", "3.5")
-                              }
-                            />
-                            <label
-                              htmlFor="rating-3.5"
-                              className="flex items-center text-sm text-slate-700 dark:text-slate-300"
-                            >
-                              3.5 & up
-                              <div className="flex ml-1">
-                                {[...Array(5)].map((_, i) => (
-                                  <Star
-                                    key={i}
-                                    className={`h-3 w-3 ${
-                                      i < 3.5
-                                        ? "fill-amber-500 text-amber-500"
-                                        : "text-slate-300 dark:text-slate-600"
-                                    }`}
-                                  />
-                                ))}
-                              </div>
-                            </label>
+                              <Badge
+                                variant="secondary"
+                                className="text-blue-700 bg-blue-100 dark:bg-blue-900 dark:text-blue-300"
+                              >
+                                {category.count}
+                              </Badge>
+                            </Link>
+                          ))
+                        ) : (
+                          <EmptyState
+                            icon={
+                              <BookOpen className="w-10 h-10 text-blue-500" />
+                            }
+                            title="No Categories Found"
+                            description="Try a different search or add more courses."
+                          />
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-blue-100 dark:border-blue-900">
+                    <CardHeader className="rounded-t-lg bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/50 dark:to-teal-950/50">
+                      <CardTitle className="text-lg text-slate-800 dark:text-slate-200">
+                        Filters
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-6">
+                      <div className="space-y-6">
+                        <div>
+                          <h3 className="mb-2 font-medium text-slate-800 dark:text-slate-200">
+                            Level
+                          </h3>
+                          <div className="space-y-1">
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="beginner"
+                                checked={activeFilters.level?.includes(
+                                  CourseLevel.BEGINNER
+                                )}
+                                onChange={() =>
+                                  handleFilterChange(
+                                    "level",
+                                    CourseLevel.BEGINNER
+                                  )
+                                }
+                                className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
+                              />
+                              <label
+                                htmlFor="beginner"
+                                className="text-sm text-slate-700 dark:text-slate-300"
+                              >
+                                Beginner
+                              </label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="intermediate"
+                                checked={activeFilters.level?.includes(
+                                  CourseLevel.INTERMEDIATE
+                                )}
+                                onChange={() =>
+                                  handleFilterChange(
+                                    "level",
+                                    CourseLevel.INTERMEDIATE
+                                  )
+                                }
+                                className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
+                              />
+                              <label
+                                htmlFor="intermediate"
+                                className="text-sm text-slate-700 dark:text-slate-300"
+                              >
+                                Intermediate
+                              </label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="advanced"
+                                checked={activeFilters.level?.includes(
+                                  CourseLevel.ADVANCED
+                                )}
+                                onChange={() =>
+                                  handleFilterChange(
+                                    "level",
+                                    CourseLevel.ADVANCED
+                                  )
+                                }
+                                className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
+                              />
+                              <label
+                                htmlFor="advanced"
+                                className="text-sm text-slate-700 dark:text-slate-300"
+                              >
+                                Advanced
+                              </label>
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      <div>
-                        <h3 className="mb-2 font-medium text-slate-800 dark:text-slate-200">
-                          Price
-                        </h3>
-                        <div className="space-y-1">
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="free"
-                              checked={activeFilters.price?.includes("free")}
-                              onChange={() =>
-                                handleFilterChange("price", "free")
-                              }
-                              className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
-                            />
-                            <label
-                              htmlFor="free"
-                              className="text-sm text-slate-700 dark:text-slate-300"
-                            >
-                              Free
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="paid"
-                              checked={activeFilters.price?.includes("paid")}
-                              onChange={() =>
-                                handleFilterChange("price", "paid")
-                              }
-                              className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
-                            />
-                            <label
-                              htmlFor="paid"
-                              className="text-sm text-slate-700 dark:text-slate-300"
-                            >
-                              Paid
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="subscription"
-                              checked={activeFilters.price?.includes(
-                                "subscription"
-                              )}
-                              onChange={() =>
-                                handleFilterChange("price", "subscription")
-                              }
-                              className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
-                            />
-                            <label
-                              htmlFor="subscription"
-                              className="text-sm text-slate-700 dark:text-slate-300"
-                            >
-                              Subscription
-                            </label>
+                        <div>
+                          <h3 className="mb-2 font-medium text-slate-800 dark:text-slate-200">
+                            Duration
+                          </h3>
+                          <div className="space-y-1">
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="short"
+                                checked={activeFilters.duration?.includes(
+                                  "0-5"
+                                )}
+                                onChange={() =>
+                                  handleFilterChange("duration", "0-5")
+                                }
+                                className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
+                              />
+                              <label
+                                htmlFor="short"
+                                className="text-sm text-slate-700 dark:text-slate-300"
+                              >
+                                0-5 hours
+                              </label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="medium"
+                                checked={activeFilters.duration?.includes(
+                                  "5-10"
+                                )}
+                                onChange={() =>
+                                  handleFilterChange("duration", "5-10")
+                                }
+                                className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
+                              />
+                              <label
+                                htmlFor="medium"
+                                className="text-sm text-slate-700 dark:text-slate-300"
+                              >
+                                5-10 hours
+                              </label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="long"
+                                checked={activeFilters.duration?.includes(
+                                  "10+"
+                                )}
+                                onChange={() =>
+                                  handleFilterChange("duration", "10+")
+                                }
+                                className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
+                              />
+                              <label
+                                htmlFor="long"
+                                className="text-sm text-slate-700 dark:text-slate-300"
+                              >
+                                10+ hours
+                              </label>
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      <Button className="w-full text-white bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700">
-                        Apply Filters
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                        <div>
+                          <h3 className="mb-2 font-medium text-slate-800 dark:text-slate-200">
+                            Rating
+                          </h3>
+                          <RadioGroup
+                            value={activeFilters.rating?.toString() || ""}
+                            onValueChange={(value) =>
+                              handleFilterChange("rating", value)
+                            }
+                          >
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="4.5" id="rating-4.5" />
+                              <Label
+                                htmlFor="rating-4.5"
+                                className="flex items-center text-sm text-slate-700 dark:text-slate-300"
+                              >
+                                4.5 & up
+                                <div className="flex ml-1">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star
+                                      key={i}
+                                      className={`h-3 w-3 ${
+                                        i < 4.5
+                                          ? "fill-amber-500 text-amber-500"
+                                          : "text-slate-300 dark:text-slate-600"
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
+                              </Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="4.0" id="rating-4.0" />
+                              <Label
+                                htmlFor="rating-4.0"
+                                className="flex items-center text-sm text-slate-700 dark:text-slate-300"
+                              >
+                                4.0 & up
+                                <div className="flex ml-1">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star
+                                      key={i}
+                                      className={`h-3 w-3 ${
+                                        i < 4
+                                          ? "fill-amber-500 text-amber-500"
+                                          : "text-slate-300 dark:text-slate-600"
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
+                              </Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="3.5" id="rating-3.5" />
+                              <Label
+                                htmlFor="rating-3.5"
+                                className="flex items-center text-sm text-slate-700 dark:text-slate-300"
+                              >
+                                3.5 & up
+                                <div className="flex ml-1">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star
+                                      key={i}
+                                      className={`h-3 w-3 ${
+                                        i < 3.5
+                                          ? "fill-amber-500 text-amber-500"
+                                          : "text-slate-300 dark:text-slate-600"
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
+                              </Label>
+                            </div>
+                          </RadioGroup>
+                        </div>
+
+                        <div>
+                          <h3 className="mb-2 font-medium text-slate-800 dark:text-slate-200">
+                            Price
+                          </h3>
+                          <div className="space-y-1">
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="free"
+                                checked={activeFilters.price?.includes("free")}
+                                onChange={() =>
+                                  handleFilterChange("price", "free")
+                                }
+                                className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
+                              />
+                              <label
+                                htmlFor="free"
+                                className="text-sm text-slate-700 dark:text-slate-300"
+                              >
+                                Free
+                              </label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="paid"
+                                checked={activeFilters.price?.includes("paid")}
+                                onChange={() =>
+                                  handleFilterChange("price", "paid")
+                                }
+                                className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
+                              />
+                              <label
+                                htmlFor="paid"
+                                className="text-sm text-slate-700 dark:text-slate-300"
+                              >
+                                Paid
+                              </label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="subscription"
+                                checked={activeFilters.price?.includes(
+                                  "subscription"
+                                )}
+                                onChange={() =>
+                                  handleFilterChange("price", "subscription")
+                                }
+                                className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700"
+                              />
+                              <label
+                                htmlFor="subscription"
+                                className="text-sm text-slate-700 dark:text-slate-300"
+                              >
+                                Subscription
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+
+                        <Button className="w-full text-white bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700">
+                          Apply Filters
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
 
               <div>
@@ -722,135 +1303,16 @@ export default function MarketplacePage() {
                   </div>
                 ) : featuredCourses.length === 0 ? (
                   <EmptyState
-                    title="No Courses Available"
-                    description="Be the first to create a course and share your blockchain knowledge with the community."
+                    title="No Featured Courses Available"
+                    description="Check back soon for featured blockchain courses."
                     icon={
                       <BookOpen className="w-12 h-12 text-blue-500 dark:text-blue-300" />
                     }
-                    // showCreateButton={true}
                   />
                 ) : (
                   <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {featuredCourses.map((course) => (
-                      <Link
-                        href={`/course/${course.id}`}
-                        key={course.id}
-                        className="group"
-                      >
-                        <Card
-                          className={`overflow-hidden transition-all hover:shadow-lg ${
-                            course.featured
-                              ? "border-2 border-blue-300 dark:border-blue-700"
-                              : "border-slate-200 dark:border-slate-800"
-                          }`}
-                        >
-                          <div className="relative w-full overflow-hidden aspect-video">
-                            <img
-                              src={
-                                course.thumbnail &&
-                                course.thumbnail.trim() !== ""
-                                  ? course.thumbnail
-                                  : "/course-placeholder.jpg"
-                              }
-                              loading="lazy"
-                              alt={course.title}
-                              className="object-cover w-full h-full transition-transform group-hover:scale-105"
-                            />
-                            <div className="absolute flex gap-2 top-2 right-2">
-                              {course.bestseller && (
-                                <Badge className="text-white bg-amber-500 hover:bg-amber-600">
-                                  Bestseller
-                                </Badge>
-                              )}
-                              {course.new && (
-                                <Badge className="text-white bg-green-500 hover:bg-green-600">
-                                  New
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                          <CardHeader className="pb-2">
-                            <div className="flex items-center justify-between">
-                              <Badge
-                                className={`${
-                                  course.level === "Beginner"
-                                    ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-                                    : course.level === "Intermediate"
-                                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
-                                    : "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
-                                }`}
-                              >
-                                {course.level}
-                              </Badge>
-                              <div className="flex items-center gap-1">
-                                <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
-                                <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
-                                  {course.rating}
-                                </span>
-                                <span className="text-xs text-slate-500 dark:text-slate-400">
-                                  ({course.reviews})
-                                </span>
-                              </div>
-                            </div>
-                            <CardTitle className="text-xl transition-colors line-clamp-1 text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">
-                              {course.title}
-                            </CardTitle>
-                            <CardDescription className="flex items-center gap-1">
-                              <Avatar className="w-4 h-4">
-                                <AvatarImage
-                                  src={course.instructor.avatar}
-                                  alt={course.instructor.name}
-                                />
-                                <AvatarFallback className="text-[8px] bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
-                                  {course.instructor.name
-                                    .substring(0, 2)
-                                    .toUpperCase()}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="text-xs">
-                                {course.instructor.name}
-                              </span>
-                            </CardDescription>
-                          </CardHeader>
-                          <CardContent className="pb-2">
-                            <div className="flex flex-wrap gap-2 mb-3">
-                              {course.tags.map((tag, index) => (
-                                <Badge
-                                  key={index}
-                                  variant="secondary"
-                                  className="font-normal text-blue-700 bg-blue-100 hover:bg-blue-200 dark:text-blue-300 dark:bg-blue-900 dark:hover:bg-blue-800"
-                                >
-                                  {tag}
-                                </Badge>
-                              ))}
-                            </div>
-                            <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
-                              <div className="flex items-center gap-1">
-                                <Users className="w-4 h-4 text-blue-500" />
-                                <span>{course.students} students</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Clock className="w-4 h-4 text-teal-500" />
-                                <span>{course.duration}</span>
-                              </div>
-                            </div>
-                          </CardContent>
-                          <CardFooter className="flex items-center justify-between">
-                            <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                              {course.price === "0"
-                                ? "Free"
-                                : `$${course.price}`}
-                            </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
-                            >
-                              View Course
-                            </Button>
-                          </CardFooter>
-                        </Card>
-                      </Link>
+                      <CourseCard key={course.id} course={course} />
                     ))}
                   </div>
                 )}
@@ -860,13 +1322,25 @@ export default function MarketplacePage() {
                       All Courses
                     </h2>
                   </div>
-
-                  <CourseTabs
-                    loading={loading}
-                    allCourses={allCourses}
-                    featuredCourses={featuredCourses}
-                    defaultTab="all"
-                  />
+                  {loading ? (
+                    <div className="flex items-center justify-center h-64">
+                      <div className="w-8 h-8 border-b-2 border-blue-600 rounded-full animate-spin"></div>
+                    </div>
+                  ) : allCourses.length === 0 ? (
+                    <EmptyState
+                      title="No Courses Available"
+                      description="Be the first to create a course and share your blockchain knowledge with the community."
+                      icon={
+                        <BookOpen className="w-12 h-12 text-blue-500 dark:text-blue-300" />
+                      }
+                    />
+                  ) : (
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                      {allCourses.map((course) => (
+                        <CourseCard key={course.id} course={course} />
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
