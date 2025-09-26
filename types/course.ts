@@ -204,6 +204,7 @@ export interface CourseFilters {
   category?: string[];
   level?: CourseLevel[];
   price?: {
+    some(arg0: (type: any) => boolean): unknown;
     min: number;
     max: number;
   };
