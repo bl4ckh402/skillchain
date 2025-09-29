@@ -36,7 +36,17 @@ import {
 } from "lucide-react";
 import { JSX, useEffect, useState } from "react";
 import { useCourses } from "@/context/CourseContext";
-import { Course, CourseFilters, CourseLevel } from "@/types/course";
+import { Course, CourseLevel } from "@/types/course";
+
+// Define CourseFilters locally with price as string[]
+type CourseFilters = {
+  level?: CourseLevel[];
+  duration?: string[];
+  price?: string[];
+  rating?: number;
+  search?: string;
+  category?: string | string[];
+};
 import { EmptyState } from "@/components/empty-state";
 import {
   Accordion,
@@ -174,11 +184,15 @@ export default function MarketplacePage() {
     if (activeFilters.category) {
       if (Array.isArray(activeFilters.category)) {
         filtered = filtered.filter((course) =>
-          activeFilters.category!.some((cat) => course.tags.includes(cat))
+          Array.isArray(activeFilters.category)
+            ? activeFilters.category.some((cat: string) =>
+                course.tags.includes(cat)
+              )
+            : false
         );
-      } else {
+      } else if (typeof activeFilters.category === "string") {
         filtered = filtered.filter((course) =>
-          course.tags.includes(activeFilters.category!)
+          course.tags.includes(activeFilters.category as string)
         );
       }
     }
@@ -287,8 +301,10 @@ export default function MarketplacePage() {
       switch (filterType) {
         case "level":
           current.level = Array.isArray(current.level) ? current.level : [];
-          if (current.level.includes(value)) {
-            current.level = current.level.filter((v) => v !== value);
+          if (current.level.includes(value as CourseLevel)) {
+            current.level = current.level.filter(
+              (v) => v !== (value as CourseLevel)
+            );
           } else {
             current.level = [...current.level, value as CourseLevel];
           }
@@ -837,7 +853,10 @@ export default function MarketplacePage() {
                               <input
                                 type="checkbox"
                                 id="free-mobile"
-                                checked={activeFilters.price?.includes("free")}
+                                checked={
+                                  Array.isArray(activeFilters.price) &&
+                                  activeFilters.price.includes("free")
+                                }
                                 onChange={() =>
                                   handleFilterChange("price", "free")
                                 }
