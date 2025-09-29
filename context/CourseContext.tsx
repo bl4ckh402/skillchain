@@ -21,7 +21,23 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from "@/lib/firebase";
 import { Course, CourseFilters, CourseStatus } from "@/types/course";
 import { useAuth } from "./AuthProvider";
-import { FirestoreEnrolledCourse } from "@/types/dashboard";
+// import { FirestoreEnrolledCourse } from "@/types/dashboard";
+// If FirestoreEnrolledCourse is not defined, define it locally here:
+type FirestoreEnrolledCourse = {
+  courseId: string;
+  userId: string;
+  enrolledAt: any;
+  status: string;
+  progress: {
+    progress: number;
+    completedLessons: string[];
+    lastAccessed: any;
+    totalLessons: number;
+    nextLesson: string;
+    currentLesson: string;
+    moduleProgress: Record<string, any>;
+  };
+};
 
 interface CourseContextType {
   courses: Course[];
@@ -268,6 +284,12 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
         students: increment(1),
       });
 
+      // Fetch course data to get lessons and modules
+      const courseDoc = await getDoc(courseRef);
+      const courseData = courseDoc.exists()
+        ? (courseDoc.data() as Course)
+        : null;
+
       await setDoc(enrollmentRef, {
         courseId,
         userId: user.uid,
@@ -277,8 +299,8 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
           progress: 0,
           completedLessons: [],
           lastAccessed: serverTimestamp(),
-          totalLessons: course.lessons?.length || 0,
-          nextLesson: course.modules?.[0]?.lessons?.[0]?.id || "",
+          totalLessons: courseData?.lessons?.length || 0,
+          nextLesson: courseData?.modules?.[0]?.lessons?.[0]?.id || "",
           currentLesson: "",
           moduleProgress: {},
         },
@@ -306,12 +328,43 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
     if (!user) throw new Error("Must be logged in");
 
     try {
-      const storageRef = ref(storage, `courses/${user.uid}/${file.name}`);
-      await uploadBytes(storageRef, file);
+      // Generate a more unique filename to avoid collisions
+      const timestamp = Date.now();
+      const uniqueFilename = `${timestamp}-${file.name.replace(/\s+/g, "-")}`;
+
+      // Create storage reference with unique path
+      const storageRef = ref(storage, `courses/${user.uid}/${uniqueFilename}`);
+
+      // Check file size before uploading
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error("File size exceeds 5MB limit");
+      }
+
+      // Add metadata to the upload
+      const metadata = {
+        contentType: file.type,
+      };
+
+      // Upload with metadata and handle potential timeout
+      await uploadBytes(storageRef, file, metadata);
+
+      // Get and return download URL
       const url = await getDownloadURL(storageRef);
       return url;
     } catch (error: any) {
-      throw new Error(`Error uploading image: ${error.message}`);
+      console.error("Firebase storage error details:", error);
+
+      if (error.code === "storage/unauthorized") {
+        throw new Error(
+          "Storage permission denied. Check your Firebase rules."
+        );
+      } else if (error.code === "storage/canceled") {
+        throw new Error("Upload was canceled or timed out");
+      } else {
+        throw new Error(
+          `Error uploading image: ${error.message || "Unknown error"}`
+        );
+      }
     }
   };
 
@@ -333,7 +386,9 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
       const enrollment = enrollmentDoc.data() as FirestoreEnrolledCourse;
       const updatedCompletedLessons = completed
         ? [...enrollment.progress.completedLessons, lessonId]
-        : enrollment.progress.completedLessons.filter((id) => id !== lessonId);
+        : enrollment.progress.completedLessons.filter(
+            (id: string) => id !== lessonId
+          );
 
       // Calculate progress percentage
       const totalLessons = enrollment.progress.totalLessons;

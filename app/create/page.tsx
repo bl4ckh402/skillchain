@@ -214,19 +214,60 @@ export default function CreateCoursePage() {
 
     try {
       setIsUploading(true);
+
+      // Validate file type and size
+      if (!file.type.startsWith("image/")) {
+        toast({
+          title: "Invalid File Type",
+          description: "Only image files are allowed",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // File size check (limit to 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File Too Large",
+          description: "Image must be less than 5MB",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Process the upload
       const url = await uploadCourseImage(file);
       handleInputChange("thumbnail", url);
       toast({
         title: "Success",
         description: "Image uploaded successfully",
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Upload error details:", error);
+
+      // Provide more specific error messages based on the error code
+      let errorMessage = "Failed to upload image";
+      if (error.code) {
+        switch (error.code) {
+          case "storage/unauthorized":
+            errorMessage = "You don't have permission to upload files";
+            break;
+          case "storage/canceled":
+            errorMessage = "Upload was canceled";
+            break;
+          case "storage/quota-exceeded":
+            errorMessage = "Storage quota exceeded";
+            break;
+          default:
+            errorMessage = error.message || "Failed to upload image";
+        }
+      }
+
       toast({
-        title: "Error",
-        description: "Failed to upload image",
+        title: "Upload Failed",
+        description: errorMessage,
         variant: "destructive",
       });
-      console.error("Error uploading image:", error);
     } finally {
       setIsUploading(false);
     }
@@ -588,10 +629,15 @@ export default function CreateCoursePage() {
         break;
       case "project":
         updatedModules[moduleIndex].lessons[lessonIndex].content = {
-          description: currentContent.description || "",
-          requirements: currentContent.requirements || "",
-          rubric: currentContent.rubric || "",
+          description: (currentContent as any).description || "",
+          requirements: (currentContent as any).requirements || "",
+          rubric: (currentContent as any).rubric || "",
           attachments: currentContent.attachments || [],
+        } as {
+          description: string;
+          requirements: string;
+          rubric: string;
+          attachments: any[];
         };
         break;
     }
@@ -660,14 +706,19 @@ export default function CreateCoursePage() {
     const updatedModules = [...modules];
     if (!updatedModules[moduleIndex].lessons[lessonIndex].content) {
       updatedModules[moduleIndex].lessons[lessonIndex].content = {
-        videoUrl: "",
+        textContent: "",
         description: "",
-        transcript: "",
         attachments: [],
       };
+    } else if (
+      updatedModules[moduleIndex].lessons[lessonIndex].type === "text"
+    ) {
+      // Ensure content has the correct type for text lessons
+      updatedModules[moduleIndex].lessons[lessonIndex].content = {
+        ...updatedModules[moduleIndex].lessons[lessonIndex].content,
+        textContent: textContent,
+      };
     }
-    updatedModules[moduleIndex].lessons[lessonIndex].content.textContent =
-      textContent;
     setModules(updatedModules);
   };
 
@@ -2180,12 +2231,19 @@ export default function CreateCoursePage() {
                                                                   </Button>
                                                                 </div>
                                                                 {Array.isArray(
-                                                                  lesson.content
-                                                                    ?.quiz
+                                                                  (
+                                                                    lesson.content as {
+                                                                      quiz?: any[];
+                                                                    }
+                                                                  )?.quiz
                                                                 ) &&
-                                                                lesson.content
-                                                                  .quiz.length >
-                                                                  0 ? (
+                                                                (
+                                                                  (
+                                                                    lesson.content as {
+                                                                      quiz?: any[];
+                                                                    }
+                                                                  )?.quiz || []
+                                                                ).length > 0 ? (
                                                                   <div className="space-y-4">
                                                                     {(
                                                                       lesson

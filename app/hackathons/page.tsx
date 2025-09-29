@@ -64,6 +64,35 @@ export default function HackathonsPage() {
     }
   };
 
+  const formatDate = (dateValue: any) => {
+    if (!dateValue) return "TBD";
+
+    // Handle different date formats
+    try {
+      // If it's a Firestore Timestamp
+      if (dateValue?.toDate) {
+        return dateValue.toDate().toLocaleDateString();
+      }
+      // If it's a string ISO date
+      else if (typeof dateValue === "string") {
+        return new Date(dateValue).toLocaleDateString();
+      }
+      // If it's already a Date object
+      else if (dateValue instanceof Date) {
+        return dateValue.toLocaleDateString();
+      }
+      // If it's a timestamp number
+      else if (typeof dateValue === "number") {
+        return new Date(dateValue).toLocaleDateString();
+      }
+      // Fallback
+      return "Invalid date";
+    } catch (error) {
+      console.error("Date formatting error:", error);
+      return "Date error";
+    }
+  };
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setFilters({ ...filters, search: searchQuery });
