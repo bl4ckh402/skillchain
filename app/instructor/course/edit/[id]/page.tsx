@@ -68,11 +68,12 @@ import {
   ref,
   StorageReference,
   uploadBytes,
+  getDownloadURL,
 } from "firebase/storage";
-// Removed duplicate import for React types
+
 export default function CourseEditPage({ params }: { params: { id: string } }) {
-  const resolvedParams = params;
-  const [course, setCourse] = useState<any>(null); // Add proper type
+  const resolvedParams = React.use(params) as { id: string };
+  const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("basic");
   const [saveStatus, setSaveStatus] = useState<
@@ -545,7 +546,11 @@ export default function CourseEditPage({ params }: { params: { id: string } }) {
                             />
                           </div>
                           <div className="flex justify-center gap-2">
-                            <Button variant="outline" size="sm">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => thumbnailInputRef.current?.click()}
+                            >
                               <Upload className="w-4 h-4 mr-2" />
                               Change
                             </Button>
@@ -553,10 +558,23 @@ export default function CourseEditPage({ params }: { params: { id: string } }) {
                               variant="outline"
                               size="sm"
                               className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
+                              onClick={() =>
+                                setCourse((prev: any) => ({
+                                  ...prev,
+                                  thumbnail: "",
+                                }))
+                              }
                             >
                               <Trash2 className="w-4 h-4 mr-2" />
                               Remove
                             </Button>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              ref={thumbnailInputRef}
+                              style={{ display: "none" }}
+                              onChange={handleThumbnailUpload}
+                            />
                           </div>
                         </div>
                       ) : (
@@ -1705,11 +1723,9 @@ export default function CourseEditPage({ params }: { params: { id: string } }) {
             </Card>
           </TabsContent>
         </Tabs>
+        <Footer />
       </div>
-      <Footer />
     </div>
   );
-}
-function getDownloadURL(storageRef: StorageReference) {
-  throw new Error("Function not implemented.");
+  // throw new Error("Function not implemented.");
 }

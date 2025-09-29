@@ -30,7 +30,6 @@ import {
   reauthenticateWithCredential,
   updatePassword as firebaseUpdatePassword,
 } from "firebase/auth";
-
 interface UserProfile {
   uid: string;
   email: string | null;

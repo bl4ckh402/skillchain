@@ -1,44 +1,57 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { useAuth } from "@/context/AuthProvider"
-import { useHackathons } from "@/context/HackathonContext"
-import { toast } from "@/components/ui/use-toast"
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/context/AuthProvider";
+import { useHackathons } from "@/context/HackathonContext";
+import { toast } from "@/components/ui/use-toast";
 
 interface PostHackathonModalProps {
-  open: boolean
-  onClose: () => void
+  open: boolean;
+  onCloseAction: () => void;
 }
 
-export function PostHackathonModal({ open, onClose }: PostHackathonModalProps) {
-  const { user } = useAuth()
-  const { createHackathon } = useHackathons()
-  const [loading, setLoading] = useState(false)
+export function PostHackathonModal({
+  open,
+  onCloseAction,
+}: PostHackathonModalProps) {
+  const { user } = useAuth();
+  const { createHackathon } = useHackathons();
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<"active" | "upcoming" | "completed">(
+    "upcoming"
+  );
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    if (!user) return
+    e.preventDefault();
+    if (!user) return;
 
-    setLoading(true)
+    setLoading(true);
     try {
-      const formData = new FormData(e.currentTarget)
+      const formData = new FormData(e.currentTarget);
       await createHackathon({
         title: formData.get("title") as string,
         organizer: formData.get("organizer") as string,
-        logo: "",  // Should be handled by file upload
+        logo: "",
         website: formData.get("website") as string,
         startDate: new Date(formData.get("startDate") as string),
         endDate: new Date(formData.get("endDate") as string),
         location: formData.get("location") as string,
         participants: 0,
         prizePool: formData.get("prizePool") as string,
-        status: "upcoming",
-        tags: (formData.get("tags") as string).split(",").map(tag => tag.trim()),
+        status,
+        tags: (formData.get("tags") as string)
+          .split(",")
+          .map((tag) => tag.trim()),
         description: formData.get("description") as string,
         featured: false,
         sponsors: [],
@@ -46,116 +59,187 @@ export function PostHackathonModal({ open, onClose }: PostHackathonModalProps) {
           {
             date: formData.get("startDate") as string,
             attendinevent: "Registration Opens",
-            description: "Hackathon registration begins"
+            description: "Hackathon registration begins",
+            startDate: "",
+            endDate: "",
           },
           {
             date: formData.get("endDate") as string,
             attendinevent: "Submission Deadline",
-            description: "Final project submissions due"
-          }
+            description: "Final project submissions due",
+            startDate: "",
+            endDate: "",
+          },
         ],
         resources: [],
         prizes: [
           {
             title: "First Place",
             amount: formData.get("firstPrize") as string,
-            description: "First place prize"
-          }
+            description: "First place prize",
+          },
         ],
-        judges: []
-      })
+        judges: [],
+        progress: 0,
+        createdBy: "",
+      });
 
       toast({
         title: "Success",
-        description: "Hackathon created successfully"
-      })
-      onClose()
+        description: "Hackathon created successfully",
+      });
+      onCloseAction();
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message,
-        variant: "destructive"
-      })
+        variant: "destructive",
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+    <Dialog open={open} onOpenChange={onCloseAction}>
+      <DialogContent className="w-full max-w-lg sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Create a New Hackathon</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl">
+            Create a New Hackathon
+          </DialogTitle>
         </DialogHeader>
+
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
+          {/* Title + Organizer */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="title">Hackathon Title</Label>
-              <Input id="title" name="title" required />
+              <Input id="title" name="title" required className="w-full" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="organizer">Organizer</Label>
-              <Input id="organizer" name="organizer" required />
+              <Input
+                id="organizer"
+                name="organizer"
+                required
+                className="w-full"
+              />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          {/* Dates */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="startDate">Start Date</Label>
-              <Input id="startDate" name="startDate" type="date" required />
+              <Input
+                id="startDate"
+                name="startDate"
+                type="date"
+                required
+                className="w-full"
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="endDate">End Date</Label>
-              <Input id="endDate" name="endDate" type="date" required />
+              <Input
+                id="endDate"
+                name="endDate"
+                type="date"
+                required
+                className="w-full"
+              />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          {/* Location + Prize Pool */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="location">Location</Label>
-              <Input id="location" name="location" required />
+              <Input
+                id="location"
+                name="location"
+                required
+                className="w-full"
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="prizePool">Prize Pool</Label>
-              <Input id="prizePool" name="prizePool" placeholder="e.g. $50,000" required />
+              <Input
+                id="prizePool"
+                name="prizePool"
+                placeholder="e.g. $50,000"
+                required
+                className="w-full"
+              />
             </div>
           </div>
 
+          {/* Website */}
           <div className="space-y-2">
             <Label htmlFor="website">Website</Label>
-            <Input id="website" name="website" type="url" required />
+            <Input
+              id="website"
+              name="website"
+              type="url"
+              required
+              className="w-full"
+            />
           </div>
 
+          {/* Tags */}
           <div className="space-y-2">
             <Label htmlFor="tags">Tags (comma separated)</Label>
-            <Input 
-              id="tags" 
-              name="tags" 
-              placeholder="e.g. DeFi, NFTs, Gaming" 
-              required 
+            <Input
+              id="tags"
+              name="tags"
+              placeholder="e.g. DeFi, NFTs, Gaming"
+              required
+              className="w-full"
             />
           </div>
 
+          {/* Description */}
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
-            <Textarea 
-              id="description" 
-              name="description" 
-              rows={5} 
-              required 
+            <Textarea
+              id="description"
+              name="description"
+              rows={5}
+              required
+              className="w-full"
             />
           </div>
 
+          {/* Status */}
           <div className="space-y-2">
-            <Label htmlFor="firstPrize">First Place Prize</Label>
-            <Input id="firstPrize" name="firstPrize" required />
+            <Label htmlFor="status">Status</Label>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value as any)}
+            >
+              <option value="active">Active</option>
+              <option value="upcoming">Upcoming</option>
+              <option value="completed">Completed</option>
+            </select>
           </div>
 
+          {/* Prize */}
+          <div className="space-y-2">
+            <Label htmlFor="firstPrize">First Place Prize</Label>
+            <Input
+              id="firstPrize"
+              name="firstPrize"
+              required
+              className="w-full"
+            />
+          </div>
+
+          {/* Submit */}
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Creating..." : "Create Hackathon"}
           </Button>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
