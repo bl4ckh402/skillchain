@@ -22,7 +22,17 @@ import { db, storage } from "@/lib/firebase";
 import { Course, CourseFilters, CourseStatus } from "@/types/course";
 import { useAuth } from "./AuthProvider";
 import { FirestoreEnrolledCourse } from "@/types/dashboard";
+import { getApp } from "firebase/app";
+import { getStorage } from "firebase/storage";
 
+try {
+  const app = getApp();
+  console.log("Firebase app initialized successfully:", app.name);
+  const storage = getStorage(app);
+  console.log("Firebase storage initialized successfully");
+} catch (error) {
+  console.error("Firebase initialization error:", error);
+}
 interface CourseContextType {
   courses: Course[];
   loading: boolean;
@@ -262,6 +272,10 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const courseRef = doc(db, "courses", courseId);
+      const courseSnapshot = await getDoc(courseRef);
+      const course = courseSnapshot.data();
+      if (!course) throw new Error("Course not found");
+      
       const enrollmentRef = doc(db, "enrollments", `${courseId}_${user.uid}`);
 
       await updateDoc(courseRef, {
@@ -277,7 +291,7 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
           progress: 0,
           completedLessons: [],
           lastAccessed: serverTimestamp(),
-          totalLessons: course.lessons?.length || 0,
+          totalLessons: course?.lessons?.length || 0,
           nextLesson: course.modules?.[0]?.lessons?.[0]?.id || "",
           currentLesson: "",
           moduleProgress: {},
@@ -333,7 +347,7 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
       const enrollment = enrollmentDoc.data() as FirestoreEnrolledCourse;
       const updatedCompletedLessons = completed
         ? [...enrollment.progress.completedLessons, lessonId]
-        : enrollment.progress.completedLessons.filter((id) => id !== lessonId);
+        : enrollment.progress.completedLessons.filter((id: string) => id !== lessonId);
 
       // Calculate progress percentage
       const totalLessons = enrollment.progress.totalLessons;

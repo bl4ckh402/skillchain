@@ -72,9 +72,27 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 export default function CreateCoursePage() {
   const [activeTab, setActiveTab] = useState("basic");
   const [showContentEditor, setShowContentEditor] = useState(false);
+  type LessonContent = {
+    videoUrl?: string;
+    description?: string;
+    transcript?: string;
+    textContent?: string;
+    quiz?: Array<{
+      question: string;
+      options: string[];
+      correctAnswer: number;
+    }>;
+    instructions?: string;
+    solution?: string;
+    requirements?: string;
+    rubric?: string;
+    attachments: any[];
+  };
+  
   type SelectedLesson = {
     moduleId: string;
     lessonId: string;
+    content?: LessonContent;
     [key: string]: any;
   };
   const [selectedLesson, setSelectedLesson] = useState<SelectedLesson | null>(
@@ -214,19 +232,30 @@ export default function CreateCoursePage() {
 
     try {
       setIsUploading(true);
+
+      // Show loading toast
+      toast({
+        title: "Uploading image",
+        description: "Please wait while your image is being uploaded...",
+      });
+
       const url = await uploadCourseImage(file);
       handleInputChange("thumbnail", url);
+
       toast({
         title: "Success",
         description: "Image uploaded successfully",
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Error uploading image:", error);
+
       toast({
-        title: "Error",
-        description: "Failed to upload image",
+        title: "Upload failed",
+        description:
+          error.message ||
+          "Failed to upload image. Please try again with a smaller image.",
         variant: "destructive",
       });
-      console.error("Error uploading image:", error);
     } finally {
       setIsUploading(false);
     }
@@ -587,12 +616,12 @@ export default function CreateCoursePage() {
         };
         break;
       case "project":
-        updatedModules[moduleIndex].lessons[lessonIndex].content = {
-          description: currentContent.description || "",
-          requirements: currentContent.requirements || "",
-          rubric: currentContent.rubric || "",
-          attachments: currentContent.attachments || [],
-        };
+      updatedModules[moduleIndex].lessons[lessonIndex].content = {
+        description: (currentContent as any).description || "",
+        requirements: (currentContent as any).requirements || "",
+        rubric: (currentContent as any).rubric || "",
+        attachments: currentContent.attachments || [],
+      };
         break;
     }
 
@@ -2188,9 +2217,8 @@ export default function CreateCoursePage() {
                                                                   0 ? (
                                                                   <div className="space-y-4">
                                                                     {(
-                                                                      lesson
-                                                                        .content
-                                                                        .quiz ??
+                                                                      (lesson.content as { quiz?: any[] })
+                                                                        ?.quiz ??
                                                                       []
                                                                     ).map(
                                                                       (
